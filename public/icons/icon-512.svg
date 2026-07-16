@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="76" fill="#090909"/><rect x="58" y="58" width="396" height="396" rx="48" fill="#171717" stroke="#A9783F" stroke-width="16"/><text x="256" y="306" text-anchor="middle" font-family="Impact,Arial Narrow,sans-serif" font-size="172" fill="#C89B62">BB</text></svg>

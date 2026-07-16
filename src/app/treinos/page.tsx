@@ -1,0 +1,61 @@
+"use client";
+
+import { Copy, Dumbbell, Plus, Play } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { useAppStore } from "@/stores/appStore";
+
+export default function TreinosPage() {
+  const router = useRouter();
+  const { plan, startWorkout } = useAppStore();
+
+  function start(dayId: string) {
+    router.push(`/treino-ativo/${startWorkout(dayId)}`);
+  }
+
+  return (
+    <div className="space-y-5">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm uppercase text-bronze-light">Plano ativo</p>
+          <h1 className="font-display text-4xl font-black">{plan.name}</h1>
+          <p className="text-sand">{plan.description}</p>
+        </div>
+        <Button variant="secondary">
+          <Plus size={18} /> Novo treino
+        </Button>
+      </header>
+      <div className="grid gap-4 md:grid-cols-2">
+        {plan.days.map((day) => (
+          <Card key={day.id} className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-bronze-light">{day.weekday}</p>
+                <h2 className="text-2xl font-black">{day.name}</h2>
+                <p className="text-sm text-sand">{day.estimatedDurationMinutes} min · {day.muscleGroups.join(", ")}</p>
+              </div>
+              <Dumbbell className="text-bronze-light" />
+            </div>
+            <ol className="space-y-2 text-sm text-sand">
+              {day.exercises.map((item) => (
+                <li key={item.id} className="flex justify-between rounded-lg bg-iron p-2">
+                  <span>{item.orderIndex}. {item.exerciseId}</span>
+                  <span>{item.sets}x {item.minReps}-{item.maxReps}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="flex gap-2">
+              <Button onClick={() => start(day.id)} className="flex-1">
+                <Play size={18} /> Iniciar
+              </Button>
+              <Button variant="secondary" aria-label="Duplicar treino">
+                <Copy size={18} />
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
