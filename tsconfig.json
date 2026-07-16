@@ -1,21 +1,104 @@
-{
-  "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./src/*"] }
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+import type { Exercise, MuscleGroup } from "@/types/domain";
+
+const groups: MuscleGroup[] = [
+  "Peito",
+  "Costas",
+  "Ombros",
+  "Biceps",
+  "Triceps",
+  "Quadriceps",
+  "Posteriores",
+  "Gluteos",
+  "Panturrilhas",
+  "Abdomen",
+  "Antebraco",
+  "Trapezio",
+  "Cardio",
+  "Mobilidade"
+];
+
+const names: Array<[string, MuscleGroup, string, "Composto" | "Isolador" | "Cardio" | "Mobilidade"]> = [
+  ["Supino reto com barra", "Peito", "Barra", "Composto"],
+  ["Supino inclinado com halteres", "Peito", "Halteres", "Composto"],
+  ["Crossover", "Peito", "Polia", "Isolador"],
+  ["Crucifixo inclinado", "Peito", "Halteres", "Isolador"],
+  ["Paralelas", "Peito", "Peso corporal", "Composto"],
+  ["Remada curvada", "Costas", "Barra", "Composto"],
+  ["Remada baixa", "Costas", "Cabo", "Composto"],
+  ["Puxada frontal", "Costas", "Polia", "Composto"],
+  ["Barra fixa", "Costas", "Peso corporal", "Composto"],
+  ["Pullover na polia", "Costas", "Polia", "Isolador"],
+  ["Agachamento livre", "Quadriceps", "Barra", "Composto"],
+  ["Leg press", "Quadriceps", "Maquina", "Composto"],
+  ["Hack squat", "Quadriceps", "Maquina", "Composto"],
+  ["Cadeira extensora", "Quadriceps", "Maquina", "Isolador"],
+  ["Passada com halteres", "Quadriceps", "Halteres", "Composto"],
+  ["Mesa flexora", "Posteriores", "Maquina", "Isolador"],
+  ["Stiff", "Posteriores", "Barra", "Composto"],
+  ["Levantamento terra romeno", "Posteriores", "Halteres", "Composto"],
+  ["Flexora sentado", "Posteriores", "Maquina", "Isolador"],
+  ["Elevação pélvica", "Gluteos", "Barra", "Composto"],
+  ["Abdução de quadril", "Gluteos", "Maquina", "Isolador"],
+  ["Desenvolvimento com halteres", "Ombros", "Halteres", "Composto"],
+  ["Elevação lateral", "Ombros", "Halteres", "Isolador"],
+  ["Elevação frontal", "Ombros", "Halteres", "Isolador"],
+  ["Face pull", "Ombros", "Cabo", "Isolador"],
+  ["Crucifixo inverso", "Ombros", "Maquina", "Isolador"],
+  ["Rosca direta", "Biceps", "Barra", "Isolador"],
+  ["Rosca martelo", "Biceps", "Halteres", "Isolador"],
+  ["Rosca scott", "Biceps", "Maquina", "Isolador"],
+  ["Rosca alternada", "Biceps", "Halteres", "Isolador"],
+  ["Tríceps na polia", "Triceps", "Polia", "Isolador"],
+  ["Tríceps francês", "Triceps", "Halteres", "Isolador"],
+  ["Supino fechado", "Triceps", "Barra", "Composto"],
+  ["Tríceps testa", "Triceps", "Barra W", "Isolador"],
+  ["Panturrilha em pé", "Panturrilhas", "Maquina", "Isolador"],
+  ["Panturrilha sentada", "Panturrilhas", "Maquina", "Isolador"],
+  ["Panturrilha no leg press", "Panturrilhas", "Maquina", "Isolador"],
+  ["Prancha", "Abdomen", "Peso corporal", "Isolador"],
+  ["Abdominal na polia", "Abdomen", "Polia", "Isolador"],
+  ["Elevação de pernas", "Abdomen", "Peso corporal", "Isolador"],
+  ["Rosca punho", "Antebraco", "Barra", "Isolador"],
+  ["Rosca inversa", "Antebraco", "Barra", "Isolador"],
+  ["Encolhimento com halteres", "Trapezio", "Halteres", "Isolador"],
+  ["Remada alta", "Trapezio", "Barra", "Composto"],
+  ["Caminhada inclinada", "Cardio", "Esteira", "Cardio"],
+  ["Corrida leve", "Cardio", "Esteira", "Cardio"],
+  ["Bicicleta ergométrica", "Cardio", "Bicicleta", "Cardio"],
+  ["Elíptico", "Cardio", "Eliptico", "Cardio"],
+  ["Mobilidade de quadril", "Mobilidade", "Livre", "Mobilidade"],
+  ["Mobilidade torácica", "Mobilidade", "Livre", "Mobilidade"]
+];
+
+function slug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
+
+export const exercises: Exercise[] = names.map(([name, primaryMuscle, equipment, exerciseType], index) => ({
+  id: `ex-${index + 1}`,
+  name,
+  alternativeName: name.toLowerCase(),
+  primaryMuscle,
+  secondaryMuscles: groups.filter((group) => group !== primaryMuscle).slice(index % 4, (index % 4) + 2),
+  equipment,
+  difficulty: index % 5 === 0 ? "Avancado" : index % 3 === 0 ? "Intermediario" : "Iniciante",
+  exerciseType,
+  environment: equipment === "Livre" || equipment === "Peso corporal" ? "Casa" : "Academia completa",
+  instructions: [
+    "Ajuste a postura antes de iniciar.",
+    "Execute com controle, sem roubar a repetição.",
+    "Pare se sentir dor articular forte ou progressiva."
+  ],
+  commonMistakes: ["Aumentar carga antes da técnica", "Perder amplitude", "Prender a respiração sem necessidade"],
+  safetyTips: ["Use aquecimento específico", "Mantenha repetições em reserva quando estiver fatigado"],
+  substitutions: ["Variação com halteres", "Variação em máquina", "Movimento com menor amplitude se houver desconforto"],
+  imageUrl: `/equipment/${slug(equipment)}.png`,
+  animationUrl: `/exercises/ex-${index + 1}.gif`,
+  equipmentImageUrl: `/equipment/${slug(equipment)}.png`,
+  videoUrl: ""
+}));
