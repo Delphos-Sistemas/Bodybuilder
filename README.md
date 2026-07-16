@@ -1,21 +1,21 @@
 # BODYBUILDER
 
-MVP funcional em portugues do Brasil para planejamento, execucao e acompanhamento de treinos.
+MVP funcional em português do Brasil para planejamento, execução e acompanhamento de treinos.
 
 ## Funcionalidades implementadas
 
 - Landing page com identidade BODYBUILDER.
-- Modo demonstracao automatico, com usuario Tiago e dados persistidos no navegador.
-- Dashboard inicial com treino do dia, prontidao, meta semanal e recomendacao de fadiga.
+- Modo demonstração automático, com usuário Tiago e dados persistidos no navegador.
+- Dashboard inicial com treino do dia, prontidão, meta semanal e recomendação de fadiga.
 - Plano semanal demonstrativo de 6 dias.
-- Execucao de treino com registro de carga, repeticoes, RIR, dor, descanso, vibracao e resumo.
-- Historico de treinos.
-- Evolucao com graficos de peso e volume.
-- Biblioteca com 50 exercicios, busca e filtro.
-- Perfil, conquistas, configuracoes, onboarding, check-in semanal e admin mockado.
-- PWA instalavel com manifest, icones e service worker basico.
+- Execução de treino com registro de carga, repetições, RIR, dor, descanso, vibração e resumo.
+- Histórico de treinos.
+- Evolução com gráficos de peso e volume.
+- Biblioteca com 50 exercícios, busca e filtro.
+- Perfil, conquistas, configurações, onboarding, check-in semanal e admin mockado.
+- PWA instalável com manifest, ícones e service worker básico.
 - Supabase preparado com `.env.example` e migration SQL com RLS.
-- Testes unitarios e teste Playwright do fluxo principal em `tests/e2e`.
+- Testes unitários e teste Playwright do fluxo principal em `tests/e2e`.
 
 ## Como executar
 
@@ -31,7 +31,7 @@ npm install
 npm run dev
 ```
 
-Acesse `http://localhost:3000`. O preview local desta entrega tambem esta respondendo em `http://127.0.0.1:3000`.
+Acesse `http://localhost:3000`. O preview local desta entrega também está respondendo em `http://127.0.0.1:3000`.
 
 ## Verificacoes
 
@@ -51,9 +51,9 @@ npm run test
 npm run build
 ```
 
-## Modo demonstracao
+## Modo demonstração
 
-Funciona automaticamente quando `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` nao estao configurados. Os dados ficam no `localStorage`.
+Funciona automaticamente quando `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` não estão configurados. Os dados ficam no `localStorage`.
 
 ## Supabase
 
@@ -73,11 +73,11 @@ Substitua:
 - `public/brand/mascot-tired.png`
 - `public/brand/mascot-focus.png`
 
-Enquanto as imagens do mascote nao existirem, o app usa o monograma `BB`.
+Enquanto as imagens do mascote não existirem, o app usa o monograma `BB`.
 
 ## Limitacoes atuais
 
-- Autenticacao Supabase esta preparada, mas o MVP usa modo local por padrao.
-- Notificacoes locais estao estruturadas, sem agendamento avancado.
-- Painel admin e uma base visual mockada.
-- Fotos e videos de exercicios estao reservados para implementacao futura.
+- Autenticação Supabase está preparada, mas o MVP usa modo local por padrão.
+- Notificações locais estão estruturadas, sem agendamento avançado.
+- Painel admin é uma base visual mockada.
+- Fotos e vídeos de exercícios estão reservados para implementação futura.
