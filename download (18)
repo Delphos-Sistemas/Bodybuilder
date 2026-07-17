@@ -1,0 +1,18 @@
+import { Card } from "@/components/ui/Card";
+
+export default function NovoTreinoPage() {
+  const modelos = ["Push Pull Legs", "Upper Lower", "ABC", "ABCDE", "Full Body", "Treino curto de 30 minutos"];
+  return (
+    <div className="space-y-5">
+      <h1 className="font-display text-4xl font-black">Criar treino</h1>
+      <div className="grid gap-4 md:grid-cols-3">
+        {modelos.map((modelo) => (
+          <Card key={modelo}>
+            <h2 className="font-bold">{modelo}</h2>
+            <p className="mt-2 text-sm text-sand">Modelo preparado para duplicar, editar exercícios, reordenar e salvar localmente.</p>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}

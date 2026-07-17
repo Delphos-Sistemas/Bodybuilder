@@ -1,19 +1,27 @@
-import { Card } from "@/components/ui/Card";
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+import { AppShell } from "@/components/layout/AppShell";
+import { RegisterServiceWorker } from "./register-sw";
 
-export default function AdminPage() {
-  const items = ["Exercicios", "Modelos de treino", "Mensagens do mascote", "Conquistas", "Usuarios", "Metricas de uso"];
+export const metadata: Metadata = {
+  title: "BODYBUILDER",
+  description: "Planeje seus treinos, acompanhe sua evolução e transforme constância em legado.",
+  manifest: "/manifest.webmanifest"
+};
+
+export const viewport: Viewport = {
+  themeColor: "#090909",
+  width: "device-width",
+  initialScale: 1
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-5">
-      <h1 className="font-display text-4xl font-black">Admin</h1>
-      <p className="text-sand">Rota administrativa protegida no roadmap. No modo demonstração, os dados são mockados.</p>
-      <div className="grid gap-4 md:grid-cols-3">
-        {items.map((item) => (
-          <Card key={item}>
-            <h2 className="font-bold">{item}</h2>
-            <p className="mt-2 text-sm text-sand">Estrutura preparada para gestão futura.</p>
-          </Card>
-        ))}
-      </div>
-    </div>
+    <html lang="pt-BR">
+      <body>
+        <RegisterServiceWorker />
+        <AppShell>{children}</AppShell>
+      </body>
+    </html>
   );
 }

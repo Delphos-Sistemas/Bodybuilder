@@ -1,31 +1,38 @@
 "use client";
 
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { Input } from "@/components/ui/Input";
 import { useAppStore } from "@/stores/appStore";
 
-export default function ConfiguracoesPage() {
-  const { profile } = useAppStore();
+export default function AvaliacaoSemanalPage() {
+  const submitCheckin = useAppStore((state) => state.submitCheckin);
+  const latest = useAppStore((state) => state.checkins[0]);
+  const [values, setValues] = useState({ trainedDays: 5, energy: 4, sleep: 3, motivation: 4, soreness: 3, jointPain: 1, nutrition: 4, stress: 3 });
+  const [saved, setSaved] = useState(false);
+  function save() {
+    submitCheckin({ ...values, nextWeekTime: "60 minutos", agendaChanged: false });
+    setSaved(true);
+  }
   return (
-    <div className="space-y-5">
-      <h1 className="font-display text-4xl font-black">Configurações</h1>
-      <div className="grid gap-4 md:grid-cols-2">
-        {[
-          ["Tema", "Escuro premium como padrão"],
-          ["Unidade de peso", "Quilogramas"],
-          ["Notificacoes", "Estrutura preparada para lembretes locais"],
-          ["Vibração", "Ativa quando o navegador permitir"],
-          ["Descanso padrão", "90 segundos"],
-          ["Modo demonstração", profile.demoMode ? "Ativo" : "Inativo"],
-          ["Supabase", isSupabaseConfigured ? "Configurado" : "Não configurado"],
-          ["Privacidade", "Dados locais no navegador neste MVP"]
-        ].map(([title, text]) => (
-          <Card key={title}>
-            <h2 className="font-bold">{title}</h2>
-            <p className="mt-2 text-sm text-sand">{text}</p>
-          </Card>
+    <div className="mx-auto max-w-2xl space-y-5">
+      <h1 className="font-display text-4xl font-black">Avaliacao semanal</h1>
+      <Card className="space-y-3">
+        {Object.entries(values).map(([key, value]) => (
+          <label key={key} className="block text-sm text-sand">
+            {key}
+            <Input type="number" min={key === "trainedDays" ? 0 : 1} max={key === "trainedDays" ? 7 : 5} value={value} onChange={(event) => setValues({ ...values, [key]: Number(event.target.value) })} />
+          </label>
         ))}
-      </div>
+        <Button onClick={save} className="w-full">Salvar check-in</Button>
+      </Card>
+      {(saved || latest) && (
+        <Card>
+          <h2 className="font-bold">Recomendacao</h2>
+          <p className="mt-2 text-sand">{latest?.recommendation}</p>
+        </Card>
+      )}
     </div>
   );
 }
