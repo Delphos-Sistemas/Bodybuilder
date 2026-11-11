@@ -56,6 +56,7 @@ type Actions = {
   goTo: (index: number) => void;
   finish: (manual: boolean) => string | null;
   deleteSession: (id: string) => void;
+  setSessionNotes: (id: string, notes: string) => void;
   addBodyWeight: (date: string, kg: number) => void;
   removeBodyWeight: (id: string) => void;
   saveProfile: (p: Profile) => void;
@@ -151,6 +152,8 @@ export const useStore = create<Store>()(
           return done.id;
         },
         deleteSession: (id) => update((d) => ({ ...d, sessions: d.sessions.filter((s) => s.id !== id) })),
+        setSessionNotes: (id, notes) =>
+          update((d) => ({ ...d, sessions: d.sessions.map((s) => (s.id === id ? { ...s, notes: notes.trim().slice(0, 1000) || undefined } : s)) })),
 
         addBodyWeight: (date, kg) =>
           update((d) => ({

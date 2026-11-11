@@ -97,6 +97,10 @@ apagados na ativação. Os vídeos ficam num cache separado (`bb-media-v1`) que 
   em regras simples, com aviso de que não é diagnóstico nem prescrição.
 - **Configurações:** som dos alertas (ativado por ação explícita), teste de cada alerta, volume, vibração, player de
   música, exportar/importar/apagar dados, modo demonstração, informações offline e créditos de mídia.
+- **Treino ativo:** mostra o que você fez na última vez e sugere a carga pela progressão dupla (bateu o topo da faixa
+  de repetições em todas as séries: sobe a carga; ficou abaixo do mínimo: reduz; senão mantém). Para barra e Smith,
+  mostra as anilhas por lado conforme a barra escolhida.
+- **Histórico:** calendário do mês com os dias treinados e anotações livres em cada sessão.
 - **Modo demonstração:** dados de exemplo em um espaço separado; nunca entram na exportação nem se misturam com os seus.
 
 ### Áudio
@@ -105,7 +109,13 @@ Alertas distintos gerados com Web Audio: início (três notas ascendentes), fim 
 (três notas descendentes, também no encerramento manual). Vibração opcional. Se o navegador bloquear o áudio, o treino
 continua normalmente. Os bipes são **alertas**, não música.
 
-**Player de música (Metal, Rock e Hip Hop):** tocar, pausar, próxima, troca de estilo durante a reprodução e volume.
+**Spotify (padrão):** cada estilo abre o player oficial do Spotify incorporado, com uma playlist editorial como padrão
+(`SPOTIFY_DEFAULTS` em `src/data/music.ts`). O usuário pode colar o link de qualquer playlist, álbum, artista ou faixa
+por estilo, e a escolha fica salva no aparelho. O iframe só é carregado depois que o usuário toca em “Carregar player do
+Spotify”, porque é conteúdo de terceiros com cookies. Com login no Spotify Premium as faixas tocam inteiras; sem login, o
+Spotify toca prévias de 30 segundos. Não usa chaves de API nem servidor. Precisa de internet.
+
+**Arquivos do aparelho:** tocar, pausar, próxima, troca de estilo durante a reprodução e volume.
 **Nenhuma faixa vem incluída** porque ainda não há músicas com licença de distribuição verificada; o app informa isso e
 permite escolher arquivos do próprio aparelho. Para incluir faixas licenciadas, coloque os arquivos em
 `public/musica/<estilo>/` e registre título, artista, licença e fonte em `src/data/music.ts`.

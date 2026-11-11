@@ -90,6 +90,8 @@ export type Session = {
   startedAt: number;
   endedAt?: number;
   endedManually?: boolean;
+  /** anotação livre do usuário sobre a sessão */
+  notes?: string;
   items: SessionItem[];
   currentIndex: number;
   rest: RestState | null;
@@ -137,6 +139,12 @@ export type Settings = {
   audioEnabled: boolean;
   vibration: boolean;
   alertVolume: number;
+  /** Fonte de música preferida no player */
+  musicSource?: "spotify" | "local";
+  /** Playlists do Spotify escolhidas pelo usuário, por estilo (URL ou URI) */
+  spotify?: Partial<Record<"metal" | "rock" | "hiphop", string>>;
+  /** O usuário aceitou carregar o player do Spotify (conteúdo de terceiros) */
+  spotifyEnabled?: boolean;
 };
 
 export type Mode = "usuario" | "demo";

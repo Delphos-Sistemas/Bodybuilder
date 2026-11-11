@@ -13,13 +13,15 @@ import { EXERCISE_MAP } from "@/data/exercises";
 import { playAlert } from "@/lib/audio";
 import { currentItem, isItemDone, isSessionComplete, sessionSetCount } from "@/lib/session";
 import { useData, useStore } from "@/lib/store";
-import { formatClock, restRemaining, secondsBetween, workoutElapsed } from "@/lib/time";
+import { fmt, lastPerformance, platesPerSide, suggestNext } from "@/lib/progression";
+import { formatClock, formatDateShort, restRemaining, secondsBetween, workoutElapsed } from "@/lib/time";
 import { useNow } from "@/lib/useHydrated";
 import { EQUIPMENT, MUSCLES } from "@/lib/types";
 
 export default function TreinoAtivoPage() {
   const router = useRouter();
-  const session = useData().activeSession;
+  const data = useData();
+  const session = data.activeSession;
   const store = useStore();
   const { settings } = store;
   const now = useNow(250);
@@ -34,14 +36,17 @@ export default function TreinoAtivoPage() {
   const exercise = item ? EXERCISE_MAP[item.exerciseId] : undefined;
   const setsDone = item?.sets.length ?? 0;
   const formKey = `${session?.id}:${session?.currentIndex}:${setsDone}`;
+  const last = item ? lastPerformance(data.sessions, item.exerciseId) : null;
+  const suggestion = item && exercise ? suggestNext(item.planned, last, exercise.equipment) : null;
+  const [barKg, setBarKg] = useState(20);
 
   // preenche o formulário com a última série registrada ou com o planejado
   useEffect(() => {
     if (!item) return;
-    const last = item.sets[item.sets.length - 1];
+    const prev = item.sets[item.sets.length - 1];
     setForm({
-      loadKg: last?.loadKg ?? item.planned.loadKg,
-      reps: last?.reps ?? item.planned.repsMax,
+      loadKg: prev?.loadKg ?? suggestion?.loadKg ?? item.planned.loadKg,
+      reps: prev?.reps ?? suggestion?.repsTarget ?? item.planned.repsMax,
       rir: item.planned.rir,
       pain: ""
     });
@@ -201,6 +206,22 @@ export default function TreinoAtivoPage() {
                 Meta: {item.planned.sets} séries · {item.planned.repsMin}–{item.planned.repsMax} {iso ? "segundos" : "repetições"}
                 {item.planned.loadKg ? ` · ${item.planned.loadKg} kg` : ""} · RIR {item.planned.rir} · descanso {item.planned.restSec} s
               </p>
+              {last && (
+                <div className="rounded-xl border border-line bg-iron p-3 text-sm" data-testid="ultima-vez">
+                  <p>
+                    <span className="text-muted">Última vez ({formatDateShort(last.date)}):</span>{" "}
+                    {last.sets.map((st) => `${fmt(st.loadKg)} kg × ${st.reps}`).join(" · ")}
+                  </p>
+                  {suggestion && (
+                    <p className={clsx("mt-1", suggestion.kind === "subir" ? "text-ok" : suggestion.kind === "reduzir" ? "text-danger" : "text-sand")}>
+                      <strong>
+                        Sugestão: {exercise.equipment === "peso-corporal" ? `${suggestion.repsTarget} ${iso ? "s" : "repetições"}` : `${fmt(suggestion.loadKg)} kg × ${suggestion.repsTarget}`}.
+                      </strong>{" "}
+                      <span className="text-muted">{suggestion.reason}</span>
+                    </p>
+                  )}
+                </div>
+              )}
             </section>
 
             {/* Painel de série: altura fixa para os botões não mudarem de lugar */}
@@ -243,6 +264,9 @@ export default function TreinoAtivoPage() {
               <div className="grid grid-cols-2 gap-2">
                 <div className="col-span-2">
                   <Stepper id="carga" label="Carga" suffix="kg" step={2.5} max={1000} value={form.loadKg} onChange={(v) => setForm((f) => ({ ...f, loadKg: v }))} />
+                  {(exercise.equipment === "barra" || exercise.equipment === "smith") && (
+                    <PlateLine totalKg={form.loadKg} barKg={barKg} onBar={setBarKg} />
+                  )}
                 </div>
                 <Stepper id="reps" label={iso ? "Segundos" : "Repetições"} max={300} value={form.reps} onChange={(v) => setForm((f) => ({ ...f, reps: v }))} />
                 <Stepper id="rir" label="RIR" max={10} value={form.rir} onChange={(v) => setForm((f) => ({ ...f, rir: v }))} />
@@ -312,6 +336,29 @@ export default function TreinoAtivoPage() {
       </details>
 
       <ExerciseSheet exerciseId={sheet} onClose={() => setSheet(null)} />
+    </div>
+  );
+}
+
+function PlateLine({ totalKg, barKg, onBar }: { totalKg: number; barKg: number; onBar: (v: number) => void }) {
+  const r = platesPerSide(totalKg, barKg);
+  return (
+    <div className="mt-1.5 flex min-h-8 flex-wrap items-center gap-x-2 text-xs text-muted" data-testid="anilhas">
+      <label htmlFor="barra-kg">Barra</label>
+      <select id="barra-kg" className="rounded-md border border-line bg-iron px-1 py-0.5 text-sand" value={barKg} onChange={(e) => onBar(Number(e.target.value))}>
+        {[20, 15, 10, 0].map((b) => (
+          <option key={b} value={b}>
+            {b ? `${b} kg` : "sem barra"}
+          </option>
+        ))}
+      </select>
+      <span>
+        {!r
+          ? "Carga menor que a barra."
+          : r.plates.length === 0
+            ? "Só a barra."
+            : `Por lado: ${r.plates.map((p) => fmt(p)).join(" + ")} kg${r.remainder ? ` (faltam ${fmt(r.remainder)} kg)` : ""}`}
+      </span>
     </div>
   );
 }

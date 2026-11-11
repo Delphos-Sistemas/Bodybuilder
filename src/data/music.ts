@@ -18,3 +18,13 @@ export const BUNDLED_TRACKS: Record<MusicStyle, BundledTrack[]> = {
   rock: [],
   hiphop: []
 };
+
+/**
+ * Playlists editoriais públicas do Spotify usadas como padrão em cada estilo.
+ * O usuário pode trocar por qualquer playlist, álbum ou artista colando o link.
+ */
+export const SPOTIFY_DEFAULTS: Record<MusicStyle, { title: string; url: string }> = {
+  metal: { title: "Kickass Metal", url: "https://open.spotify.com/playlist/37i9dQZF1DWTcqUzwhNmKv" },
+  rock: { title: "Rock Classics", url: "https://open.spotify.com/playlist/37i9dQZF1DWXRqgorJj26U" },
+  hiphop: { title: "RapCaviar", url: "https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd" }
+};

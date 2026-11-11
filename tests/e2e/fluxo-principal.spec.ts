@@ -5,14 +5,18 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
 });
 
-test("criar treino → recarregar → iniciar → registrar série → descansar → encerrar → histórico", async ({ page }) => {
+test("criar treino → recarregar → iniciar → registrar série → descansar → encerrar → histórico", async ({
+  page
+}) => {
   await page.goto("/treinos");
   await page.getByRole("link", { name: "Criar do zero" }).click();
   await page.getByLabel("Nome do treino").fill("Treino E2E");
 
   await page.getByRole("button", { name: "Adicionar exercício" }).click();
   await page.getByLabel("Buscar exercício").fill("supino reto com barra");
-  await page.getByRole("button", { name: "Adicionar Supino reto com barra" }).click();
+  await page
+    .getByRole("button", { name: "Adicionar Supino reto com barra" })
+    .click();
   await page.getByRole("button", { name: "Concluir" }).click();
 
   const item = page.getByTestId("item-exercicio");
@@ -30,18 +34,28 @@ test("criar treino → recarregar → iniciar → registrar série → descansar
 
   await card.getByRole("button", { name: "Iniciar treino" }).click();
   await expect(page).toHaveURL(/treino-ativo/);
-  await expect(page.getByRole("heading", { name: "Supino reto com barra" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Supino reto com barra" })
+  ).toBeVisible();
   await expect(page.getByLabel("Carga (kg)")).toHaveValue("40");
 
   await page.getByLabel("Repetições", { exact: true }).fill("9");
   await page.getByRole("button", { name: "Concluir série" }).click();
-  await expect(page.getByRole("heading", { name: "Série 2 de 2" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pular descanso" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Série 2 de 2" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Pular descanso" })
+  ).toBeVisible();
   // descanso de 3 s termina sozinho
-  await expect(page.getByRole("button", { name: "Pular descanso" })).toBeHidden({ timeout: 8000 });
+  await expect(page.getByRole("button", { name: "Pular descanso" })).toBeHidden(
+    { timeout: 8000 }
+  );
 
   await page.getByRole("button", { name: "Concluir série" }).click();
-  await expect(page.getByRole("heading", { name: "Todas as séries concluídas" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Todas as séries concluídas" })
+  ).toBeVisible();
   await page.getByRole("button", { name: "Finalizar e salvar treino" }).click();
 
   await expect(page).toHaveURL(/historico/);
@@ -61,15 +75,21 @@ test("retomar sessão interrompida e encerrar manualmente", async ({ page }) => 
   await page.reload();
   await expect(page.getByText("Sessão interrompida")).toBeVisible();
   await page.getByRole("link", { name: "Retomar treino" }).click();
-  await expect(page.getByRole("heading", { name: "Série 2 de 3" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Série 2 de 3" })
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Pular exercício" }).click();
-  await expect(page.getByRole("heading", { name: "Supino reto com barra" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Supino reto com barra" })
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Encerrar treino" }).click();
   await page.getByRole("button", { name: "Encerrar e salvar" }).click();
   await expect(page).toHaveURL(/historico/);
-  await expect(page.getByTestId("sessao-historico").first()).toContainText("encerrado manualmente");
+  await expect(page.getByTestId("sessao-historico").first()).toContainText(
+    "encerrado manualmente"
+  );
 });
 
 test("biblioteca: busca sem acento, ficha e demonstração", async ({ page }) => {
@@ -77,25 +97,43 @@ test("biblioteca: busca sem acento, ficha e demonstração", async ({ page }) =>
   await expect(page.getByText("50 exercícios encontrados")).toBeVisible();
   await page.getByLabel("Buscar exercício").fill("triceps frances");
   await expect(page.getByText("1 exercício encontrado")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Tríceps francês com halter" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Tríceps francês com halter" })
+  ).toBeVisible();
 
   await page.getByLabel("Buscar exercício").fill("");
   await page.getByLabel("Filtrar por equipamento").selectOption("maquina");
-  await expect(page.getByRole("heading", { name: "Leg press 45°" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Supino reto com barra" })).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Leg press 45°" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Supino reto com barra" })
+  ).toHaveCount(0);
 
   // nenhum vídeo é carregado antes do toque
   await expect(page.locator("video")).toHaveCount(0);
-  await page.getByRole("button", { name: "Reproduzir demonstração de Leg press 45°" }).click();
+  await page
+    .getByRole("button", { name: "Reproduzir demonstração de Leg press 45°" })
+    .click();
   await expect(page.locator("video")).toHaveCount(1);
 
-  await page.getByRole("article").filter({ hasText: "Leg press 45°" }).getByRole("button", { name: "Ver ficha" }).click();
+  await page
+    .getByRole("article")
+    .filter({ hasText: "Leg press 45°" })
+    .getByRole("button", { name: "Ver ficha" })
+    .click();
   const ficha = page.getByRole("dialog");
-  await expect(ficha.getByRole("heading", { name: "Leg press 45°" })).toBeVisible();
+  await expect(
+    ficha.getByRole("heading", { name: "Leg press 45°" })
+  ).toBeVisible();
   await expect(ficha.getByText("Erros comuns")).toBeVisible();
   await ficha.getByRole("button", { name: "Posições" }).click();
-  await expect(ficha.getByRole("figure").filter({ hasText: "Posição inicial" })).toBeVisible();
-  await expect(ficha.getByRole("figure").filter({ hasText: "Posição final" })).toBeVisible();
+  await expect(
+    ficha.getByRole("figure").filter({ hasText: "Posição inicial" })
+  ).toBeVisible();
+  await expect(
+    ficha.getByRole("figure").filter({ hasText: "Posição final" })
+  ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(ficha).toBeHidden();
 });
@@ -104,11 +142,17 @@ test("prancha mostra a posição sustentada, sem vídeo", async ({ page }) => {
   await page.goto("/biblioteca");
   await page.getByLabel("Buscar exercício").fill("prancha");
   await page.getByRole("button", { name: "Ver ficha" }).click();
-  await expect(page.getByRole("dialog").getByText("Posição sustentada")).toBeVisible();
-  await expect(page.getByRole("dialog").getByRole("button", { name: /Reproduzir/ })).toHaveCount(0);
+  await expect(
+    page.getByRole("dialog").getByText("Posição sustentada")
+  ).toBeVisible();
+  await expect(
+    page.getByRole("dialog").getByRole("button", { name: /Reproduzir/ })
+  ).toHaveCount(0);
 });
 
-test("modo demonstração fica separado dos dados do usuário", async ({ page }) => {
+test("modo demonstração fica separado dos dados do usuário", async ({
+  page
+}) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Ver demonstração" }).click();
   await expect(page.getByText("Modo demonstração.")).toBeVisible();
@@ -129,19 +173,100 @@ test("perfil: onboarding salva e sugere plano editável", async ({ page }) => {
   await page.getByRole("button", { name: "Salvar e sugerir plano" }).click();
   await expect(page.getByText("Sugestão de plano inicial")).toBeVisible();
   await expect(page.getByText("não é uma prescrição individual")).toBeVisible();
-  await page.getByRole("button", { name: "Adicionar aos meus treinos" }).click();
+  await page
+    .getByRole("button", { name: "Adicionar aos meus treinos" })
+    .click();
   await page.reload();
   await expect(page.getByText("Ganhar força")).toBeVisible();
   await page.goto("/treinos");
-  await expect(page.getByRole("region", { name: "Meus treinos" }).getByRole("heading", { name: "Full Body" })).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Meus treinos" })
+      .getByRole("heading", { name: "Full Body" })
+  ).toBeVisible();
 });
 
-test("configurações: som exige ação do usuário e player indica falta de faixas", async ({ page }) => {
+test("configurações: som exige ação do usuário e player indica falta de faixas", async ({
+  page
+}) => {
   await page.goto("/configuracoes");
   await expect(page.getByText("Som dos alertas: desligado.")).toBeVisible();
   await page.getByRole("button", { name: "Ativar som dos alertas" }).click();
-  await expect(page.getByRole("button", { name: "Desligar som dos alertas" })).toBeVisible();
-  await expect(page.getByTestId("musica-indisponivel")).toContainText("Nenhuma faixa de Metal");
+  await expect(
+    page.getByRole("button", { name: "Desligar som dos alertas" })
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Arquivos do aparelho" }).click();
+  await expect(page.getByTestId("musica-indisponivel")).toContainText(
+    "Nenhuma faixa de Metal"
+  );
   await page.getByRole("radio", { name: "Rock" }).click();
-  await expect(page.getByTestId("musica-indisponivel")).toContainText("Nenhuma faixa de Rock");
+  await expect(page.getByTestId("musica-indisponivel")).toContainText(
+    "Nenhuma faixa de Rock"
+  );
+});
+
+test("spotify: só carrega após consentimento e aceita playlist própria", async ({
+  page
+}) => {
+  await page.route("https://open.spotify.com/**", (r) =>
+    r.fulfill({ status: 200, contentType: "text/html", body: "<p>spotify</p>" })
+  );
+  await page.goto("/configuracoes");
+  await expect(page.getByTestId("spotify-player")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Carregar player do Spotify" })
+    .click();
+  const player = page.getByTestId("spotify-player");
+  await expect(player).toHaveAttribute(
+    "src",
+    /embed\/playlist\/37i9dQZF1DWTcqUzwhNmKv/
+  );
+  await page.getByRole("radio", { name: "Hip Hop" }).click();
+  await page.getByRole("button", { name: "Trocar playlist" }).click();
+  await page
+    .getByLabel("Link do Spotify para Hip Hop")
+    .fill("https://exemplo.com/nada");
+  await page.getByRole("button", { name: "Salvar" }).click();
+  await expect(page.getByText(/^Link não reconhecido/)).toBeVisible();
+  await page
+    .getByLabel("Link do Spotify para Hip Hop")
+    .fill(
+      "https://open.spotify.com/intl-pt/album/4aawyAB9vmqN3uQ7FjRGTy?si=abc"
+    );
+  await page.getByRole("button", { name: "Salvar" }).click();
+  await expect(player).toHaveAttribute(
+    "src",
+    /embed\/album\/4aawyAB9vmqN3uQ7FjRGTy/
+  );
+  await page.reload();
+  await page.getByRole("radio", { name: "Hip Hop" }).click();
+  await expect(page.getByTestId("spotify-player")).toHaveAttribute(
+    "src",
+    /album\/4aawyAB9vmqN3uQ7FjRGTy/
+  );
+});
+
+test("histórico: calendário marca dias treinados e salva anotação", async ({
+  page
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Ver demonstração" }).click();
+  await page.goto("/historico");
+  const cal = page.getByTestId("calendario");
+  await expect(cal).toBeVisible();
+  // a demonstração termina ontem: se hoje é dia 1, os treinos estão no mês anterior
+  if (new Date().getDate() === 1)
+    await page.getByRole("button", { name: "Mês anterior" }).click();
+  await expect(cal.locator("[data-treinado]").first()).toBeVisible();
+  const first = page.getByTestId("sessao-historico").first();
+  await first.locator("summary").click();
+  await first
+    .getByLabel("Anotações da sessão")
+    .fill("Dormi mal, carga mantida.");
+  await first.getByLabel("Anotações da sessão").blur();
+  await expect(first.getByText("Anotação salva.")).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("sessao-historico").first()).toContainText(
+    "Dormi mal, carga mantida."
+  );
 });

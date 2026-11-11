@@ -38,6 +38,7 @@ const sessionSchema = z.object({
   startedAt: z.number(),
   endedAt: z.number().optional(),
   endedManually: z.boolean().optional(),
+  notes: z.string().max(1000).optional(),
   items: z.array(
     z.object({
       exerciseId: z.string(),
