@@ -39,19 +39,32 @@ npm run check        # lint + tipos + unitários + build
 
 Os testes de ponta a ponta cobrem: criar treino → recarregar → iniciar → registrar série → descanso → encerrar → histórico;
 retomar sessão interrompida e encerrar manualmente; busca sem acento, filtros, ficha e demonstração; prancha estática;
-modo demonstração separado; onboarding do perfil; ativação do som e player sem faixas; PWA abrindo sem internet.
+modo demonstração separado; onboarding do perfil; ativação do som e player sem faixas; PWA abrindo sem internet;
+Spotify só após consentimento e com playlist própria; calendário e anotações; exercício personalizado; aquecimento e
+recorde no treino ativo; volume semanal, recordes e medidas; card para compartilhar.
+
+**Sincronização (dois aparelhos):** precisa do Worker com D1 local, sem conta Cloudflare:
+
+```bash
+npx wrangler d1 migrations apply bodybuilder-sync-local --local -c wrangler.local.jsonc
+npx wrangler dev -c wrangler.local.jsonc --port 8799
+SYNC_BASE_URL=http://localhost:8799 npx playwright test sync --project desktop
+```
+
+**Safari (WebKit):** `npx playwright install webkit` e depois `PW_WEBKIT=1 npx playwright test`. O GitHub Actions
+(`.github/workflows/ci.yml`) roda tudo isso em cada PR: lint, tipos, unitários, build, Chrome, Safari e sincronização.
 
 Para rodar o Playwright contra o runtime local da Cloudflare: `npx wrangler dev --port 8787` em um terminal e
 `PORT=8787 npx playwright test` em outro.
 
 ## Como publicar na Cloudflare
 
-O app não tem rotas dinâmicas de servidor (todos os dados ficam no navegador), então ele é exportado como site estático e
-servido pelo recurso **Static Assets** do Cloudflare Workers. Por isso **não** é necessário o adaptador OpenNext; ele só
-seria preciso se o app passasse a usar rotas de API, SSR ou middleware. A pasta `.next` **não** deve ser publicada:
-o que vai para a Cloudflare é a pasta `out/`.
+O app é exportado como site estático e servido pelo recurso **Static Assets** do Cloudflare Workers. Um Worker pequeno
+(`worker/index.ts`) atende só `/api/*` (sincronização); todo o resto sai direto dos arquivos estáticos. Por isso **não**
+é necessário o adaptador OpenNext. A pasta `.next` **não** deve ser publicada: o que vai para a Cloudflare é a pasta `out/`.
 
-Configuração em `wrangler.jsonc` (`assets.directory = ./out`, página 404 própria, URLs sem `.html`).
+Configuração em `wrangler.jsonc` (`assets.directory = ./out`, página 404 própria, URLs sem `.html`, `run_worker_first`
+só para `/api/*`). Sem o banco D1 ligado, o app funciona normalmente e a tela de sincronização avisa que ela está desligada.
 
 ```bash
 npx wrangler login     # uma vez, com a conta Cloudflare da Delphos Sistemas
@@ -63,6 +76,39 @@ Cloudflare (Workers & Pages → bodybuilder → Settings → Domains & Routes). 
 painel (Workers Builds) usando `npm run build` como comando de build e `npx wrangler deploy` como comando de deploy.
 
 Cabeçalhos de cache ficam em `public/_headers` (o `sw.js` nunca é guardado em cache pelo navegador).
+
+**Hoje os previews da PR estão saindo pela Vercel**, que não faz parte do plano. Para ficar só na Cloudflare: ligue o
+repositório em Workers & Pages → Create → Import a repository (build `npm run build`, deploy `npx wrangler deploy`) e
+desinstale o app da Vercel no GitHub (Settings → Integrations → GitHub Apps → Vercel) ou remova os projetos no painel da Vercel.
+
+### Sincronização entre aparelhos (opcional)
+
+Sem e-mail nem senha: o app gera um código secreto de 24 caracteres; o mesmo código em outro aparelho junta os dados.
+No servidor fica só o hash SHA-256 do código e um JSON por código, com controle de versão (dois aparelhos não se
+sobrescrevem). Itens apagados viram "lápides" para não voltarem; o treino em andamento nunca sai do aparelho; as fotos
+de progresso não são enviadas.
+
+```bash
+npx wrangler d1 create bodybuilder-sync        # copie o database_id que aparecer
+# descomente o bloco "d1_databases" no wrangler.jsonc e cole o id
+npx wrangler d1 migrations apply bodybuilder-sync --remote
+npm run deploy
+```
+
+Limites: 4 MB por conta de sincronização; quem tiver o código vê os dados (o app avisa para guardá-lo em segredo).
+Para algo com login de verdade (e-mail, recuperação de senha), o próximo passo seria Cloudflare Access ou um provedor de identidade.
+
+### Controle do Spotify (opcional)
+
+O player incorporado funciona sem configuração. Para o **controle remoto** (tocar a playlist do estilo no app do Spotify,
+pausar, avançar e ver a faixa atual, inclusive com a tela bloqueada), cadastre um app em developer.spotify.com/dashboard:
+
+1. Redirect URI: `https://SEU-DOMINIO/spotify-callback/` (e `http://localhost:3000/spotify-callback/` para testes).
+2. APIs: Web API. Copie o **Client ID** (não há segredo: o login usa PKCE no próprio navegador).
+3. Publique com a variável `NEXT_PUBLIC_SPOTIFY_CLIENT_ID=<client id>` no build (Workers Builds → Variables).
+
+Sem essa variável o botão "Entrar com Spotify" não aparece. O controle exige Spotify **Premium**. Apps novos no Spotify
+ficam em modo de desenvolvimento, limitados a 25 usuários cadastrados no painel, até o Spotify aprovar a cota estendida.
 
 ## O que funciona sem internet
 
@@ -100,7 +146,17 @@ apagados na ativação. Os vídeos ficam num cache separado (`bb-media-v1`) que 
 - **Treino ativo:** mostra o que você fez na última vez e sugere a carga pela progressão dupla (bateu o topo da faixa
   de repetições em todas as séries: sobe a carga; ficou abaixo do mínimo: reduz; senão mantém). Para barra e Smith,
   mostra as anilhas por lado conforme a barra escolhida.
-- **Histórico:** calendário do mês com os dias treinados e anotações livres em cada sessão.
+- **Histórico:** calendário do mês com os dias treinados, anotações livres em cada sessão, recordes batidos e card do
+  treino em formato story (1080 × 1920) para compartilhar ou baixar.
+- **Recordes pessoais:** maior carga e 1RM estimado (Epley, até 12 repetições); aviso na hora em que você bate um recorde.
+- **Tipos de série:** aquecimento e drop set ficam registrados mas não contam na meta de séries, não iniciam descanso
+  e ficam fora dos recordes e da progressão (o aquecimento também fica fora do volume).
+- **Evolução:** volume semanal por músculo (principal 1, secundários 0,5) com a faixa de referência de 10 a 20 séries;
+  recordes por exercício e linha do 1RM estimado no gráfico; medidas corporais com comparação e fotos de progresso
+  (guardadas só no aparelho, reduzidas para 1080 px).
+- **Exercícios personalizados:** criados na Biblioteca ou no seletor do editor; editáveis na ficha; entram no backup.
+- **Proteção dos dados:** pedido de armazenamento persistente após o primeiro treino, lembrete de backup a cada 14 dias
+  com treinos novos, status em Configurações e sincronização opcional entre aparelhos.
 - **Modo demonstração:** dados de exemplo em um espaço separado; nunca entram na exportação nem se misturam com os seus.
 
 ### Áudio
@@ -220,8 +276,11 @@ ilustração, → panturrilha sentada); “Paralelas” renomeada para “Parale
   (ex.: Remotion/HyperFrames, que não estavam instalados neste ambiente). O formato atual alterna duas posições corretas.
 - **Imagem separada do aparelho:** pendente para os 10 exercícios em máquina/Smith (marcados no inventário).
 - **Música:** nenhuma faixa licenciada incluída (ver “Áudio”).
-- **Sem sincronização entre aparelhos:** os dados ficam no navegador. Use Exportar/Importar para backup. Supabase não foi
-  incluído porque exigiria autenticação e isolamento de dados por usuário reais.
+- **Sincronização:** pronta no código e testada localmente; só funciona depois de criar o banco D1 na conta Cloudflare.
+- **Controle do Spotify:** pronto no código e testado com o Spotify simulado; precisa do Client ID e de Premium.
+  As playlists padrão não puderam ser abertas daqui (rede bloqueada) e devem ser conferidas.
+- **Alertas com a tela bloqueada:** o navegador pode silenciar o bipe do fim do descanso; o tempo continua certo e o
+  app avisa. Resolver de verdade exige notificação enviada por servidor (Web Push), não incluída.
 - **Testes em aparelho real pendentes:** alertas sonoros e vibração com a tela bloqueada, Wake Lock e instalação na tela
   inicial precisam ser conferidos em Android (Chrome) e iPhone (Safari). No iPhone não há vibração pela web.
 - **Publicação:** depende de login na conta Cloudflare (`npx wrangler login`).
@@ -232,7 +291,9 @@ ilustração, → panturrilha sentada); “Paralelas” renomeada para “Parale
 src/app/            telas (Início, Treinos, editor, Treino ativo, Biblioteca, Evolução, Perfil, Histórico, Configurações)
 src/components/     AppShell, ExerciseMedia, ExerciseCard, ExerciseSheet, MuscleMap, MusicPlayer, AudioControls…
 src/data/           exercícios, modelos, demonstração, mídia gerada, música
-src/lib/            tipos, store (Zustand + persistência), regras de sessão, tempos, estatísticas, plano, esquemas Zod, áudio
+src/lib/            tipos, store (Zustand + persistência), regras de sessão, tempos, estatísticas, recordes, volume,
+                    sincronização, Spotify, card, plano, esquemas Zod, áudio
+worker/             Worker da Cloudflare (API de sincronização) e migrations/ do D1
 scripts/            geração de mídia, service worker e servidor de pré-visualização
 public/media/       demonstrações adaptadas (CC BY-SA 4.0)
 media-src/          ilustrações originais Everkinetic (CC BY-SA 4.0)

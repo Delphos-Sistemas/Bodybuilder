@@ -12,8 +12,8 @@ export function ExerciseThumb({ id, className, width, height }: { id: string; cl
       </span>
     );
   }
-  // eslint-disable-next-line @next/next/no-img-element
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img src={poster} alt="" className={clsx("shrink-0 rounded-lg bg-[#ECEBE7] object-contain", className)} loading="lazy" width={width} height={height} />
   );
 }

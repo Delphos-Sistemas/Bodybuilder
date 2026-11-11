@@ -1,0 +1,15 @@
+{
+  // Só para desenvolvimento e testes locais da sincronização (D1 simulado no disco, sem conta Cloudflare).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bodybuilder-local",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [{ "binding": "DB", "database_name": "bodybuilder-sync-local", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }]
+}

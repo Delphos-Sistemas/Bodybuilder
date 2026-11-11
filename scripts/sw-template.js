@@ -23,7 +23,10 @@ self.addEventListener("activate", (event) => {
 });
 
 function pageUrlFor(pathname) {
-  const clean = pathname.replace(/\/$/, "").replace(/\.html$/, "").replace(/\/index$/, "");
+  const clean = pathname
+    .replace(/\/$/, "")
+    .replace(/\.html$/, "")
+    .replace(/\/index$/, "");
   return clean || "/";
 }
 
@@ -37,6 +40,8 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // API de sincronização: sempre na rede, nunca em cache.
+  if (url.pathname.startsWith("/api/")) return;
 
   // Páginas: usa a cópia da versão instalada (abre offline); se não houver, vai à rede.
   if (req.mode === "navigate") {

@@ -4,6 +4,7 @@ import { Download, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AudioControls } from "@/components/AudioControls";
 import { MusicPlayer } from "@/components/MusicPlayer";
+import { SyncPanel } from "@/components/SyncPanel";
 import { Card, PageHeader } from "@/components/ui";
 import { EXERCISES } from "@/data/exercises";
 import { getMedia } from "@/data/media";
@@ -65,6 +66,11 @@ export default function ConfiguracoesPage() {
       <Card className="space-y-3">
         <h2 className="font-display text-xl font-bold">Música</h2>
         <MusicPlayer />
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="font-display text-xl font-bold">Sincronizar entre aparelhos</h2>
+        <SyncPanel />
       </Card>
 
       <Card className="space-y-3">

@@ -39,6 +39,7 @@ const sessionSchema = z.object({
   startedAt: z.number(),
   endedAt: z.number().optional(),
   endedManually: z.boolean().optional(),
+  updatedAt: z.number().optional(),
   notes: z.string().max(1000).optional(),
   items: z.array(
     z.object({
@@ -100,7 +101,9 @@ export const datasetSchema = z.object({
         cm: z.partialRecord(z.enum(Object.keys(MEASUREMENTS) as [keyof typeof MEASUREMENTS, ...(keyof typeof MEASUREMENTS)[]]), z.number().min(10).max(300))
       })
     )
-    .optional()
+    .optional(),
+  profileUpdatedAt: z.number().optional(),
+  tombstones: z.record(z.string(), z.number()).optional()
 });
 
 export const exportSchema = z.object({

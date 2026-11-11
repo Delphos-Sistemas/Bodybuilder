@@ -10,6 +10,7 @@ import { useData, useStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
 import { UpdateBanner } from "./UpdateBanner";
 import { AudioUnlocker } from "./AudioUnlocker";
+import { SyncAgent } from "./SyncAgent";
 
 const NAV = [
   { href: "/", label: "Início", icon: House },
@@ -71,6 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <UpdateBanner />
       {hydrated && <AudioUnlocker />}
+      {hydrated && <SyncAgent />}
 
       <main className="flex-1 px-4 pb-40 pt-5 lg:pb-16">{hydrated ? children : <p className="py-16 text-center text-muted">Carregando seus dados…</p>}</main>
 

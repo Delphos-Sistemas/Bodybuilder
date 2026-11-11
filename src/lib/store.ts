@@ -21,6 +21,12 @@ export const DEFAULT_PROFILE: Profile = {
   onboarded: false
 };
 
+/** Marca ids apagados, para a sincronização entre aparelhos não trazê-los de volta. */
+function tomb(d: Dataset, ...ids: string[]): Record<string, number> {
+  const now = Date.now();
+  return { ...d.tombstones, ...Object.fromEntries(ids.map((id) => [id, now])) };
+}
+
 export function emptyDataset(): Dataset {
   return {
     profile: { ...DEFAULT_PROFILE },
@@ -63,6 +69,8 @@ type Actions = {
   exportData: () => ExportFile;
   importData: (raw: unknown) => { ok: true } | { ok: false; error: string };
   clearUserData: () => void;
+  /** substitui os dados do usuário pelos sincronizados, mantendo o treino em andamento deste aparelho */
+  applySynced: (data: Dataset) => void;
   saveCustomExercise: (e: Omit<Exercise, "id"> & { id?: string }) => string;
   deleteCustomExercise: (id: string) => void;
   markBackupDone: () => void;
@@ -141,7 +149,8 @@ export const useStore = create<Store>()(
         deleteWorkout: (id) =>
           update((d) => ({
             ...d,
-            workouts: d.workouts.filter((w) => w.id !== id)
+            workouts: d.workouts.filter((w) => w.id !== id),
+            tombstones: tomb(d, id)
           })),
 
         startSession: (workoutId) => {
@@ -205,25 +214,28 @@ export const useStore = create<Store>()(
         deleteSession: (id) =>
           update((d) => ({
             ...d,
-            sessions: d.sessions.filter((s) => s.id !== id)
+            sessions: d.sessions.filter((s) => s.id !== id),
+            tombstones: tomb(d, id)
           })),
         setSessionNotes: (id, notes) =>
           update((d) => ({
             ...d,
-            sessions: d.sessions.map((s) => (s.id === id ? { ...s, notes: notes.trim().slice(0, 1000) || undefined } : s))
+            sessions: d.sessions.map((s) => (s.id === id ? { ...s, notes: notes.trim().slice(0, 1000) || undefined, updatedAt: Date.now() } : s))
           })),
 
         addBodyWeight: (date, kg) =>
           update((d) => ({
             ...d,
-            bodyWeights: [...d.bodyWeights.filter((b) => b.date !== date), { id: uid("bw_"), date, kg } as BodyWeight]
+            bodyWeights: [...d.bodyWeights.filter((b) => b.date !== date), { id: uid("bw_"), date, kg } as BodyWeight],
+            tombstones: tomb(d, ...d.bodyWeights.filter((b) => b.date === date).map((b) => b.id))
           })),
         removeBodyWeight: (id) =>
           update((d) => ({
             ...d,
-            bodyWeights: d.bodyWeights.filter((b) => b.id !== id)
+            bodyWeights: d.bodyWeights.filter((b) => b.id !== id),
+            tombstones: tomb(d, id)
           })),
-        saveProfile: (p) => update((d) => ({ ...d, profile: p })),
+        saveProfile: (p) => update((d) => ({ ...d, profile: p, profileUpdatedAt: Date.now() })),
         updateSettings: (s) => set((st) => ({ settings: { ...st.settings, ...s } })),
 
         exportData: () => ({
@@ -243,7 +255,14 @@ export const useStore = create<Store>()(
           set({ usuario: parsed.data.data as Dataset, mode: "usuario" });
           return { ok: true };
         },
-        clearUserData: () => set({ usuario: emptyDataset(), mode: "usuario" }),
+        // apaga só neste aparelho e desliga a sincronização aqui, para não misturar com a nuvem
+        clearUserData: () =>
+          set((st) => ({
+            usuario: emptyDataset(),
+            mode: "usuario",
+            settings: { ...st.settings, syncCode: undefined, syncVersion: undefined, lastSyncAt: undefined }
+          })),
+        applySynced: (data) => set((st) => ({ usuario: { ...data, activeSession: st.usuario.activeSession } })),
 
         saveCustomExercise: (e) => {
           const id = e.id || uid("cx_");
@@ -260,17 +279,20 @@ export const useStore = create<Store>()(
         deleteCustomExercise: (id) =>
           update((d) => ({
             ...d,
-            customExercises: (d.customExercises ?? []).filter((x) => x.id !== id)
+            customExercises: (d.customExercises ?? []).filter((x) => x.id !== id),
+            tombstones: tomb(d, id)
           })),
         addMeasurement: (date, cm) =>
           update((d) => ({
             ...d,
-            measurements: [...(d.measurements ?? []).filter((m) => m.date !== date), { id: uid("me_"), date, cm }].sort((a, b) => a.date.localeCompare(b.date))
+            measurements: [...(d.measurements ?? []).filter((m) => m.date !== date), { id: uid("me_"), date, cm }].sort((a, b) => a.date.localeCompare(b.date)),
+            tombstones: tomb(d, ...(d.measurements ?? []).filter((m) => m.date === date).map((m) => m.id))
           })),
         removeMeasurement: (id) =>
           update((d) => ({
             ...d,
-            measurements: (d.measurements ?? []).filter((m) => m.id !== id)
+            measurements: (d.measurements ?? []).filter((m) => m.id !== id),
+            tombstones: tomb(d, id)
           })),
         markBackupDone: () =>
           set((st) => ({

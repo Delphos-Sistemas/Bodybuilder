@@ -102,6 +102,8 @@ export type Session = {
   endedManually?: boolean;
   /** anotação livre do usuário sobre a sessão */
   notes?: string;
+  /** última alteração depois de encerrada (anotação), para a sincronização */
+  updatedAt?: number;
   items: SessionItem[];
   currentIndex: number;
   rest: RestState | null;
@@ -163,6 +165,10 @@ export type Dataset = {
   /** exercícios criados pelo usuário */
   customExercises?: Exercise[];
   measurements?: Measurement[];
+  /** quando o perfil foi alterado (ms), para a sincronização */
+  profileUpdatedAt?: number;
+  /** ids apagados e quando (ms), para a sincronização não trazer de volta */
+  tombstones?: Record<string, number>;
 };
 
 export type Settings = {
@@ -179,6 +185,11 @@ export type Settings = {
   lastBackupAt?: number;
   /** o usuário adiou o lembrete de backup até este instante (ms) */
   backupSnoozeUntil?: number;
+  /** código secreto de sincronização entre aparelhos */
+  syncCode?: string;
+  /** versão do servidor na última sincronização */
+  syncVersion?: number;
+  lastSyncAt?: number;
 };
 
 export type Mode = "usuario" | "demo";

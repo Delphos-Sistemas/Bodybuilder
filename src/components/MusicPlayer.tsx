@@ -9,6 +9,7 @@ import { uid } from "@/lib/id";
 import { embedUrl, openUrl, parseSpotify } from "@/lib/spotify";
 import { useStore } from "@/lib/store";
 import { AudioControls } from "./AudioControls";
+import { SpotifyRemote } from "./SpotifyRemote";
 
 type Playable = {
   key: string;
@@ -111,27 +112,33 @@ function SpotifyPlayer({ style, compact }: { style: MusicStyle; compact: boolean
 
   if (!enabled) {
     return (
-      <div className="space-y-3 rounded-xl border border-line bg-iron p-4" data-testid="spotify-consentimento">
-        <p className="flex items-center gap-2 font-semibold">
-          <Music2 size={18} className="text-bronze-light" aria-hidden /> Ouça pelo Spotify
-        </p>
-        <p className="text-sm text-sand">
-          O player oficial do Spotify é carregado dos servidores do Spotify, que podem usar cookies. Só carregamos depois que você permitir. Com login no
-          Spotify Premium, as faixas tocam inteiras; sem login, o Spotify toca prévias de 30 segundos.
-        </p>
-        <button type="button" className="btn-primary min-h-11" onClick={() => updateSettings({ spotifyEnabled: true })}>
-          Carregar player do Spotify
-        </button>
-        <a className="btn-secondary ml-2 min-h-11" href={openUrl(ref)} target="_blank" rel="noopener noreferrer">
-          <ExternalLink size={16} aria-hidden /> Abrir no app do Spotify
-        </a>
-        <p className="text-xs text-muted">Dica: no celular, o app do Spotify continua tocando com a tela bloqueada; o player dentro do navegador pode parar.</p>
+      <div className="space-y-3">
+        <SpotifyRemote context={ref} />
+        <div className="space-y-3 rounded-xl border border-line bg-iron p-4" data-testid="spotify-consentimento">
+          <p className="flex items-center gap-2 font-semibold">
+            <Music2 size={18} className="text-bronze-light" aria-hidden /> Ouça pelo Spotify
+          </p>
+          <p className="text-sm text-sand">
+            O player oficial do Spotify é carregado dos servidores do Spotify, que podem usar cookies. Só carregamos depois que você permitir. Com login no
+            Spotify Premium, as faixas tocam inteiras; sem login, o Spotify toca prévias de 30 segundos.
+          </p>
+          <button type="button" className="btn-primary min-h-11" onClick={() => updateSettings({ spotifyEnabled: true })}>
+            Carregar player do Spotify
+          </button>
+          <a className="btn-secondary ml-2 min-h-11" href={openUrl(ref)} target="_blank" rel="noopener noreferrer">
+            <ExternalLink size={16} aria-hidden /> Abrir no app do Spotify
+          </a>
+          <p className="text-xs text-muted">
+            Dica: no celular, o app do Spotify continua tocando com a tela bloqueada; o player dentro do navegador pode parar.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
+      <SpotifyRemote context={ref} />
       <iframe
         key={embedUrl(ref)}
         title={`Spotify: ${label}`}

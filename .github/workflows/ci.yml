@@ -25,3 +25,11 @@ jobs:
         run: npx playwright test --trace off
         env:
           PW_WEBKIT: "1"
+      - name: Sincronização entre aparelhos (Worker + D1 local)
+        run: |
+          npx wrangler d1 migrations apply bodybuilder-sync-local --local -c wrangler.local.jsonc
+          npx wrangler dev -c wrangler.local.jsonc --port 8799 > wrangler-dev.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf localhost:8799/api/sync/status && break; sleep 1; done
+          npx playwright test sync --project desktop --trace off
+        env:
+          SYNC_BASE_URL: http://localhost:8799

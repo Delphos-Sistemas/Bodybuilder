@@ -7,7 +7,7 @@
     "build": "next build && node scripts/generate-sw.mjs",
     "start": "node scripts/serve-out.mjs --port 3000",
     "preview": "node scripts/serve-out.mjs --port 4173 --host",
-    "lint": "eslint src tests scripts",
+    "lint": "eslint src tests scripts worker",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
