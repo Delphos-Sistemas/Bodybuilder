@@ -1,71 +1,144 @@
 "use client";
 
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Card } from "@/components/ui/Card";
-import { useAppStore } from "@/stores/appStore";
+import { Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { EXERCISE_MAP } from "@/data/exercises";
+import { exercisesWithHistory, loadHistory, sortedWeights } from "@/lib/stats";
+import { useData, useStore } from "@/lib/store";
+import { formatDate, formatDateShort, todayISO } from "@/lib/time";
+
+const axis = { stroke: "#9C9284", fontSize: 12 };
+const tooltipStyle = { background: "#171513", border: "1px solid #34302A", borderRadius: 12, color: "#F3EEE6" };
 
 export default function EvolucaoPage() {
-  const { weightLogs, sessions } = useAppStore();
-  const weights = [...weightLogs].reverse().slice(-14).map((item) => ({
-    dia: new Date(item.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-    peso: item.weightKg
-  }));
-  const volume = [...sessions].reverse().filter((item) => item.finishedAt).slice(-12).map((item, index) => ({
-    treino: `T${index + 1}`,
-    volume: item.totalVolume
-  }));
+  const data = useData();
+  const addWeight = useStore((s) => s.addBodyWeight);
+  const removeWeight = useStore((s) => s.removeBodyWeight);
+  const [date, setDate] = useState(todayISO());
+  const [kg, setKg] = useState("");
+  const [err, setErr] = useState("");
+
+  const weights = sortedWeights(data.bodyWeights);
+  const withHistory = useMemo(() => exercisesWithHistory(data.sessions), [data.sessions]);
+  const [selected, setSelected] = useState<string>("");
+  const exId = selected && withHistory.includes(selected) ? selected : withHistory[0] ?? "";
+  const loads = useMemo(() => (exId ? loadHistory(data.sessions, exId) : []), [data.sessions, exId]);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = parseFloat(kg.replace(",", "."));
+    if (!Number.isFinite(v) || v < 20 || v > 400) {
+      setErr("Informe um peso entre 20 e 400 kg.");
+      return;
+    }
+    addWeight(date, Math.round(v * 10) / 10);
+    setKg("");
+    setErr("");
+  };
 
   return (
-    <div className="space-y-5">
-      <header>
-        <p className="text-sm uppercase text-bronze-light">Evolucao</p>
-        <h1 className="font-display text-4xl font-black">Capacidade em construcao</h1>
-      </header>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h2 className="mb-4 font-bold">Peso corporal</h2>
-          <div className="h-72">
+    <div className="space-y-6">
+      <PageHeader eyebrow="Acompanhamento" title="Evolução" />
+
+      <Card className="space-y-4">
+        <h2 className="font-display text-xl font-bold">Peso corporal</h2>
+        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div>
+            <label htmlFor="peso-data" className="label">
+              Data
+            </label>
+            <input id="peso-data" type="date" className="input" value={date} max={todayISO()} onChange={(e) => setDate(e.target.value)} required />
+          </div>
+          <div>
+            <label htmlFor="peso-kg" className="label">
+              Peso (kg)
+            </label>
+            <input id="peso-kg" inputMode="decimal" className="input" placeholder="Ex.: 78,5" value={kg} onChange={(e) => setKg(e.target.value)} aria-invalid={!!err} aria-describedby={err ? "peso-erro" : undefined} />
+          </div>
+          <button type="submit" className="btn-primary">
+            Registrar
+          </button>
+        </form>
+        {err && (
+          <p id="peso-erro" className="text-sm text-danger">
+            {err}
+          </p>
+        )}
+        {weights.length >= 2 ? (
+          <div className="h-64" role="img" aria-label={`Gráfico de peso corporal com ${weights.length} registros, de ${weights[0].kg} kg a ${weights[weights.length - 1].kg} kg`}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weights}>
-                <CartesianGrid stroke="#2b2b2b" />
-                <XAxis dataKey="dia" stroke="#D5C2A5" />
-                <YAxis stroke="#D5C2A5" domain={["dataMin - 1", "dataMax + 1"]} />
-                <Tooltip contentStyle={{ background: "#171717", border: "1px solid #A9783F" }} />
-                <Area dataKey="peso" stroke="#C89B62" fill="#A9783F33" />
-              </AreaChart>
+              <LineChart data={weights.map((w) => ({ ...w, label: formatDateShort(w.date) }))} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                <CartesianGrid stroke="#34302A" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={axis} stroke="#34302A" />
+                <YAxis domain={["dataMin - 1", "dataMax + 1"]} tick={axis} stroke="#34302A" unit=" kg" width={64} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} kg`, "Peso"]} />
+                <Line type="monotone" dataKey="kg" stroke="#D3A46B" strokeWidth={2.5} dot={{ r: 3, fill: "#D3A46B" }} isAnimationActive={false} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
-        </Card>
-        <Card>
-          <h2 className="mb-4 font-bold">Volume por treino</h2>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={volume}>
-                <CartesianGrid stroke="#2b2b2b" />
-                <XAxis dataKey="treino" stroke="#D5C2A5" />
-                <YAxis stroke="#D5C2A5" />
-                <Tooltip contentStyle={{ background: "#171717", border: "1px solid #A9783F" }} />
-                <Bar dataKey="volume" fill="#A9783F" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-      <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Treinos concluidos" value={`${sessions.filter((item) => item.finishedAt).length}`} />
-        <Stat label="Duracao media" value="58 min" />
-        <Stat label="Recordes" value="5" />
-        <Stat label="Constancia mensal" value="82%" />
-      </div>
+        ) : (
+          <EmptyState title={weights.length ? "Falta pouco para o gráfico" : "Nenhum peso registrado"} text="Registre seu peso em pelo menos duas datas para ver a evolução." />
+        )}
+        {weights.length > 0 && (
+          <details>
+            <summary className="cursor-pointer text-sm text-sand">Ver registros ({weights.length})</summary>
+            <ul className="mt-2 divide-y divide-line text-sm">
+              {weights
+                .slice()
+                .reverse()
+                .map((w) => (
+                  <li key={w.id} className="flex items-center justify-between py-1.5">
+                    <span>
+                      {formatDate(w.date)} · <strong>{w.kg.toLocaleString("pt-BR")} kg</strong>
+                    </span>
+                    <button type="button" className="btn-ghost min-h-10 px-2" onClick={() => removeWeight(w.id)} aria-label={`Excluir registro de ${formatDate(w.date)}`}>
+                      <Trash2 size={16} aria-hidden />
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </details>
+        )}
+      </Card>
+
+      <Card className="space-y-4">
+        <h2 className="font-display text-xl font-bold">Carga por exercício</h2>
+        {withHistory.length === 0 ? (
+          <EmptyState title="Sem séries registradas" text="Faça um treino e registre as séries para acompanhar a evolução da carga de cada exercício." />
+        ) : (
+          <>
+            <div>
+              <label htmlFor="exercicio-grafico" className="label">
+                Exercício
+              </label>
+              <select id="exercicio-grafico" className="input" value={exId} onChange={(e) => setSelected(e.target.value)}>
+                {withHistory.map((id) => (
+                  <option key={id} value={id}>
+                    {EXERCISE_MAP[id]?.name ?? id}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {loads.length >= 2 ? (
+              <div className="h-64" role="img" aria-label={`Gráfico da maior carga por sessão em ${EXERCISE_MAP[exId]?.name}`}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={loads.map((p) => ({ ...p, label: formatDateShort(p.date) }))} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                    <CartesianGrid stroke="#34302A" strokeDasharray="3 3" />
+                    <XAxis dataKey="label" tick={axis} stroke="#34302A" />
+                    <YAxis tick={axis} stroke="#34302A" unit=" kg" width={64} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v, _n, p) => [`${v} kg (melhor série: ${(p.payload as { bestSet: string }).bestSet})`, "Maior carga"]} />
+                    <Line type="monotone" dataKey="maxLoad" stroke="#D3A46B" strokeWidth={2.5} dot={{ r: 3, fill: "#D3A46B" }} isAnimationActive={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState title="Uma sessão registrada" text={`Melhor série até agora: ${loads[0]?.bestSet ?? "—"}. Com duas sessões ou mais, o gráfico aparece.`} />
+            )}
+          </>
+        )}
+      </Card>
     </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <p className="text-sm text-sand">{label}</p>
-      <p className="mt-2 text-3xl font-black">{value}</p>
-    </Card>
   );
 }

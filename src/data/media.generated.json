@@ -1,0 +1,796 @@
+{
+  "supino-reto": {
+    "frames": [
+      "/media/exercicios/supino-reto/inicio.webp",
+      "/media/exercicios/supino-reto/fim.webp"
+    ],
+    "poster": "/media/exercicios/supino-reto/capa.webp",
+    "sources": [
+      "bench-press-2",
+      "bench-press-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/supino-reto/loop.webm",
+      "mp4": "/media/exercicios/supino-reto/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "supino-inclinado-halteres": {
+    "frames": [
+      "/media/exercicios/supino-inclinado-halteres/inicio.webp",
+      "/media/exercicios/supino-inclinado-halteres/fim.webp"
+    ],
+    "poster": "/media/exercicios/supino-inclinado-halteres/capa.webp",
+    "sources": [
+      "dumbbell-incline-bench-press-2",
+      "dumbbell-incline-bench-press-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/supino-inclinado-halteres/loop.webm",
+      "mp4": "/media/exercicios/supino-inclinado-halteres/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "supino-reto-halteres": {
+    "frames": [
+      "/media/exercicios/supino-reto-halteres/inicio.webp",
+      "/media/exercicios/supino-reto-halteres/fim.webp"
+    ],
+    "poster": "/media/exercicios/supino-reto-halteres/capa.webp",
+    "sources": [
+      "bench-press-dumbbell-1",
+      "bench-press-dumbbell-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/supino-reto-halteres/loop.webm",
+      "mp4": "/media/exercicios/supino-reto-halteres/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "crucifixo-halteres": {
+    "frames": [
+      "/media/exercicios/crucifixo-halteres/inicio.webp",
+      "/media/exercicios/crucifixo-halteres/fim.webp"
+    ],
+    "poster": "/media/exercicios/crucifixo-halteres/capa.webp",
+    "sources": [
+      "dumbbell-flys-1",
+      "dumbbell-flys-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/crucifixo-halteres/loop.webm",
+      "mp4": "/media/exercicios/crucifixo-halteres/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "crossover": {
+    "frames": [
+      "/media/exercicios/crossover/inicio.webp",
+      "/media/exercicios/crossover/fim.webp"
+    ],
+    "poster": "/media/exercicios/crossover/capa.webp",
+    "sources": [
+      "cable-crossover-1",
+      "cable-crossover-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/crossover/loop.webm",
+      "mp4": "/media/exercicios/crossover/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "voador": {
+    "frames": [
+      "/media/exercicios/voador/inicio.webp",
+      "/media/exercicios/voador/fim.webp"
+    ],
+    "poster": "/media/exercicios/voador/capa.webp",
+    "sources": [
+      "butterfly-machine-1",
+      "butterfly-machine-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/voador/loop.webm",
+      "mp4": "/media/exercicios/voador/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "paralelas": {
+    "frames": [
+      "/media/exercicios/paralelas/inicio.webp",
+      "/media/exercicios/paralelas/fim.webp"
+    ],
+    "poster": "/media/exercicios/paralelas/capa.webp",
+    "sources": [
+      "chest-dips-1",
+      "chest-dips-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/paralelas/loop.webm",
+      "mp4": "/media/exercicios/paralelas/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "flexao-de-braco": {
+    "frames": [
+      "/media/exercicios/flexao-de-braco/inicio.webp",
+      "/media/exercicios/flexao-de-braco/fim.webp"
+    ],
+    "poster": "/media/exercicios/flexao-de-braco/capa.webp",
+    "sources": [
+      "push-ups-1",
+      "push-ups-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/flexao-de-braco/loop.webm",
+      "mp4": "/media/exercicios/flexao-de-braco/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "remada-curvada": {
+    "frames": [
+      "/media/exercicios/remada-curvada/inicio.webp",
+      "/media/exercicios/remada-curvada/fim.webp"
+    ],
+    "poster": "/media/exercicios/remada-curvada/capa.webp",
+    "sources": [
+      "809a",
+      "809b"
+    ],
+    "video": {
+      "webm": "/media/exercicios/remada-curvada/loop.webm",
+      "mp4": "/media/exercicios/remada-curvada/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "remada-baixa": {
+    "frames": [
+      "/media/exercicios/remada-baixa/inicio.webp",
+      "/media/exercicios/remada-baixa/fim.webp"
+    ],
+    "poster": "/media/exercicios/remada-baixa/capa.webp",
+    "sources": [
+      "seated-cable-rows-2",
+      "seated-cable-rows-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/remada-baixa/loop.webm",
+      "mp4": "/media/exercicios/remada-baixa/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "puxada-frontal": {
+    "frames": [
+      "/media/exercicios/puxada-frontal/inicio.webp",
+      "/media/exercicios/puxada-frontal/fim.webp"
+    ],
+    "poster": "/media/exercicios/puxada-frontal/capa.webp",
+    "sources": [
+      "wide-grip-lat-pull-down-2",
+      "wide-grip-lat-pull-down-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/puxada-frontal/loop.webm",
+      "mp4": "/media/exercicios/puxada-frontal/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "puxada-supinada": {
+    "frames": [
+      "/media/exercicios/puxada-supinada/inicio.webp",
+      "/media/exercicios/puxada-supinada/fim.webp"
+    ],
+    "poster": "/media/exercicios/puxada-supinada/capa.webp",
+    "sources": [
+      "underhand-pull-downs-1",
+      "underhand-pull-downs-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/puxada-supinada/loop.webm",
+      "mp4": "/media/exercicios/puxada-supinada/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "barra-fixa": {
+    "frames": [
+      "/media/exercicios/barra-fixa/inicio.webp",
+      "/media/exercicios/barra-fixa/fim.webp"
+    ],
+    "poster": "/media/exercicios/barra-fixa/capa.webp",
+    "sources": [
+      "pull-ups-1",
+      "pull-ups-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/barra-fixa/loop.webm",
+      "mp4": "/media/exercicios/barra-fixa/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "remada-invertida": {
+    "frames": [
+      "/media/exercicios/remada-invertida/inicio.webp",
+      "/media/exercicios/remada-invertida/fim.webp"
+    ],
+    "poster": "/media/exercicios/remada-invertida/capa.webp",
+    "sources": [
+      "body-row-2",
+      "body-row-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/remada-invertida/loop.webm",
+      "mp4": "/media/exercicios/remada-invertida/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "levantamento-terra": {
+    "frames": [
+      "/media/exercicios/levantamento-terra/inicio.webp",
+      "/media/exercicios/levantamento-terra/fim.webp"
+    ],
+    "poster": "/media/exercicios/levantamento-terra/capa.webp",
+    "sources": [
+      "barbell-dead-lifts-2",
+      "barbell-dead-lifts-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/levantamento-terra/loop.webm",
+      "mp4": "/media/exercicios/levantamento-terra/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "hiperextensao-lombar": {
+    "frames": [
+      "/media/exercicios/hiperextensao-lombar/inicio.webp",
+      "/media/exercicios/hiperextensao-lombar/fim.webp"
+    ],
+    "poster": "/media/exercicios/hiperextensao-lombar/capa.webp",
+    "sources": [
+      "hyperextensions-1",
+      "hyperextensions-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/hiperextensao-lombar/loop.webm",
+      "mp4": "/media/exercicios/hiperextensao-lombar/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "agachamento-livre": {
+    "frames": [
+      "/media/exercicios/agachamento-livre/inicio.webp",
+      "/media/exercicios/agachamento-livre/fim.webp"
+    ],
+    "poster": "/media/exercicios/agachamento-livre/capa.webp",
+    "sources": [
+      "barbell-squat-1",
+      "barbell-squat-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/agachamento-livre/loop.webm",
+      "mp4": "/media/exercicios/agachamento-livre/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "leg-press": {
+    "frames": [
+      "/media/exercicios/leg-press/inicio.webp",
+      "/media/exercicios/leg-press/fim.webp"
+    ],
+    "poster": "/media/exercicios/leg-press/capa.webp",
+    "sources": [
+      "leg-press-1",
+      "leg-press-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/leg-press/loop.webm",
+      "mp4": "/media/exercicios/leg-press/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "agachamento-smith": {
+    "frames": [
+      "/media/exercicios/agachamento-smith/inicio.webp",
+      "/media/exercicios/agachamento-smith/fim.webp"
+    ],
+    "poster": "/media/exercicios/agachamento-smith/capa.webp",
+    "sources": [
+      "smith-machine-squats-1",
+      "smith-machine-squats-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/agachamento-smith/loop.webm",
+      "mp4": "/media/exercicios/agachamento-smith/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "cadeira-extensora": {
+    "frames": [
+      "/media/exercicios/cadeira-extensora/inicio.webp",
+      "/media/exercicios/cadeira-extensora/fim.webp"
+    ],
+    "poster": "/media/exercicios/cadeira-extensora/capa.webp",
+    "sources": [
+      "leg-extensions-1",
+      "leg-extensions-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/cadeira-extensora/loop.webm",
+      "mp4": "/media/exercicios/cadeira-extensora/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "mesa-flexora": {
+    "frames": [
+      "/media/exercicios/mesa-flexora/inicio.webp",
+      "/media/exercicios/mesa-flexora/fim.webp"
+    ],
+    "poster": "/media/exercicios/mesa-flexora/capa.webp",
+    "sources": [
+      "lying-leg-curl-machine-1",
+      "lying-leg-curl-machine-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/mesa-flexora/loop.webm",
+      "mp4": "/media/exercicios/mesa-flexora/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "cadeira-flexora": {
+    "frames": [
+      "/media/exercicios/cadeira-flexora/inicio.webp",
+      "/media/exercicios/cadeira-flexora/fim.webp"
+    ],
+    "poster": "/media/exercicios/cadeira-flexora/capa.webp",
+    "sources": [
+      "seated-leg-curl-1",
+      "seated-leg-curl-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/cadeira-flexora/loop.webm",
+      "mp4": "/media/exercicios/cadeira-flexora/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "stiff": {
+    "frames": [
+      "/media/exercicios/stiff/inicio.webp",
+      "/media/exercicios/stiff/fim.webp"
+    ],
+    "poster": "/media/exercicios/stiff/capa.webp",
+    "sources": [
+      "romanian-dead-lift-1",
+      "romanian-dead-lift-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/stiff/loop.webm",
+      "mp4": "/media/exercicios/stiff/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "afundo-halteres": {
+    "frames": [
+      "/media/exercicios/afundo-halteres/inicio.webp",
+      "/media/exercicios/afundo-halteres/fim.webp"
+    ],
+    "poster": "/media/exercicios/afundo-halteres/capa.webp",
+    "sources": [
+      "dumbbell-lunges-1",
+      "dumbbell-lunges-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/afundo-halteres/loop.webm",
+      "mp4": "/media/exercicios/afundo-halteres/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "avanco-caminhando": {
+    "frames": [
+      "/media/exercicios/avanco-caminhando/inicio.webp",
+      "/media/exercicios/avanco-caminhando/fim.webp"
+    ],
+    "poster": "/media/exercicios/avanco-caminhando/capa.webp",
+    "sources": [
+      "walking-lunges-1",
+      "walking-lunges-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/avanco-caminhando/loop.webm",
+      "mp4": "/media/exercicios/avanco-caminhando/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "cadeira-abdutora": {
+    "frames": [
+      "/media/exercicios/cadeira-abdutora/inicio.webp",
+      "/media/exercicios/cadeira-abdutora/fim.webp"
+    ],
+    "poster": "/media/exercicios/cadeira-abdutora/capa.webp",
+    "sources": [
+      "thigh-abductor-1",
+      "thigh-abductor-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/cadeira-abdutora/loop.webm",
+      "mp4": "/media/exercicios/cadeira-abdutora/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "cadeira-adutora": {
+    "frames": [
+      "/media/exercicios/cadeira-adutora/inicio.webp",
+      "/media/exercicios/cadeira-adutora/fim.webp"
+    ],
+    "poster": "/media/exercicios/cadeira-adutora/capa.webp",
+    "sources": [
+      "thigh-adductor-1",
+      "thigh-adductor-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/cadeira-adutora/loop.webm",
+      "mp4": "/media/exercicios/cadeira-adutora/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "ponte-de-gluteo": {
+    "frames": [
+      "/media/exercicios/ponte-de-gluteo/inicio.webp",
+      "/media/exercicios/ponte-de-gluteo/fim.webp"
+    ],
+    "poster": "/media/exercicios/ponte-de-gluteo/capa.webp",
+    "sources": [
+      "bridging-1",
+      "bridging-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/ponte-de-gluteo/loop.webm",
+      "mp4": "/media/exercicios/ponte-de-gluteo/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "panturrilha-sentada": {
+    "frames": [
+      "/media/exercicios/panturrilha-sentada/inicio.webp",
+      "/media/exercicios/panturrilha-sentada/fim.webp"
+    ],
+    "poster": "/media/exercicios/panturrilha-sentada/capa.webp",
+    "sources": [
+      "seated-calf-raise-with-barbell-1",
+      "seated-calf-raise-with-barbell-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/panturrilha-sentada/loop.webm",
+      "mp4": "/media/exercicios/panturrilha-sentada/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "panturrilha-leg-press": {
+    "frames": [
+      "/media/exercicios/panturrilha-leg-press/inicio.webp",
+      "/media/exercicios/panturrilha-leg-press/fim.webp"
+    ],
+    "poster": "/media/exercicios/panturrilha-leg-press/capa.webp",
+    "sources": [
+      "calves-press-on-leg-machine-1",
+      "calves-press-on-leg-machine-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/panturrilha-leg-press/loop.webm",
+      "mp4": "/media/exercicios/panturrilha-leg-press/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "desenvolvimento-halteres": {
+    "frames": [
+      "/media/exercicios/desenvolvimento-halteres/inicio.webp",
+      "/media/exercicios/desenvolvimento-halteres/fim.webp"
+    ],
+    "poster": "/media/exercicios/desenvolvimento-halteres/capa.webp",
+    "sources": [
+      "dumbbell-shoulder-press-1",
+      "dumbbell-shoulder-press-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/desenvolvimento-halteres/loop.webm",
+      "mp4": "/media/exercicios/desenvolvimento-halteres/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "desenvolvimento-militar": {
+    "frames": [
+      "/media/exercicios/desenvolvimento-militar/inicio.webp",
+      "/media/exercicios/desenvolvimento-militar/fim.webp"
+    ],
+    "poster": "/media/exercicios/desenvolvimento-militar/capa.webp",
+    "sources": [
+      "seated-military-press-1",
+      "seated-military-press-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/desenvolvimento-militar/loop.webm",
+      "mp4": "/media/exercicios/desenvolvimento-militar/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "elevacao-lateral": {
+    "frames": [
+      "/media/exercicios/elevacao-lateral/inicio.webp",
+      "/media/exercicios/elevacao-lateral/fim.webp"
+    ],
+    "poster": "/media/exercicios/elevacao-lateral/capa.webp",
+    "sources": [
+      "lateral-dumbbell-raises-2",
+      "lateral-dumbbell-raises-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/elevacao-lateral/loop.webm",
+      "mp4": "/media/exercicios/elevacao-lateral/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "elevacao-frontal": {
+    "frames": [
+      "/media/exercicios/elevacao-frontal/inicio.webp",
+      "/media/exercicios/elevacao-frontal/fim.webp"
+    ],
+    "poster": "/media/exercicios/elevacao-frontal/capa.webp",
+    "sources": [
+      "front-dumbbell-raise-1",
+      "front-dumbbell-raise-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/elevacao-frontal/loop.webm",
+      "mp4": "/media/exercicios/elevacao-frontal/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "desenvolvimento-arnold": {
+    "frames": [
+      "/media/exercicios/desenvolvimento-arnold/inicio.webp",
+      "/media/exercicios/desenvolvimento-arnold/fim.webp"
+    ],
+    "poster": "/media/exercicios/desenvolvimento-arnold/capa.webp",
+    "sources": [
+      "arnold-press-1",
+      "arnold-press-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/desenvolvimento-arnold/loop.webm",
+      "mp4": "/media/exercicios/desenvolvimento-arnold/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "remada-alta": {
+    "frames": [
+      "/media/exercicios/remada-alta/inicio.webp",
+      "/media/exercicios/remada-alta/fim.webp"
+    ],
+    "poster": "/media/exercicios/remada-alta/capa.webp",
+    "sources": [
+      "upright-barbell-rows-2",
+      "upright-barbell-rows-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/remada-alta/loop.webm",
+      "mp4": "/media/exercicios/remada-alta/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "encolhimento-barra": {
+    "frames": [
+      "/media/exercicios/encolhimento-barra/inicio.webp",
+      "/media/exercicios/encolhimento-barra/fim.webp"
+    ],
+    "poster": "/media/exercicios/encolhimento-barra/capa.webp",
+    "sources": [
+      "barbell-shrugs-1",
+      "barbell-shrugs-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/encolhimento-barra/loop.webm",
+      "mp4": "/media/exercicios/encolhimento-barra/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "crucifixo-inverso": {
+    "frames": [
+      "/media/exercicios/crucifixo-inverso/inicio.webp",
+      "/media/exercicios/crucifixo-inverso/fim.webp"
+    ],
+    "poster": "/media/exercicios/crucifixo-inverso/capa.webp",
+    "sources": [
+      "lying-rear-lateral-raise-1",
+      "lying-rear-lateral-raise-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/crucifixo-inverso/loop.webm",
+      "mp4": "/media/exercicios/crucifixo-inverso/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "rosca-direta": {
+    "frames": [
+      "/media/exercicios/rosca-direta/inicio.webp",
+      "/media/exercicios/rosca-direta/fim.webp"
+    ],
+    "poster": "/media/exercicios/rosca-direta/capa.webp",
+    "sources": [
+      "bicep-curls-with-barbell-1",
+      "bicep-curls-with-barbell-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/rosca-direta/loop.webm",
+      "mp4": "/media/exercicios/rosca-direta/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "rosca-martelo": {
+    "frames": [
+      "/media/exercicios/rosca-martelo/inicio.webp",
+      "/media/exercicios/rosca-martelo/fim.webp"
+    ],
+    "poster": "/media/exercicios/rosca-martelo/capa.webp",
+    "sources": [
+      "bicep-hammer-curl-with-dumbbell-1",
+      "bicep-hammer-curl-with-dumbbell-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/rosca-martelo/loop.webm",
+      "mp4": "/media/exercicios/rosca-martelo/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "rosca-alternada": {
+    "frames": [
+      "/media/exercicios/rosca-alternada/inicio.webp",
+      "/media/exercicios/rosca-alternada/fim.webp"
+    ],
+    "poster": "/media/exercicios/rosca-alternada/capa.webp",
+    "sources": [
+      "alternating-bicep-curl-with-dumbbell-1",
+      "alternating-bicep-curl-with-dumbbell-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/rosca-alternada/loop.webm",
+      "mp4": "/media/exercicios/rosca-alternada/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "rosca-scott": {
+    "frames": [
+      "/media/exercicios/rosca-scott/inicio.webp",
+      "/media/exercicios/rosca-scott/fim.webp"
+    ],
+    "poster": "/media/exercicios/rosca-scott/capa.webp",
+    "sources": [
+      "preacher-curl-with-barbell-1",
+      "preacher-curl-with-barbell-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/rosca-scott/loop.webm",
+      "mp4": "/media/exercicios/rosca-scott/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "triceps-polia": {
+    "frames": [
+      "/media/exercicios/triceps-polia/inicio.webp",
+      "/media/exercicios/triceps-polia/fim.webp"
+    ],
+    "poster": "/media/exercicios/triceps-polia/capa.webp",
+    "sources": [
+      "triceps-pushdown-with-cable-1",
+      "triceps-pushdown-with-cable-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/triceps-polia/loop.webm",
+      "mp4": "/media/exercicios/triceps-polia/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "triceps-corda": {
+    "frames": [
+      "/media/exercicios/triceps-corda/inicio.webp",
+      "/media/exercicios/triceps-corda/fim.webp"
+    ],
+    "poster": "/media/exercicios/triceps-corda/capa.webp",
+    "sources": [
+      "triceps-pushdown-with-rope-and-cable-1",
+      "triceps-pushdown-with-rope-and-cable-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/triceps-corda/loop.webm",
+      "mp4": "/media/exercicios/triceps-corda/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "triceps-testa": {
+    "frames": [
+      "/media/exercicios/triceps-testa/inicio.webp",
+      "/media/exercicios/triceps-testa/fim.webp"
+    ],
+    "poster": "/media/exercicios/triceps-testa/capa.webp",
+    "sources": [
+      "lying-triceps-press-with-barbell-1",
+      "lying-triceps-press-with-barbell-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/triceps-testa/loop.webm",
+      "mp4": "/media/exercicios/triceps-testa/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "triceps-frances": {
+    "frames": [
+      "/media/exercicios/triceps-frances/inicio.webp",
+      "/media/exercicios/triceps-frances/fim.webp"
+    ],
+    "poster": "/media/exercicios/triceps-frances/capa.webp",
+    "sources": [
+      "seated-triceps-press-with-dumbbell-2",
+      "seated-triceps-press-with-dumbbell-1"
+    ],
+    "video": {
+      "webm": "/media/exercicios/triceps-frances/loop.webm",
+      "mp4": "/media/exercicios/triceps-frances/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "prancha": {
+    "frames": [
+      "/media/exercicios/prancha/posicao.webp"
+    ],
+    "poster": "/media/exercicios/prancha/capa.webp",
+    "sources": [
+      "848"
+    ],
+    "video": null
+  },
+  "abdominal-supra": {
+    "frames": [
+      "/media/exercicios/abdominal-supra/inicio.webp",
+      "/media/exercicios/abdominal-supra/fim.webp"
+    ],
+    "poster": "/media/exercicios/abdominal-supra/capa.webp",
+    "sources": [
+      "crunches-1",
+      "crunches-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/abdominal-supra/loop.webm",
+      "mp4": "/media/exercicios/abdominal-supra/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "abdominal-polia": {
+    "frames": [
+      "/media/exercicios/abdominal-polia/inicio.webp",
+      "/media/exercicios/abdominal-polia/fim.webp"
+    ],
+    "poster": "/media/exercicios/abdominal-polia/capa.webp",
+    "sources": [
+      "seated-ab-crunch-with-cable-1",
+      "seated-ab-crunch-with-cable-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/abdominal-polia/loop.webm",
+      "mp4": "/media/exercicios/abdominal-polia/loop.mp4",
+      "kind": "alternancia"
+    }
+  },
+  "elevacao-de-pernas": {
+    "frames": [
+      "/media/exercicios/elevacao-de-pernas/inicio.webp",
+      "/media/exercicios/elevacao-de-pernas/fim.webp"
+    ],
+    "poster": "/media/exercicios/elevacao-de-pernas/capa.webp",
+    "sources": [
+      "flat-bench-leg-raises-1",
+      "flat-bench-leg-raises-2"
+    ],
+    "video": {
+      "webm": "/media/exercicios/elevacao-de-pernas/loop.webm",
+      "mp4": "/media/exercicios/elevacao-de-pernas/loop.mp4",
+      "kind": "alternancia"
+    }
+  }
+}

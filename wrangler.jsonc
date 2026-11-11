@@ -1,0 +1,12 @@
+{
+  // Publicação na Cloudflare Workers com Static Assets (sem código de servidor).
+  // O app é exportado estaticamente para ./out por `npm run build`.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bodybuilder",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  }
+}

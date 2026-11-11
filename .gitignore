@@ -5,9 +5,11 @@ dist/
 coverage/
 test-results/
 playwright-report/
+.media-tmp/
+.wrangler/
 *.tsbuildinfo
 *.log
 .env
 .env.local
 .env.*.local
-!.env.example
+next-env.d.ts

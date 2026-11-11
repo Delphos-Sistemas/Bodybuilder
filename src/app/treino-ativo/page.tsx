@@ -1,0 +1,317 @@
+"use client";
+
+import clsx from "clsx";
+import { Check, ChevronDown, Flag, SkipForward, Square, Timer, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { ExerciseMedia } from "@/components/ExerciseMedia";
+import { ExerciseSheet } from "@/components/ExerciseSheet";
+import { MusicPlayer } from "@/components/MusicPlayer";
+import { EmptyState, ProgressBar, Stepper } from "@/components/ui";
+import { EXERCISE_MAP } from "@/data/exercises";
+import { playAlert } from "@/lib/audio";
+import { currentItem, isItemDone, isSessionComplete, sessionSetCount } from "@/lib/session";
+import { useData, useStore } from "@/lib/store";
+import { formatClock, restRemaining, secondsBetween, workoutElapsed } from "@/lib/time";
+import { useNow } from "@/lib/useHydrated";
+import { EQUIPMENT, MUSCLES } from "@/lib/types";
+
+export default function TreinoAtivoPage() {
+  const router = useRouter();
+  const session = useData().activeSession;
+  const store = useStore();
+  const { settings } = store;
+  const now = useNow(250);
+  const [sheet, setSheet] = useState<string | null>(null);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const [flash, setFlash] = useState(0);
+  const [showPain, setShowPain] = useState(false);
+  const [form, setForm] = useState({ loadKg: 0, reps: 0, rir: 2, pain: "" });
+  const alertedRest = useRef<number | null>(null);
+
+  const item = session ? currentItem(session) : undefined;
+  const exercise = item ? EXERCISE_MAP[item.exerciseId] : undefined;
+  const setsDone = item?.sets.length ?? 0;
+  const formKey = `${session?.id}:${session?.currentIndex}:${setsDone}`;
+
+  // preenche o formulário com a última série registrada ou com o planejado
+  useEffect(() => {
+    if (!item) return;
+    const last = item.sets[item.sets.length - 1];
+    setForm({
+      loadKg: last?.loadKg ?? item.planned.loadKg,
+      reps: last?.reps ?? item.planned.repsMax,
+      rir: item.planned.rir,
+      pain: ""
+    });
+    setShowPain(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formKey]);
+
+  // mantém a tela acesa durante o treino, quando o navegador permite
+  useEffect(() => {
+    if (!session) return;
+    let lock: { release: () => Promise<void> } | null = null;
+    const nav = navigator as Navigator & { wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> } };
+    const request = () => nav.wakeLock?.request("screen").then((l) => (lock = l)).catch(() => undefined);
+    void request();
+    const onVis = () => document.visibilityState === "visible" && void request();
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      void lock?.release().catch(() => undefined);
+    };
+  }, [session?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const rest = session?.rest ?? null;
+  const remaining = restRemaining(rest, now);
+
+  // alerta de fim do descanso (uma vez por descanso)
+  useEffect(() => {
+    if (!rest || remaining > 0 || alertedRest.current === rest.endsAt) return;
+    alertedRest.current = rest.endsAt;
+    // se o descanso terminou há muito tempo (app fechado), não toca o alerta atrasado
+    if (now - rest.endsAt < 30_000) {
+      playAlert("fim-descanso", { sound: settings.audioEnabled, vibrate: settings.vibration, volume: settings.alertVolume });
+    }
+    store.endRest();
+  }, [rest, remaining, now, settings, store]);
+
+  if (!session) {
+    return (
+      <EmptyState
+        title="Nenhum treino em andamento"
+        text="Escolha um treino para começar. Se você fechou o app no meio de uma sessão, ela aparece aqui automaticamente."
+        action={
+          <Link href="/treinos" className="btn-primary">
+            Escolher treino
+          </Link>
+        }
+      />
+    );
+  }
+
+  const total = workoutElapsed(session, now);
+  const exerciseTime = item?.startedAt ? secondsBetween(item.startedAt, now) : 0;
+  const complete = isSessionComplete(session);
+  const totalSets = session.items.reduce((a, it) => a + (it.skipped ? it.sets.length : it.planned.sets), 0);
+  const iso = exercise?.isometric;
+
+  const finish = (manual: boolean) => {
+    const id = store.finish(manual);
+    playAlert("encerramento", { sound: settings.audioEnabled, vibrate: settings.vibration, volume: settings.alertVolume });
+    router.push(id ? `/historico?sessao=${id}` : "/historico");
+  };
+
+  const logSet = () => {
+    store.logSet({ loadKg: form.loadKg, reps: form.reps, rir: form.rir, ...(form.pain.trim() ? { pain: form.pain.trim() } : {}) });
+    setFlash((f) => f + 1);
+  };
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-4">
+      {/* Cronômetros */}
+      <section aria-label="Tempos do treino" className="grid grid-cols-3 gap-2 text-center">
+        <div className="card p-3">
+          <p className="text-xs text-muted">Treino</p>
+          <p className="font-display text-2xl font-bold tabular-nums" data-testid="tempo-treino">
+            {formatClock(total)}
+          </p>
+        </div>
+        <div className="card p-3">
+          <p className="text-xs text-muted">Exercício</p>
+          <p className="font-display text-2xl font-bold tabular-nums">{formatClock(exerciseTime)}</p>
+        </div>
+        <div className={clsx("card p-3", rest && "border-bronze")}>
+          <p className="text-xs text-muted">Descanso</p>
+          <p className={clsx("font-display text-2xl font-bold tabular-nums", rest ? "text-bronze-light" : "text-muted")} data-testid="tempo-descanso">
+            {rest ? formatClock(remaining) : "--:--"}
+          </p>
+        </div>
+      </section>
+
+      <div>
+        <div className="mb-1 flex justify-between text-xs text-muted">
+          <span>{session.workoutName}</span>
+          <span>
+            {sessionSetCount(session)} de {totalSets} séries
+          </span>
+        </div>
+        <ProgressBar value={totalSets ? sessionSetCount(session) / totalSets : 0} label="Progresso do treino" />
+      </div>
+
+      {/* Lista de exercícios da sessão */}
+      <nav aria-label="Exercícios da sessão" className="-mx-4 overflow-x-auto px-4">
+        <ol className="flex gap-2 pb-1">
+          {session.items.map((it, i) => {
+            const ex = EXERCISE_MAP[it.exerciseId];
+            const current = i === session.currentIndex;
+            return (
+              <li key={`${it.exerciseId}-${i}`}>
+                <button
+                  type="button"
+                  onClick={() => store.goTo(i)}
+                  aria-current={current ? "step" : undefined}
+                  className={clsx(
+                    "flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-sm",
+                    current ? "border-bronze bg-bronze/15 text-bronze-light" : isItemDone(it) ? "border-line text-muted line-through" : "border-line text-sand"
+                  )}
+                >
+                  {isItemDone(it) && !it.skipped && <Check size={14} aria-hidden />}
+                  {i + 1}. {ex?.name ?? it.exerciseId}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      {complete ? (
+        <section className="card anim-fade space-y-3 border-ok/50 text-center" aria-live="polite">
+          <p className="eyebrow text-ok">Tudo feito</p>
+          <h1 className="h1">Todas as séries concluídas</h1>
+          <p className="text-sand">
+            {sessionSetCount(session)} séries em {formatClock(total)}. Finalize para salvar no histórico.
+          </p>
+          <button type="button" className="btn-primary w-full" onClick={() => finish(false)}>
+            <Flag size={18} aria-hidden /> Finalizar e salvar treino
+          </button>
+        </section>
+      ) : (
+        exercise &&
+        item && (
+          <>
+            <section aria-labelledby="exercicio-atual" className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs text-muted">
+                    Exercício {session.currentIndex + 1} de {session.items.length} · {MUSCLES[exercise.primary]} · {EQUIPMENT[exercise.equipment]}
+                  </p>
+                  <h1 id="exercicio-atual" className="font-display text-2xl font-bold leading-tight sm:text-3xl">
+                    {exercise.name}
+                  </h1>
+                </div>
+                <button type="button" className="btn-secondary min-h-11 shrink-0 px-3 text-sm" onClick={() => setSheet(exercise.id)}>
+                  <BookOpen size={16} aria-hidden /> Ficha
+                </button>
+              </div>
+              <ExerciseMedia exercise={exercise} variant="large" />
+              <p className="text-sm text-sand">
+                Meta: {item.planned.sets} séries · {item.planned.repsMin}–{item.planned.repsMax} {iso ? "segundos" : "repetições"}
+                {item.planned.loadKg ? ` · ${item.planned.loadKg} kg` : ""} · RIR {item.planned.rir} · descanso {item.planned.restSec} s
+              </p>
+            </section>
+
+            {/* Painel de série: altura fixa para os botões não mudarem de lugar */}
+            <section aria-labelledby="serie-atual" className="card space-y-4">
+              <div>
+                <h2 id="serie-atual" className="text-lg font-semibold">
+                  Série {Math.min(setsDone + 1, item.planned.sets)} de {item.planned.sets}
+                </h2>
+                <ol className="mt-1 flex gap-1.5" aria-label="Séries concluídas">
+                  {Array.from({ length: item.planned.sets }, (_, i) => (
+                    <li key={i} className={clsx("h-2.5 w-7 rounded-full", i < setsDone ? "bg-ok" : "bg-steel")} aria-label={i < setsDone ? `Série ${i + 1} concluída` : `Série ${i + 1} pendente`} />
+                  ))}
+                </ol>
+              </div>
+
+              <div className={clsx("flex h-[72px] items-center gap-2 rounded-xl px-3", rest ? "bg-bronze/10" : "bg-iron")} aria-live="polite">
+                {rest ? (
+                  <>
+                    <span className="mr-auto">
+                      <span className="block text-xs text-bronze-light">Descanso</span>
+                      <span className="font-display text-2xl font-bold tabular-nums">{formatClock(remaining)}</span>
+                    </span>
+                    <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => store.changeRest(-15)} aria-label="Reduzir descanso em 15 segundos">
+                      −15
+                    </button>
+                    <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => store.changeRest(15)} aria-label="Aumentar descanso em 15 segundos">
+                      +15
+                    </button>
+                    <button type="button" className="btn-ghost min-h-11 px-3 text-sm" aria-label="Pular descanso" onClick={() => store.endRest()}>
+                      Pular
+                    </button>
+                  </>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-sm text-muted">
+                    <Timer size={16} aria-hidden /> Faça a série e toque em concluir.
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="col-span-2">
+                  <Stepper id="carga" label="Carga" suffix="kg" step={2.5} max={1000} value={form.loadKg} onChange={(v) => setForm((f) => ({ ...f, loadKg: v }))} />
+                </div>
+                <Stepper id="reps" label={iso ? "Segundos" : "Repetições"} max={300} value={form.reps} onChange={(v) => setForm((f) => ({ ...f, reps: v }))} />
+                <Stepper id="rir" label="RIR" max={10} value={form.rir} onChange={(v) => setForm((f) => ({ ...f, rir: v }))} />
+              </div>
+
+              <div>
+                <button type="button" className="flex min-h-10 items-center gap-1 text-sm text-sand" aria-expanded={showPain} aria-controls="campo-dor" onClick={() => setShowPain((v) => !v)}>
+                  <ChevronDown size={16} className={clsx("transition-transform", showPain && "rotate-180")} aria-hidden />
+                  Registrar dor ou desconforto (opcional)
+                </button>
+                {showPain && (
+                  <div id="campo-dor" className="mt-1">
+                    <label htmlFor="dor" className="sr-only">
+                      Descreva a dor ou desconforto
+                    </label>
+                    <input id="dor" className="input" maxLength={200} placeholder="Ex.: incômodo leve no ombro direito" value={form.pain} onChange={(e) => setForm((f) => ({ ...f, pain: e.target.value }))} />
+                    <p className="mt-1 text-xs text-muted">Se a dor for forte ou persistir, interrompa o exercício e procure um profissional.</p>
+                  </div>
+                )}
+              </div>
+
+              <button key={flash} type="button" className={clsx("btn-primary w-full text-lg", flash > 0 && "anim-set-done")} onClick={logSet}>
+                <Check size={20} aria-hidden /> Concluir série
+              </button>
+            </section>
+          </>
+        )
+      )}
+
+      <section className="grid grid-cols-2 gap-2" aria-label="Ações do treino">
+        <button type="button" className="btn-secondary" disabled={complete} onClick={() => store.skipCurrent()}>
+          <SkipForward size={18} aria-hidden /> Pular exercício
+        </button>
+        <button type="button" className="btn-danger" onClick={() => setConfirmEnd(true)}>
+          <Square size={16} aria-hidden /> Encerrar treino
+        </button>
+      </section>
+      {confirmEnd && (
+        <div role="alert" className="card anim-fade space-y-3 border-danger/50">
+          <p>Encerrar o treino agora? As séries já registradas serão salvas no histórico.</p>
+          <div className="flex gap-2">
+            <button type="button" className="btn-danger flex-1" onClick={() => finish(true)}>
+              Encerrar e salvar
+            </button>
+            <button type="button" className="btn-ghost flex-1" onClick={() => setConfirmEnd(false)}>
+              Continuar treinando
+            </button>
+          </div>
+          <button
+            type="button"
+            className="w-full text-center text-sm text-muted underline"
+            onClick={() => {
+              store.discardActive();
+              router.push("/");
+            }}
+          >
+            Descartar sem salvar
+          </button>
+        </div>
+      )}
+
+      <details className="card">
+        <summary className="flex min-h-10 cursor-pointer items-center font-semibold">Música e som</summary>
+        <div className="mt-3">
+          <MusicPlayer compact />
+        </div>
+      </details>
+
+      <ExerciseSheet exerciseId={sheet} onClose={() => setSheet(null)} />
+    </div>
+  );
+}
