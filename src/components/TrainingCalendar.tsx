@@ -4,11 +4,12 @@ import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { WEEKDAYS, type Session } from "@/lib/types";
+import { todayISO } from "@/lib/time";
 
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
-/** Grade do mês com os dias em que houve treino concluído. */
-export function TrainingCalendar({ sessions }: { sessions: Session[] }) {
+/** Grade do mês com os dias em que houve treino concluído (e, se houver, os dias em que seguiu o plano alimentar). */
+export function TrainingCalendar({ sessions, onPlanDays }: { sessions: Session[]; onPlanDays?: Set<string> }) {
   const [cursor, setCursor] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -60,23 +61,31 @@ export function TrainingCalendar({ sessions }: { sessions: Session[] }) {
           if (!d) return <div key={`v${i}`} aria-hidden />;
           const k = dayKey(new Date(year, month, d));
           const n = counts.get(k) ?? 0;
+          const plan = onPlanDays?.has(todayISO(new Date(year, month, d).getTime())) ?? false;
           return (
             <div
               key={k}
               role="gridcell"
-              aria-label={`${d}: ${n ? `${n} ${n === 1 ? "treino" : "treinos"}` : "sem treino"}`}
+              aria-label={`${d}: ${n ? `${n} ${n === 1 ? "treino" : "treinos"}` : "sem treino"}${plan ? ", seguiu o plano alimentar" : ""}`}
               className={clsx(
-                "flex aspect-square items-center justify-center rounded-lg text-sm",
+                "relative flex aspect-square items-center justify-center rounded-lg text-sm",
                 n ? "bg-bronze font-semibold text-iron" : "bg-iron text-sand",
                 k === today && "ring-2 ring-bronze-light"
               )}
               data-treinado={n ? "sim" : undefined}
+              data-plano={plan ? "sim" : undefined}
             >
               {d}
+              {plan && <span aria-hidden className={clsx("absolute bottom-1 h-1.5 w-1.5 rounded-full", n ? "bg-iron" : "bg-ok")} />}
             </div>
           );
         })}
       </div>
+      {onPlanDays && onPlanDays.size > 0 && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ok" /> Seguiu o plano alimentar
+        </p>
+      )}
     </section>
   );
 }

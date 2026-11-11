@@ -18,6 +18,7 @@
   ],
   "shortcuts": [
     { "name": "Treinos", "url": "/treinos", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Histórico", "url": "/historico", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Histórico", "url": "/historico", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Nutrição", "url": "/nutricao", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

@@ -103,7 +103,37 @@ export const datasetSchema = z.object({
     )
     .optional(),
   profileUpdatedAt: z.number().optional(),
-  tombstones: z.record(z.string(), z.number()).optional()
+  tombstones: z.record(z.string(), z.number()).optional(),
+  nutrition: z
+    .object({
+      proteinPerKg: z.number().min(0.8).max(3).optional(),
+      proteinGoalG: z.number().min(20).max(400).optional(),
+      waterGoalMl: z.number().min(500).max(8000).optional(),
+      goalsUpdatedAt: z.number().optional(),
+      days: z.record(
+        z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        z.object({
+          proteinG: z.number().min(0).max(1000),
+          waterMl: z.number().min(0).max(20000),
+          onPlan: z.boolean().optional(),
+          updatedAt: z.number()
+        })
+      )
+    })
+    .optional(),
+  shoppingList: z
+    .array(
+      z.object({
+        id: z.string(),
+        text: z.string().min(1).max(120),
+        qtd: z.string().max(200).optional(),
+        done: z.boolean(),
+        recipeId: z.string().optional(),
+        updatedAt: z.number()
+      })
+    )
+    .max(500)
+    .optional()
 });
 
 export const exportSchema = z.object({

@@ -25,7 +25,17 @@ export default function HistoricoPage() {
 
 function Historico() {
   const highlight = useSearchParams().get("sessao");
-  const all = useData().sessions;
+  const data = useData();
+  const all = data.sessions;
+  const onPlanDays = useMemo(
+    () =>
+      new Set(
+        Object.entries(data.nutrition?.days ?? {})
+          .filter(([, d]) => d.onPlan)
+          .map(([k]) => k)
+      ),
+    [data.nutrition]
+  );
   const sessions = useMemo(() => all.filter((s) => s.endedAt), [all]);
   const records = useMemo(() => new Map(sessions.map((s) => [s.id, sessionRecordHits(s, sessions)])), [sessions]);
   const remove = useStore((s) => s.deleteSession);
@@ -51,7 +61,7 @@ function Historico() {
         />
       ) : (
         <div className="space-y-4">
-          <TrainingCalendar sessions={sessions} />
+          <TrainingCalendar sessions={sessions} onPlanDays={onPlanDays} />
           <ul className="space-y-3">
             {sessions.map((s) => {
               const open = s.id === highlight;

@@ -4,7 +4,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { BookOpen, ChartLine, Dumbbell, History, House, Settings, User, Play } from "lucide-react";
+import { BookOpen, ChartLine, Dumbbell, History, House, Settings, User, Play, Utensils } from "lucide-react";
 import { Monogram, Signature } from "./Logo";
 import { useData, useStore } from "@/lib/store";
 import { useHydrated } from "@/lib/useHydrated";
@@ -17,6 +17,7 @@ const NAV = [
   { href: "/treinos", label: "Treinos", icon: Dumbbell },
   { href: "/biblioteca", label: "Biblioteca", icon: BookOpen },
   { href: "/evolucao", label: "Evolução", icon: ChartLine },
+  { href: "/nutricao", label: "Nutrição", icon: Utensils },
   { href: "/perfil", label: "Perfil", icon: User }
 ];
 
@@ -87,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-iron/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "var(--safe-bottom)" }}
       >
-        <ul className="mx-auto grid max-w-lg grid-cols-5">
+        <ul className="mx-auto grid max-w-lg grid-cols-6">
           {NAV.map((n) => {
             const active = isActive(pathname, n.href);
             const Icon = n.icon;
@@ -97,7 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   href={n.href}
                   aria-current={active ? "page" : undefined}
                   className={clsx(
-                    "flex h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-medium",
+                    "flex h-16 flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium",
                     active ? "text-bronze-light" : "text-muted"
                   )}
                 >

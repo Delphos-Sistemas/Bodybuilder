@@ -2,7 +2,9 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { BodyWeight, Dataset, Exercise, Measurement, Mode, Profile, SetLog, Settings, Workout, WorkoutExercise } from "./types";
+import type { BodyWeight, Dataset, Exercise, Measurement, Mode, Nutrition, NutritionDay, Profile, SetLog, Settings, Workout, WorkoutExercise } from "./types";
+import type { Recipe } from "@/data/recipes";
+import { addRecipeToList, bumpDay, dayOf, EMPTY_DAY } from "./nutrition";
 import { syncCustomExercises } from "@/data/exercises";
 import { uid } from "./id";
 import { buildDemoDataset } from "@/data/demo";
@@ -77,6 +79,14 @@ type Actions = {
   addMeasurement: (date: string, cm: Measurement["cm"]) => void;
   removeMeasurement: (id: string) => void;
   snoozeBackup: (days: number) => void;
+  logNutrition: (date: string, delta: { proteinG?: number; waterMl?: number }) => void;
+  setNutritionDay: (date: string, patch: Partial<Omit<NutritionDay, "updatedAt">>) => void;
+  setNutritionGoals: (g: Pick<Nutrition, "proteinPerKg" | "proteinGoalG" | "waterGoalMl">) => void;
+  addRecipeToShopping: (recipe: Recipe) => number;
+  addShoppingItem: (text: string, qtd?: string) => void;
+  toggleShoppingItem: (id: string) => void;
+  removeShoppingItem: (id: string) => void;
+  clearShoppingDone: () => void;
 };
 
 export type Store = State & Actions;
@@ -302,6 +312,54 @@ export const useStore = create<Store>()(
               backupSnoozeUntil: undefined
             }
           })),
+        logNutrition: (date, delta) =>
+          update((d) => {
+            const n = d.nutrition ?? { days: {} };
+            return { ...d, nutrition: { ...n, days: { ...n.days, [date]: bumpDay(dayOf(n, date), delta) } } };
+          }),
+        setNutritionDay: (date, patch) =>
+          update((d) => {
+            const n = d.nutrition ?? { days: {} };
+            return { ...d, nutrition: { ...n, days: { ...n.days, [date]: { ...(n.days[date] ?? EMPTY_DAY), ...patch, updatedAt: Date.now() } } } };
+          }),
+        setNutritionGoals: (g) =>
+          update((d) => ({
+            ...d,
+            nutrition: { days: {}, ...d.nutrition, ...g, goalsUpdatedAt: Date.now() }
+          })),
+        addRecipeToShopping: (recipe) => {
+          let added = 0;
+          update((d) => {
+            const r = addRecipeToList(d.shoppingList ?? [], recipe);
+            added = r.added;
+            return { ...d, shoppingList: r.list };
+          });
+          return added;
+        },
+        addShoppingItem: (text, qtd) =>
+          update((d) => ({
+            ...d,
+            shoppingList: [
+              ...(d.shoppingList ?? []),
+              { id: uid("sh_"), text: text.trim().slice(0, 120), qtd: qtd?.trim().slice(0, 200) || undefined, done: false, updatedAt: Date.now() }
+            ]
+          })),
+        toggleShoppingItem: (id) =>
+          update((d) => ({
+            ...d,
+            shoppingList: (d.shoppingList ?? []).map((x) => (x.id === id ? { ...x, done: !x.done, updatedAt: Date.now() } : x))
+          })),
+        removeShoppingItem: (id) =>
+          update((d) => ({
+            ...d,
+            shoppingList: (d.shoppingList ?? []).filter((x) => x.id !== id),
+            tombstones: tomb(d, id)
+          })),
+        clearShoppingDone: () =>
+          update((d) => {
+            const done = (d.shoppingList ?? []).filter((x) => x.done);
+            return { ...d, shoppingList: (d.shoppingList ?? []).filter((x) => !x.done), tombstones: tomb(d, ...done.map((x) => x.id)) };
+          }),
         snoozeBackup: (days) =>
           set((st) => ({
             settings: {

@@ -3,6 +3,7 @@
 import { ArrowRight, Dumbbell, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { BackupReminder } from "@/components/BackupReminder";
+import { NutritionCard } from "@/components/NutritionCard";
 import { StartWorkoutButton } from "@/components/StartWorkout";
 import { Card, ProgressBar } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
@@ -142,6 +143,8 @@ export default function InicioPage() {
           </Link>
         </Card>
       </div>
+
+      <NutritionCard />
 
       <Card className="space-y-3">
         <div className="flex items-center justify-between">

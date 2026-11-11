@@ -156,6 +156,33 @@ export type Profile = {
   onboarded: boolean;
 };
 
+/** Registro de um dia: proteína e água consumidas e se seguiu o próprio plano alimentar. */
+export type NutritionDay = {
+  proteinG: number;
+  waterMl: number;
+  onPlan?: boolean;
+  updatedAt: number;
+};
+
+/** Metas leves de proteína e água. Sem meta manual, a proteína usa g/kg do peso mais recente. */
+export type Nutrition = {
+  proteinPerKg?: number;
+  proteinGoalG?: number;
+  waterGoalMl?: number;
+  goalsUpdatedAt?: number;
+  /** por data local AAAA-MM-DD */
+  days: Record<string, NutritionDay>;
+};
+
+export type ShoppingItem = {
+  id: string;
+  text: string;
+  qtd?: string;
+  done: boolean;
+  recipeId?: string;
+  updatedAt: number;
+};
+
 export type Dataset = {
   profile: Profile;
   workouts: Workout[];
@@ -169,6 +196,8 @@ export type Dataset = {
   profileUpdatedAt?: number;
   /** ids apagados e quando (ms), para a sincronização não trazer de volta */
   tombstones?: Record<string, number>;
+  nutrition?: Nutrition;
+  shoppingList?: ShoppingItem[];
 };
 
 export type Settings = {

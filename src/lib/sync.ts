@@ -1,5 +1,6 @@
 import { datasetSchema } from "./schemas";
 import type { Dataset } from "./types";
+import { mergeNutrition } from "./nutrition";
 
 /** Código secreto de sincronização: 20 bytes aleatórios em base32 (sem letras ambíguas), em grupos de 4. */
 export function newSyncCode(): string {
@@ -63,13 +64,22 @@ export function mergeDatasets(local: Dataset, remote: Dataset): Dataset {
     bodyWeights: dedupeByDate(mergeById(local.bodyWeights, remote.bodyWeights, dead), localIds(local.bodyWeights)),
     measurements: dedupeByDate(mergeById(local.measurements, remote.measurements, dead), localIds(local.measurements)),
     customExercises: mergeById(local.customExercises, remote.customExercises, dead),
+    nutrition: mergeNutrition(local.nutrition, remote.nutrition),
+    shoppingList: mergeById(local.shoppingList, remote.shoppingList, dead, (x, y) => (y.updatedAt > x.updatedAt ? y : x)),
     tombstones: dead
   };
 }
 
 /** Conteúdo comparável (sem o treino em andamento), para saber se algo mudou. */
 export function fingerprint(d: Dataset): string {
-  return stable({ ...d, activeSession: null, tombstones: d.tombstones ?? {}, customExercises: d.customExercises ?? [], measurements: d.measurements ?? [] });
+  return stable({
+    ...d,
+    activeSession: null,
+    tombstones: d.tombstones ?? {},
+    customExercises: d.customExercises ?? [],
+    measurements: d.measurements ?? [],
+    shoppingList: d.shoppingList ?? []
+  });
 }
 
 /** JSON com as chaves em ordem, para comparar conteúdo independentemente da ordem dos campos. */

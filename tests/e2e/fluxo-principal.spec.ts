@@ -258,3 +258,69 @@ test("histórico: card do treino para compartilhar", async ({ page }) => {
   await page.getByRole("button", { name: "Compartilhar imagem" }).click();
   expect((await download).suggestedFilename()).toMatch(/^treino-.*\.png$/);
 });
+
+test("nutrição: meta pelo peso, registro rápido, plano e card no início", async ({ page }) => {
+  await page.goto("/evolucao");
+  await page.getByLabel("Peso (kg)").fill("80");
+  await page.getByRole("button", { name: "Registrar", exact: true }).click();
+
+  await page.goto("/nutricao");
+  const protein = page.getByTestId("proteina");
+  await expect(protein).toContainText("de 145 g");
+  await protein.getByRole("button", { name: "+25 g" }).click();
+  await protein.getByRole("button", { name: "+10 g" }).click();
+  await expect(page.getByTestId("proteina-valor")).toHaveText("35");
+  const water = page.getByTestId("agua");
+  await expect(water).toContainText("de 2.750 ml");
+  await water.getByRole("button", { name: /\+500 ml/ }).click();
+  await water.getByRole("button", { name: "Tirar 250 ml de água" }).click();
+  await expect(page.getByTestId("agua-valor")).toHaveText("250");
+
+  await page.getByRole("switch", { name: "Segui meu plano hoje" }).click();
+  await expect(page.getByRole("switch", { name: "Segui meu plano hoje" })).toHaveAttribute("aria-checked", "true");
+
+  // meta fixa vence o cálculo
+  await page.getByLabel("Ou meta fixa (g)").fill("160");
+  await page.getByRole("button", { name: "Salvar metas" }).click();
+  await expect(protein).toContainText("de 160 g");
+
+  await page.reload();
+  await expect(page.getByTestId("proteina-valor")).toHaveText("35");
+  await page.goto("/");
+  await expect(page.getByTestId("nutricao-inicio")).toContainText("35 g de 160 g");
+  await expect(page.getByTestId("nutricao-inicio")).toContainText("Plano seguido hoje");
+});
+
+test("nutrição: receita vai para a lista de compras sem duplicar", async ({ page }) => {
+  await page.goto("/nutricao#receitas");
+  await expect(page.getByRole("tab", { name: "Receitas" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Vegetariano" }).click();
+  await page.getByLabel("Buscar receita ou ingrediente").fill("panqueca de banana");
+  await expect(page.getByTestId("receita")).toHaveCount(1);
+  await page.getByTestId("receita").click();
+  const dialog = page.getByRole("dialog", { name: "Panqueca de banana e aveia" });
+  await expect(dialog).toContainText("Modo de preparo");
+  await dialog.getByRole("button", { name: "Adicionar à lista" }).click();
+  await expect(dialog.getByRole("status")).toContainText("3 itens adicionados");
+  await dialog.getByRole("button", { name: "Adicionar à lista" }).click();
+  await expect(dialog.getByRole("status")).toContainText("0 itens novos");
+  await dialog.getByRole("button", { name: "Comi 1 porção" }).click();
+  await expect(dialog.getByRole("status")).toContainText("+17 g");
+  await dialog.getByRole("button", { name: "Fechar" }).click();
+
+  await page.getByRole("tab", { name: /Compras/ }).click();
+  const items = page.getByTestId("item-compra");
+  await expect(items).toHaveCount(3);
+  await expect(items.filter({ hasText: "Ovos" })).toContainText("4 unidades");
+
+  await page.getByLabel("Item", { exact: true }).fill("Café");
+  await page.getByRole("button", { name: "Adicionar", exact: true }).click();
+  await expect(items).toHaveCount(4);
+  await items.filter({ hasText: "Banana" }).getByRole("checkbox").check();
+  await expect(page.getByRole("heading", { name: "No carrinho (1)" })).toBeVisible();
+  await page.getByRole("button", { name: "Limpar comprados" }).click();
+  await expect(items).toHaveCount(3);
+  await page.reload();
+  await page.getByRole("tab", { name: /Compras/ }).click();
+  await expect(page.getByTestId("item-compra")).toHaveCount(3);
+});
