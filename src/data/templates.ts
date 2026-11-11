@@ -5,7 +5,13 @@ import { EXERCISE_MAP } from "./exercises";
 type Row = [exerciseId: string, sets: number, repsMin: number, repsMax: number, restSec: number];
 
 export type TemplateDay = { name: string; rows: Row[] };
-export type Template = { id: string; name: string; description: string; daysPerWeek: string; days: TemplateDay[] };
+export type Template = {
+  id: string;
+  name: string;
+  description: string;
+  daysPerWeek: string;
+  days: TemplateDay[];
+};
 
 export const TEMPLATES: Template[] = [
   {
@@ -140,7 +146,16 @@ export const TEMPLATES: Template[] = [
 ];
 
 export function rowToExercise([exerciseId, sets, repsMin, repsMax, restSec]: Row): WorkoutExercise {
-  return { uid: uid("we_"), exerciseId, sets, repsMin, repsMax, loadKg: 0, rir: 2, restSec };
+  return {
+    uid: uid("we_"),
+    exerciseId,
+    sets,
+    repsMin,
+    repsMax,
+    loadKg: 0,
+    rir: 2,
+    restSec
+  };
 }
 
 export function workoutsFromTemplate(template: Template, now: number, prefix = ""): Workout[] {

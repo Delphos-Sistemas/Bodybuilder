@@ -39,7 +39,12 @@ describe("armazenamento local", () => {
     useStore.getState().exitDemo();
     const user = useStore.getState().usuario;
     expect(user.workouts.map((w) => w.name)).toEqual(["Real"]);
-    expect(useStore.getState().exportData().data.workouts.map((w) => w.name)).toEqual(["Real"]);
+    expect(
+      useStore
+        .getState()
+        .exportData()
+        .data.workouts.map((w) => w.name)
+    ).toEqual(["Real"]);
   });
 
   it("duplica treino com novo id", () => {
@@ -67,8 +72,7 @@ describe("plano sugerido", () => {
     const p = { ...DEFAULT_PROFILE, days: [1, 2, 4, 5], equipment: ["halteres" as const, "peso-corporal" as const] };
     const plan = suggestPlan(p, 0);
     expect(plan.templateId).toBe("upper-lower");
-    for (const w of plan.workouts)
-      for (const e of w.exercises) expect(["halteres", "peso-corporal"]).toContain(EXERCISE_MAP[e.exerciseId].equipment);
+    for (const w of plan.workouts) for (const e of w.exercises) expect(["halteres", "peso-corporal"]).toContain(EXERCISE_MAP[e.exerciseId].equipment);
   });
   it("iniciante com 3 dias recebe Full Body", () => {
     expect(suggestPlan({ ...DEFAULT_PROFILE, days: [1, 3, 5] }, 0).templateId).toBe("full-body");

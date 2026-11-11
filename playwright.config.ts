@@ -15,6 +15,8 @@ export default defineConfig({
   },
   projects: [
     { name: "celular", use: { ...devices["Pixel 7"] } },
-    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 860 } } }
+    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 860 } } },
+    // Safari do iPhone (WebKit). Ligado com PW_WEBKIT=1, pois exige `npx playwright install webkit`.
+    ...(process.env.PW_WEBKIT ? [{ name: "iphone", use: { ...devices["iPhone 14"] } }] : [])
   ]
 });

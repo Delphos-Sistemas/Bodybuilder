@@ -2,19 +2,12 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { BodyWeight, Dataset, Mode, Profile, SetLog, Settings, Workout, WorkoutExercise } from "./types";
+import type { BodyWeight, Dataset, Exercise, Measurement, Mode, Profile, SetLog, Settings, Workout, WorkoutExercise } from "./types";
+import { syncCustomExercises } from "@/data/exercises";
 import { uid } from "./id";
 import { buildDemoDataset } from "@/data/demo";
 import { exportSchema, type ExportFile } from "./schemas";
-import {
-  adjustRest,
-  clearRest,
-  completeSet,
-  createSession,
-  finishSession,
-  goToExercise,
-  skipExercise
-} from "./session";
+import { adjustRest, clearRest, completeSet, createSession, finishSession, goToExercise, skipExercise } from "./session";
 
 export const STORAGE_KEY = "bodybuilder:v2";
 
@@ -29,7 +22,13 @@ export const DEFAULT_PROFILE: Profile = {
 };
 
 export function emptyDataset(): Dataset {
-  return { profile: { ...DEFAULT_PROFILE }, workouts: [], sessions: [], activeSession: null, bodyWeights: [] };
+  return {
+    profile: { ...DEFAULT_PROFILE },
+    workouts: [],
+    sessions: [],
+    activeSession: null,
+    bodyWeights: []
+  };
 }
 
 type State = {
@@ -64,6 +63,12 @@ type Actions = {
   exportData: () => ExportFile;
   importData: (raw: unknown) => { ok: true } | { ok: false; error: string };
   clearUserData: () => void;
+  saveCustomExercise: (e: Omit<Exercise, "id"> & { id?: string }) => string;
+  deleteCustomExercise: (id: string) => void;
+  markBackupDone: () => void;
+  addMeasurement: (date: string, cm: Measurement["cm"]) => void;
+  removeMeasurement: (id: string) => void;
+  snoozeBackup: (days: number) => void;
 };
 
 export type Store = State & Actions;
@@ -88,7 +93,11 @@ export const useStore = create<Store>()(
         demo: null,
         settings: { audioEnabled: false, vibration: true, alertVolume: 0.7 },
 
-        enterDemo: () => set((s) => ({ mode: "demo", demo: s.demo ?? buildDemoDataset(Date.now()) })),
+        enterDemo: () =>
+          set((s) => ({
+            mode: "demo",
+            demo: s.demo ?? buildDemoDataset(Date.now())
+          })),
         exitDemo: () => set({ mode: "usuario" }),
         resetDemo: () => set({ demo: buildDemoDataset(Date.now()), mode: "demo" }),
 
@@ -119,48 +128,101 @@ export const useStore = create<Store>()(
             ...src,
             id: uid("w_"),
             name: `${src.name} (cópia)`.slice(0, 80),
-            exercises: src.exercises.map((e: WorkoutExercise) => ({ ...e, uid: uid("we_") })),
+            exercises: src.exercises.map((e: WorkoutExercise) => ({
+              ...e,
+              uid: uid("we_")
+            })),
             createdAt: now,
             updatedAt: now
           };
           update((d) => ({ ...d, workouts: [...d.workouts, copy] }));
           return copy.id;
         },
-        deleteWorkout: (id) => update((d) => ({ ...d, workouts: d.workouts.filter((w) => w.id !== id) })),
+        deleteWorkout: (id) =>
+          update((d) => ({
+            ...d,
+            workouts: d.workouts.filter((w) => w.id !== id)
+          })),
 
         startSession: (workoutId) => {
           const w = current().workouts.find((x) => x.id === workoutId);
           if (!w || !w.exercises.length) return false;
-          update((d) => ({ ...d, activeSession: createSession(w, Date.now()) }));
+          update((d) => ({
+            ...d,
+            activeSession: createSession(w, Date.now())
+          }));
           return true;
         },
         discardActive: () => update((d) => ({ ...d, activeSession: null })),
         logSet: (log) =>
-          update((d) => (d.activeSession ? { ...d, activeSession: completeSet(d.activeSession, log, Date.now()) } : d)),
+          update((d) =>
+            d.activeSession
+              ? {
+                  ...d,
+                  activeSession: completeSet(d.activeSession, log, Date.now())
+                }
+              : d
+          ),
         changeRest: (delta) =>
-          update((d) => (d.activeSession ? { ...d, activeSession: adjustRest(d.activeSession, delta, Date.now()) } : d)),
+          update((d) =>
+            d.activeSession
+              ? {
+                  ...d,
+                  activeSession: adjustRest(d.activeSession, delta, Date.now())
+                }
+              : d
+          ),
         endRest: () => update((d) => (d.activeSession ? { ...d, activeSession: clearRest(d.activeSession) } : d)),
         skipCurrent: () =>
-          update((d) => (d.activeSession ? { ...d, activeSession: skipExercise(d.activeSession, Date.now()) } : d)),
+          update((d) =>
+            d.activeSession
+              ? {
+                  ...d,
+                  activeSession: skipExercise(d.activeSession, Date.now())
+                }
+              : d
+          ),
         goTo: (index) =>
-          update((d) => (d.activeSession ? { ...d, activeSession: goToExercise(d.activeSession, index, Date.now()) } : d)),
+          update((d) =>
+            d.activeSession
+              ? {
+                  ...d,
+                  activeSession: goToExercise(d.activeSession, index, Date.now())
+                }
+              : d
+          ),
         finish: (manual) => {
           const active = current().activeSession;
           if (!active) return null;
           const done = finishSession(active, Date.now(), manual);
-          update((d) => ({ ...d, activeSession: null, sessions: [done, ...d.sessions] }));
+          update((d) => ({
+            ...d,
+            activeSession: null,
+            sessions: [done, ...d.sessions]
+          }));
           return done.id;
         },
-        deleteSession: (id) => update((d) => ({ ...d, sessions: d.sessions.filter((s) => s.id !== id) })),
+        deleteSession: (id) =>
+          update((d) => ({
+            ...d,
+            sessions: d.sessions.filter((s) => s.id !== id)
+          })),
         setSessionNotes: (id, notes) =>
-          update((d) => ({ ...d, sessions: d.sessions.map((s) => (s.id === id ? { ...s, notes: notes.trim().slice(0, 1000) || undefined } : s)) })),
+          update((d) => ({
+            ...d,
+            sessions: d.sessions.map((s) => (s.id === id ? { ...s, notes: notes.trim().slice(0, 1000) || undefined } : s))
+          })),
 
         addBodyWeight: (date, kg) =>
           update((d) => ({
             ...d,
             bodyWeights: [...d.bodyWeights.filter((b) => b.date !== date), { id: uid("bw_"), date, kg } as BodyWeight]
           })),
-        removeBodyWeight: (id) => update((d) => ({ ...d, bodyWeights: d.bodyWeights.filter((b) => b.id !== id) })),
+        removeBodyWeight: (id) =>
+          update((d) => ({
+            ...d,
+            bodyWeights: d.bodyWeights.filter((b) => b.id !== id)
+          })),
         saveProfile: (p) => update((d) => ({ ...d, profile: p })),
         updateSettings: (s) => set((st) => ({ settings: { ...st.settings, ...s } })),
 
@@ -173,12 +235,58 @@ export const useStore = create<Store>()(
         importData: (raw) => {
           const parsed = exportSchema.safeParse(raw);
           if (!parsed.success) {
-            return { ok: false, error: "Arquivo inválido ou de outro aplicativo. Nenhum dado foi alterado." };
+            return {
+              ok: false,
+              error: "Arquivo inválido ou de outro aplicativo. Nenhum dado foi alterado."
+            };
           }
           set({ usuario: parsed.data.data as Dataset, mode: "usuario" });
           return { ok: true };
         },
-        clearUserData: () => set({ usuario: emptyDataset(), mode: "usuario" })
+        clearUserData: () => set({ usuario: emptyDataset(), mode: "usuario" }),
+
+        saveCustomExercise: (e) => {
+          const id = e.id || uid("cx_");
+          const ex: Exercise = { ...e, id, custom: true };
+          update((d) => {
+            const list = d.customExercises ?? [];
+            return {
+              ...d,
+              customExercises: list.some((x) => x.id === id) ? list.map((x) => (x.id === id ? ex : x)) : [...list, ex]
+            };
+          });
+          return id;
+        },
+        deleteCustomExercise: (id) =>
+          update((d) => ({
+            ...d,
+            customExercises: (d.customExercises ?? []).filter((x) => x.id !== id)
+          })),
+        addMeasurement: (date, cm) =>
+          update((d) => ({
+            ...d,
+            measurements: [...(d.measurements ?? []).filter((m) => m.date !== date), { id: uid("me_"), date, cm }].sort((a, b) => a.date.localeCompare(b.date))
+          })),
+        removeMeasurement: (id) =>
+          update((d) => ({
+            ...d,
+            measurements: (d.measurements ?? []).filter((m) => m.id !== id)
+          })),
+        markBackupDone: () =>
+          set((st) => ({
+            settings: {
+              ...st.settings,
+              lastBackupAt: Date.now(),
+              backupSnoozeUntil: undefined
+            }
+          })),
+        snoozeBackup: (days) =>
+          set((st) => ({
+            settings: {
+              ...st.settings,
+              backupSnoozeUntil: Date.now() + days * 86_400_000
+            }
+          }))
       };
     },
     {
@@ -188,6 +296,13 @@ export const useStore = create<Store>()(
     }
   )
 );
+
+// mantém os exercícios personalizados do conjunto ativo visíveis para todas as telas
+const activeCustom = (s: Store) => (s.mode === "demo" && s.demo ? s.demo : s.usuario).customExercises;
+syncCustomExercises(activeCustom(useStore.getState()));
+useStore.subscribe((s, prev) => {
+  if (activeCustom(s) !== activeCustom(prev) || s.mode !== prev.mode) syncCustomExercises(activeCustom(s));
+});
 
 /** Conjunto de dados ativo (usuário ou demonstração). */
 export function useData(): Dataset {

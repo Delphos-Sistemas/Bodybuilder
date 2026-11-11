@@ -1,22 +1,24 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { CustomExerciseForm } from "@/components/CustomExerciseForm";
 import { useMemo, useState } from "react";
 import { ExerciseCard } from "@/components/ExerciseCard";
 import { ExerciseSheet } from "@/components/ExerciseSheet";
 import { EmptyState, PageHeader } from "@/components/ui";
-import { EXERCISES } from "@/data/exercises";
+import { useAllExercises } from "@/lib/useExercises";
 import { matchesSearch } from "@/lib/text";
 import { EQUIPMENT, MUSCLES, type Equipment, type Muscle } from "@/lib/types";
-
-const usedMuscles = [...new Set(EXERCISES.map((e) => e.primary))] as Muscle[];
-const usedEquipment = [...new Set(EXERCISES.map((e) => e.equipment))] as Equipment[];
 
 export default function BibliotecaPage() {
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState<Muscle | "">("");
   const [equipment, setEquipment] = useState<Equipment | "">("");
   const [open, setOpen] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const EXERCISES = useAllExercises();
+  const usedMuscles = useMemo(() => [...new Set(EXERCISES.map((e) => e.primary))] as Muscle[], [EXERCISES]);
+  const usedEquipment = useMemo(() => [...new Set(EXERCISES.map((e) => e.equipment))] as Equipment[], [EXERCISES]);
 
   const list = useMemo(
     () =>
@@ -26,19 +28,30 @@ export default function BibliotecaPage() {
           (!equipment || e.equipment === equipment) &&
           matchesSearch([e.name, MUSCLES[e.primary], EQUIPMENT[e.equipment], ...e.secondary.map((m) => MUSCLES[m])], query)
       ),
-    [query, muscle, equipment]
+    [query, muscle, equipment, EXERCISES]
   );
 
   return (
     <div>
-      <PageHeader eyebrow={`${EXERCISES.length} exercícios`} title="Biblioteca" />
+      <PageHeader eyebrow={`${EXERCISES.length} exercícios`} title="Biblioteca">
+        <button type="button" className="btn-secondary" onClick={() => setCreating(true)}>
+          <Plus size={18} aria-hidden /> Criar exercício
+        </button>
+      </PageHeader>
       <div className="mb-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} aria-hidden />
           <label htmlFor="busca" className="sr-only">
             Buscar exercício
           </label>
-          <input id="busca" type="search" className="input pl-10" placeholder="Buscar (ex.: supino, triceps, agachamento)" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input
+            id="busca"
+            type="search"
+            className="input pl-10"
+            placeholder="Buscar (ex.: supino, triceps, agachamento)"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         </div>
         <div>
           <label htmlFor="filtro-musculo" className="sr-only">
@@ -96,6 +109,7 @@ export default function BibliotecaPage() {
         />
       )}
       <ExerciseSheet exerciseId={open} onClose={() => setOpen(null)} onSelect={setOpen} />
+      <CustomExerciseForm open={creating} onClose={() => setCreating(false)} onSaved={setOpen} />
     </div>
   );
 }

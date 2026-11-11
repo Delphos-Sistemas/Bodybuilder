@@ -35,7 +35,11 @@ export function workoutElapsed(session: Pick<Session, "startedAt" | "endedAt">, 
 
 export function formatDate(ts: number | string): string {
   const d = typeof ts === "string" ? new Date(`${ts}T12:00:00`) : new Date(ts);
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
 }
 
 export function formatDateShort(ts: number | string): string {

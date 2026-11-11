@@ -8,7 +8,7 @@ import { ExercisePicker } from "@/components/ExercisePicker";
 import { ExerciseSheet } from "@/components/ExerciseSheet";
 import { Card, EmptyState, Stepper } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
-import { getMedia } from "@/data/media";
+import { ExerciseThumb } from "@/components/ExerciseThumb";
 import { uid } from "@/lib/id";
 import { useData, useStore } from "@/lib/store";
 import type { Workout, WorkoutExercise } from "@/lib/types";
@@ -28,7 +28,17 @@ function Editor() {
   const existing = id ? data.workouts.find((w) => w.id === id) : undefined;
 
   if (id && !existing) {
-    return <EmptyState title="Treino não encontrado" text="Ele pode ter sido excluído." action={<Link className="btn-secondary" href="/treinos">Voltar aos treinos</Link>} />;
+    return (
+      <EmptyState
+        title="Treino não encontrado"
+        text="Ele pode ter sido excluído."
+        action={
+          <Link className="btn-secondary" href="/treinos">
+            Voltar aos treinos
+          </Link>
+        }
+      />
+    );
   }
   return <EditorForm key={existing?.id ?? "novo"} initial={existing} />;
 }
@@ -64,8 +74,17 @@ function EditorForm({ initial }: { initial?: Workout }) {
       document.getElementById("nome-treino")?.focus();
       return;
     }
-    const fixed = items.map((x) => ({ ...x, repsMax: Math.max(x.repsMin, x.repsMax) }));
-    saveWorkout({ id: initial?.id ?? "", name: name.trim(), notes: notes.trim(), exercises: fixed, createdAt: initial?.createdAt });
+    const fixed = items.map((x) => ({
+      ...x,
+      repsMax: Math.max(x.repsMin, x.repsMax)
+    }));
+    saveWorkout({
+      id: initial?.id ?? "",
+      name: name.trim(),
+      notes: notes.trim(),
+      exercises: fixed,
+      createdAt: initial?.createdAt
+    });
     router.push("/treinos");
   };
 
@@ -110,7 +129,13 @@ function EditorForm({ initial }: { initial?: Workout }) {
           <label htmlFor="obs-treino" className="label">
             Observações (opcional)
           </label>
-          <textarea id="obs-treino" className="input min-h-20 py-2" maxLength={500} value={notes} onChange={(e) => (setNotes(e.target.value), setDirty(true))} />
+          <textarea
+            id="obs-treino"
+            className="input min-h-20 py-2"
+            maxLength={500}
+            value={notes}
+            onChange={(e) => (setNotes(e.target.value), setDirty(true))}
+          />
         </div>
       </Card>
 
@@ -133,32 +158,80 @@ function EditorForm({ initial }: { initial?: Workout }) {
                 <Card className="space-y-3" data-testid="item-exercicio">
                   <div className="flex items-start gap-3">
                     <button type="button" onClick={() => setSheet(it.exerciseId)} className="shrink-0" aria-label={`Ver ficha de ${ex?.name}`}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={getMedia(it.exerciseId)?.poster} alt="" className="h-16 w-[86px] rounded-lg bg-[#ECEBE7] object-contain" width={86} height={64} />
+                      <ExerciseThumb id={it.exerciseId} className="h-16 w-[86px]" width={86} height={64} />
                     </button>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-muted">Exercício {i + 1}</p>
                       <h3 className="font-semibold leading-snug">{ex?.name ?? "Exercício removido da biblioteca"}</h3>
                     </div>
                     <div className="flex shrink-0 gap-1">
-                      <button type="button" className="btn-ghost min-h-11 px-2" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Mover ${ex?.name} para cima`}>
+                      <button
+                        type="button"
+                        className="btn-ghost min-h-11 px-2"
+                        disabled={i === 0}
+                        onClick={() => move(i, -1)}
+                        aria-label={`Mover ${ex?.name} para cima`}
+                      >
                         <ArrowUp size={18} aria-hidden />
                       </button>
-                      <button type="button" className="btn-ghost min-h-11 px-2" disabled={i === items.length - 1} onClick={() => move(i, 1)} aria-label={`Mover ${ex?.name} para baixo`}>
+                      <button
+                        type="button"
+                        className="btn-ghost min-h-11 px-2"
+                        disabled={i === items.length - 1}
+                        onClick={() => move(i, 1)}
+                        aria-label={`Mover ${ex?.name} para baixo`}
+                      >
                         <ArrowDown size={18} aria-hidden />
                       </button>
-                      <button type="button" className="btn-ghost min-h-11 px-2 text-danger" onClick={() => change((l) => l.filter((x) => x.uid !== it.uid))} aria-label={`Remover ${ex?.name}`}>
+                      <button
+                        type="button"
+                        className="btn-ghost min-h-11 px-2 text-danger"
+                        onClick={() => change((l) => l.filter((x) => x.uid !== it.uid))}
+                        aria-label={`Remover ${ex?.name}`}
+                      >
                         <Trash2 size={18} aria-hidden />
                       </button>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     <Stepper id={`series-${it.uid}`} label="Séries" value={it.sets} min={1} max={20} onChange={(v) => patch(it.uid, { sets: v })} />
-                    <Stepper id={`repmin-${it.uid}`} label={iso ? "Tempo mín. (s)" : "Repetições mín."} value={it.repsMin} min={1} max={300} onChange={(v) => patch(it.uid, { repsMin: v })} />
-                    <Stepper id={`repmax-${it.uid}`} label={iso ? "Tempo máx. (s)" : "Repetições máx."} value={it.repsMax} min={1} max={300} onChange={(v) => patch(it.uid, { repsMax: v })} />
-                    <Stepper id={`carga-${it.uid}`} label="Carga" suffix="kg" step={2.5} value={it.loadKg} min={0} max={1000} onChange={(v) => patch(it.uid, { loadKg: v })} />
+                    <Stepper
+                      id={`repmin-${it.uid}`}
+                      label={iso ? "Tempo mín. (s)" : "Repetições mín."}
+                      value={it.repsMin}
+                      min={1}
+                      max={300}
+                      onChange={(v) => patch(it.uid, { repsMin: v })}
+                    />
+                    <Stepper
+                      id={`repmax-${it.uid}`}
+                      label={iso ? "Tempo máx. (s)" : "Repetições máx."}
+                      value={it.repsMax}
+                      min={1}
+                      max={300}
+                      onChange={(v) => patch(it.uid, { repsMax: v })}
+                    />
+                    <Stepper
+                      id={`carga-${it.uid}`}
+                      label="Carga"
+                      suffix="kg"
+                      step={2.5}
+                      value={it.loadKg}
+                      min={0}
+                      max={1000}
+                      onChange={(v) => patch(it.uid, { loadKg: v })}
+                    />
                     <Stepper id={`rir-${it.uid}`} label="RIR" value={it.rir} min={0} max={10} onChange={(v) => patch(it.uid, { rir: v })} />
-                    <Stepper id={`descanso-${it.uid}`} label="Descanso" suffix="s" step={15} value={it.restSec} min={0} max={1800} onChange={(v) => patch(it.uid, { restSec: v })} />
+                    <Stepper
+                      id={`descanso-${it.uid}`}
+                      label="Descanso"
+                      suffix="s"
+                      step={15}
+                      value={it.restSec}
+                      min={0}
+                      max={1800}
+                      onChange={(v) => patch(it.uid, { restSec: v })}
+                    />
                   </div>
                 </Card>
               </li>

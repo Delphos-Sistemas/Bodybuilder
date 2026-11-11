@@ -7,7 +7,11 @@ export const metadata: Metadata = {
   description: "Planeje, execute e acompanhe seus treinos de musculação.",
   manifest: "/manifest.webmanifest",
   applicationName: "BODYBUILDER",
-  appleWebApp: { capable: true, title: "BODYBUILDER", statusBarStyle: "black-translucent" },
+  appleWebApp: {
+    capable: true,
+    title: "BODYBUILDER",
+    statusBarStyle: "black-translucent"
+  },
   icons: {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }]

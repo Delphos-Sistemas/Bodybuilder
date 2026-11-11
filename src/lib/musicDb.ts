@@ -2,7 +2,13 @@
 
 /** Faixas locais escolhidas pelo usuário, guardadas no IndexedDB do próprio navegador. */
 export type MusicStyle = "metal" | "rock" | "hiphop";
-export type LocalTrack = { id: string; style: MusicStyle; name: string; blob: Blob; addedAt: number };
+export type LocalTrack = {
+  id: string;
+  style: MusicStyle;
+  name: string;
+  blob: Blob;
+  addedAt: number;
+};
 
 const DB = "bodybuilder-musica";
 const STORE = "faixas";

@@ -67,7 +67,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
   if (!media) {
     return (
       <div className={clsx("flex aspect-[4/3] items-center justify-center rounded-xl bg-[#ECEBE7] p-4 text-center text-sm text-neutral-600", className)}>
-        Demonstração ainda não disponível para este exercício.
+        {exercise.custom ? "Exercício criado por você: sem demonstração em imagem." : "Demonstração ainda não disponível para este exercício."}
       </div>
     );
   }
@@ -140,7 +140,12 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
           )}
           {media.video && (
             <div className="inline-flex rounded-lg border border-line p-0.5" role="group" aria-label="Tipo de demonstração">
-              <button type="button" aria-pressed={view === "video"} onClick={() => setView("video")} className={clsx("flex min-h-10 items-center gap-1.5 rounded-md px-3 text-sm", view === "video" ? "bg-steel text-bronze-light" : "text-sand")}>
+              <button
+                type="button"
+                aria-pressed={view === "video"}
+                onClick={() => setView("video")}
+                className={clsx("flex min-h-10 items-center gap-1.5 rounded-md px-3 text-sm", view === "video" ? "bg-steel text-bronze-light" : "text-sand")}
+              >
                 <Film size={16} aria-hidden /> Vídeo
               </button>
               <button
@@ -176,7 +181,15 @@ function StaticFrames({ exercise, frames, large }: { exercise: Exercise; frames:
       {frames.map((src, i) => (
         <figure key={src} className="overflow-hidden rounded-xl bg-[#ECEBE7]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt={`${exercise.name}: ${labels[i].toLowerCase()}`} className="aspect-[4/3] w-full object-contain" loading="lazy" decoding="async" width={800} height={600} />
+          <img
+            src={src}
+            alt={`${exercise.name}: ${labels[i].toLowerCase()}`}
+            className="aspect-[4/3] w-full object-contain"
+            loading="lazy"
+            decoding="async"
+            width={800}
+            height={600}
+          />
           <figcaption className={clsx("bg-steel px-2 py-1.5 text-center font-medium text-sand", large ? "text-sm" : "text-xs")}>{labels[i]}</figcaption>
         </figure>
       ))}

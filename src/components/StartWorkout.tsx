@@ -7,7 +7,15 @@ import { useData, useStore } from "@/lib/store";
 import { playAlert } from "@/lib/audio";
 
 /** Botão "Iniciar treino" com tratamento de sessão já em andamento. */
-export function StartWorkoutButton({ workoutId, className = "btn-primary", label = "Iniciar treino" }: { workoutId: string; className?: string; label?: string }) {
+export function StartWorkoutButton({
+  workoutId,
+  className = "btn-primary",
+  label = "Iniciar treino"
+}: {
+  workoutId: string;
+  className?: string;
+  label?: string;
+}) {
   const router = useRouter();
   const data = useData();
   const startSession = useStore((s) => s.startSession);
@@ -19,7 +27,11 @@ export function StartWorkoutButton({ workoutId, className = "btn-primary", label
 
   const start = () => {
     if (startSession(workoutId)) {
-      playAlert("inicio", { sound: settings.audioEnabled, vibrate: settings.vibration, volume: settings.alertVolume });
+      playAlert("inicio", {
+        sound: settings.audioEnabled,
+        vibrate: settings.vibration,
+        volume: settings.alertVolume
+      });
       router.push("/treino-ativo");
     }
   };

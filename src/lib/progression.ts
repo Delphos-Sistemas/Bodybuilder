@@ -6,13 +6,18 @@ export type LastPerformance = { date: number; sets: SetLog[] };
 export function lastPerformance(sessions: Session[], exerciseId: string, excludeSessionId?: string): LastPerformance | null {
   for (const s of sessions) {
     if (!s.endedAt || s.id === excludeSessionId) continue;
-    const sets = s.items.filter((i) => i.exerciseId === exerciseId).flatMap((i) => i.sets);
+    const sets = s.items.filter((i) => i.exerciseId === exerciseId).flatMap((i) => i.sets.filter((x) => !x.kind));
     if (sets.length) return { date: s.startedAt, sets };
   }
   return null;
 }
 
-export type Suggestion = { loadKg: number; repsTarget: number; reason: string; kind: "subir" | "manter" | "reduzir" };
+export type Suggestion = {
+  loadKg: number;
+  repsTarget: number;
+  reason: string;
+  kind: "subir" | "manter" | "reduzir";
+};
 
 export function loadIncrement(equipment: Equipment): number {
   if (equipment === "peso-corporal") return 0;
@@ -37,7 +42,12 @@ export function suggestNext(planned: SessionItem["planned"], last: LastPerforman
 
   if (allTop && minRir >= planned.rir) {
     if (inc === 0) {
-      return { loadKg: lastLoad, repsTarget: planned.repsMax + 1, kind: "subir", reason: "Você completou o topo das repetições com folga. Tente uma repetição a mais por série." };
+      return {
+        loadKg: lastLoad,
+        repsTarget: planned.repsMax + 1,
+        kind: "subir",
+        reason: "Você completou o topo das repetições com folga. Tente uma repetição a mais por série."
+      };
     }
     return {
       loadKg: round(lastLoad + inc),

@@ -11,10 +11,17 @@ describe("progressão de carga", () => {
   });
   it("halteres sobem 2 kg; peso corporal sobe repetições", () => {
     expect(suggestNext(planned, { date: 0, sets: [set(10, 20, 2), set(10, 20, 2), set(10, 20, 2)] }, "halteres")?.loadKg).toBe(22);
-    expect(suggestNext(planned, { date: 0, sets: [set(10, 0, 2), set(10, 0, 2), set(10, 0, 2)] }, "peso-corporal")).toMatchObject({ loadKg: 0, repsTarget: 11 });
+    expect(suggestNext(planned, { date: 0, sets: [set(10, 0, 2), set(10, 0, 2), set(10, 0, 2)] }, "peso-corporal")).toMatchObject({
+      loadKg: 0,
+      repsTarget: 11
+    });
   });
   it("mantém a carga quando ainda não completou a faixa", () => {
-    expect(suggestNext(planned, { date: 0, sets: [set(10, 60, 2), set(9, 60, 1), set(8, 60, 1)] }, "barra")).toMatchObject({ kind: "manter", loadKg: 60, repsTarget: 10 });
+    expect(suggestNext(planned, { date: 0, sets: [set(10, 60, 2), set(9, 60, 1), set(8, 60, 1)] }, "barra")).toMatchObject({
+      kind: "manter",
+      loadKg: 60,
+      repsTarget: 10
+    });
   });
   it("reduz quando ficou abaixo da faixa chegando à falha", () => {
     expect(suggestNext(planned, { date: 0, sets: [set(7, 70, 0), set(6, 70, 0)] }, "barra")).toMatchObject({ kind: "reduzir", loadKg: 67.5 });
@@ -24,7 +31,13 @@ describe("progressão de carga", () => {
   });
   it("encontra a última sessão com o exercício", () => {
     const mk = (id: string, ex: string, load: number): Session => ({
-      id, workoutId: "w", workoutName: "w", startedAt: 1, endedAt: 2, currentIndex: 0, rest: null,
+      id,
+      workoutId: "w",
+      workoutName: "w",
+      startedAt: 1,
+      endedAt: 2,
+      currentIndex: 0,
+      rest: null,
       items: [{ exerciseId: ex, planned, sets: [set(10, load, 2)], skipped: false }]
     });
     const last = lastPerformance([mk("a", "stiff", 50), mk("b", "supino-reto", 70), mk("c", "supino-reto", 60)], "supino-reto");

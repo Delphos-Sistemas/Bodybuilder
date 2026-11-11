@@ -42,10 +42,14 @@ export function UpdateBanner() {
   return (
     <div role="status" className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-xl border border-bronze/60 bg-steel px-4 py-3 text-sm">
       <span>Nova versão do app disponível.</span>
-      <button type="button" className="btn-primary min-h-10 px-3" onClick={() => {
+      <button
+        type="button"
+        className="btn-primary min-h-10 px-3"
+        onClick={() => {
           updateRequested = true;
           waiting.postMessage({ type: "SKIP_WAITING" });
-        }}>
+        }}
+      >
         Atualizar
       </button>
     </div>

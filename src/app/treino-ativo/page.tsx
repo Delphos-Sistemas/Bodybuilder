@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, ChevronDown, Flag, SkipForward, Square, Timer, BookOpen } from "lucide-react";
+import { Check, ChevronDown, Flag, SkipForward, Square, Timer, BookOpen, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -11,12 +11,13 @@ import { MusicPlayer } from "@/components/MusicPlayer";
 import { EmptyState, ProgressBar, Stepper } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
 import { playAlert } from "@/lib/audio";
-import { currentItem, isItemDone, isSessionComplete, sessionSetCount } from "@/lib/session";
+import { currentItem, isItemDone, isSessionComplete, sessionSetCount, workingSets } from "@/lib/session";
+import { estimate1RM, exerciseRecords, setRecordHits } from "@/lib/records";
 import { useData, useStore } from "@/lib/store";
 import { fmt, lastPerformance, platesPerSide, suggestNext } from "@/lib/progression";
 import { formatClock, formatDateShort, restRemaining, secondsBetween, workoutElapsed } from "@/lib/time";
 import { useNow } from "@/lib/useHydrated";
-import { EQUIPMENT, MUSCLES } from "@/lib/types";
+import { EQUIPMENT, MUSCLES, SET_KINDS, type SetKind } from "@/lib/types";
 
 export default function TreinoAtivoPage() {
   const router = useRouter();
@@ -29,13 +30,21 @@ export default function TreinoAtivoPage() {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [flash, setFlash] = useState(0);
   const [showPain, setShowPain] = useState(false);
-  const [form, setForm] = useState({ loadKg: 0, reps: 0, rir: 2, pain: "" });
+  const [form, setForm] = useState<{
+    loadKg: number;
+    reps: number;
+    rir: number;
+    pain: string;
+    kind: SetKind | "";
+  }>({ loadKg: 0, reps: 0, rir: 2, pain: "", kind: "" });
+  const [record, setRecord] = useState<string | null>(null);
   const alertedRest = useRef<number | null>(null);
 
   const item = session ? currentItem(session) : undefined;
   const exercise = item ? EXERCISE_MAP[item.exerciseId] : undefined;
-  const setsDone = item?.sets.length ?? 0;
-  const formKey = `${session?.id}:${session?.currentIndex}:${setsDone}`;
+  const setsDone = item ? workingSets(item.sets).length : 0;
+  const extras = item ? item.sets.filter((s) => s.kind) : [];
+  const formKey = `${session?.id}:${session?.currentIndex}:${item?.sets.length ?? 0}`;
   const last = item ? lastPerformance(data.sessions, item.exerciseId) : null;
   const suggestion = item && exercise ? suggestNext(item.planned, last, exercise.equipment) : null;
   const [barKg, setBarKg] = useState(20);
@@ -43,12 +52,13 @@ export default function TreinoAtivoPage() {
   // preenche o formulário com a última série registrada ou com o planejado
   useEffect(() => {
     if (!item) return;
-    const prev = item.sets[item.sets.length - 1];
+    const prev = workingSets(item.sets).at(-1);
     setForm({
       loadKg: prev?.loadKg ?? suggestion?.loadKg ?? item.planned.loadKg,
       reps: prev?.reps ?? suggestion?.repsTarget ?? item.planned.repsMax,
       rir: item.planned.rir,
-      pain: ""
+      pain: "",
+      kind: ""
     });
     setShowPain(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,8 +68,16 @@ export default function TreinoAtivoPage() {
   useEffect(() => {
     if (!session) return;
     let lock: { release: () => Promise<void> } | null = null;
-    const nav = navigator as Navigator & { wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> } };
-    const request = () => nav.wakeLock?.request("screen").then((l) => (lock = l)).catch(() => undefined);
+    const nav = navigator as Navigator & {
+      wakeLock?: {
+        request: (t: "screen") => Promise<{ release: () => Promise<void> }>;
+      };
+    };
+    const request = () =>
+      nav.wakeLock
+        ?.request("screen")
+        .then((l) => (lock = l))
+        .catch(() => undefined);
     void request();
     const onVis = () => document.visibilityState === "visible" && void request();
     document.addEventListener("visibilitychange", onVis);
@@ -68,6 +86,12 @@ export default function TreinoAtivoPage() {
       void lock?.release().catch(() => undefined);
     };
   }, [session?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!record) return;
+    const t = setTimeout(() => setRecord(null), 6000);
+    return () => clearTimeout(t);
+  }, [record]);
 
   const rest = session?.rest ?? null;
   const remaining = restRemaining(rest, now);
@@ -78,7 +102,11 @@ export default function TreinoAtivoPage() {
     alertedRest.current = rest.endsAt;
     // se o descanso terminou há muito tempo (app fechado), não toca o alerta atrasado
     if (now - rest.endsAt < 30_000) {
-      playAlert("fim-descanso", { sound: settings.audioEnabled, vibrate: settings.vibration, volume: settings.alertVolume });
+      playAlert("fim-descanso", {
+        sound: settings.audioEnabled,
+        vibrate: settings.vibration,
+        volume: settings.alertVolume
+      });
     }
     store.endRest();
   }, [rest, remaining, now, settings, store]);
@@ -100,17 +128,43 @@ export default function TreinoAtivoPage() {
   const total = workoutElapsed(session, now);
   const exerciseTime = item?.startedAt ? secondsBetween(item.startedAt, now) : 0;
   const complete = isSessionComplete(session);
-  const totalSets = session.items.reduce((a, it) => a + (it.skipped ? it.sets.length : it.planned.sets), 0);
+  const totalSets = session.items.reduce((a, it) => a + (it.skipped ? workingSets(it.sets).length : it.planned.sets), 0);
   const iso = exercise?.isometric;
 
   const finish = (manual: boolean) => {
     const id = store.finish(manual);
-    playAlert("encerramento", { sound: settings.audioEnabled, vibrate: settings.vibration, volume: settings.alertVolume });
+    playAlert("encerramento", {
+      sound: settings.audioEnabled,
+      vibrate: settings.vibration,
+      volume: settings.alertVolume
+    });
     router.push(id ? `/historico?sessao=${id}` : "/historico");
   };
 
   const logSet = () => {
-    store.logSet({ loadKg: form.loadKg, reps: form.reps, rir: form.rir, ...(form.pain.trim() ? { pain: form.pain.trim() } : {}) });
+    if (item && !form.kind) {
+      // recorde em relação ao histórico e às séries anteriores desta sessão
+      const history = exerciseRecords(data.sessions, item.exerciseId);
+      if (history.maxLoad) {
+        const before = exerciseRecords([...data.sessions, { ...session, endedAt: now }], item.exerciseId);
+        const hits = setRecordHits({ loadKg: form.loadKg, reps: form.reps }, before, item.exerciseId);
+        if (hits.length) {
+          const h = hits.find((x) => x.type === "carga") ?? hits[0];
+          setRecord(
+            h.type === "carga"
+              ? `Novo recorde de carga: ${fmt(h.value)} kg (antes ${fmt(h.previous ?? 0)} kg).`
+              : `Novo recorde de força: 1RM estimado de ${fmt(h.value)} kg (antes ${fmt(h.previous ?? 0)} kg).`
+          );
+        }
+      }
+    }
+    store.logSet({
+      loadKg: form.loadKg,
+      reps: form.reps,
+      rir: form.rir,
+      ...(form.kind ? { kind: form.kind } : {}),
+      ...(form.pain.trim() ? { pain: form.pain.trim() } : {})
+    });
     setFlash((f) => f + 1);
   };
 
@@ -215,7 +269,11 @@ export default function TreinoAtivoPage() {
                   {suggestion && (
                     <p className={clsx("mt-1", suggestion.kind === "subir" ? "text-ok" : suggestion.kind === "reduzir" ? "text-danger" : "text-sand")}>
                       <strong>
-                        Sugestão: {exercise.equipment === "peso-corporal" ? `${suggestion.repsTarget} ${iso ? "s" : "repetições"}` : `${fmt(suggestion.loadKg)} kg × ${suggestion.repsTarget}`}.
+                        Sugestão:{" "}
+                        {exercise.equipment === "peso-corporal"
+                          ? `${suggestion.repsTarget} ${iso ? "s" : "repetições"}`
+                          : `${fmt(suggestion.loadKg)} kg × ${suggestion.repsTarget}`}
+                        .
                       </strong>{" "}
                       <span className="text-muted">{suggestion.reason}</span>
                     </p>
@@ -223,6 +281,17 @@ export default function TreinoAtivoPage() {
                 </div>
               )}
             </section>
+
+            <div aria-live="polite">
+              {record && (
+                <p
+                  className="anim-fade flex items-center gap-2 rounded-xl border border-bronze bg-bronze/15 px-3 py-2 text-sm font-semibold text-bronze-light"
+                  data-testid="recorde"
+                >
+                  <Trophy size={18} aria-hidden /> {record}
+                </p>
+              )}
+            </div>
 
             {/* Painel de série: altura fixa para os botões não mudarem de lugar */}
             <section aria-labelledby="serie-atual" className="card space-y-4">
@@ -232,9 +301,23 @@ export default function TreinoAtivoPage() {
                 </h2>
                 <ol className="mt-1 flex gap-1.5" aria-label="Séries concluídas">
                   {Array.from({ length: item.planned.sets }, (_, i) => (
-                    <li key={i} className={clsx("h-2.5 w-7 rounded-full", i < setsDone ? "bg-ok" : "bg-steel")} aria-label={i < setsDone ? `Série ${i + 1} concluída` : `Série ${i + 1} pendente`} />
+                    <li
+                      key={i}
+                      className={clsx("h-2.5 w-7 rounded-full", i < setsDone ? "bg-ok" : "bg-steel")}
+                      aria-label={i < setsDone ? `Série ${i + 1} concluída` : `Série ${i + 1} pendente`}
+                    />
                   ))}
                 </ol>
+                {extras.length > 0 && (
+                  <p className="mt-1 text-xs text-muted" data-testid="series-extras">
+                    Extras:{" "}
+                    {(Object.keys(SET_KINDS) as SetKind[])
+                      .map((k) => [k, extras.filter((x) => x.kind === k).length] as const)
+                      .filter(([, n]) => n)
+                      .map(([k, n]) => `${n} ${SET_KINDS[k].toLowerCase()}`)
+                      .join(" · ")}
+                  </p>
+                )}
               </div>
 
               <div className={clsx("flex h-[72px] items-center gap-2 rounded-xl px-3", rest ? "bg-bronze/10" : "bg-iron")} aria-live="polite">
@@ -244,10 +327,20 @@ export default function TreinoAtivoPage() {
                       <span className="block text-xs text-bronze-light">Descanso</span>
                       <span className="font-display text-2xl font-bold tabular-nums">{formatClock(remaining)}</span>
                     </span>
-                    <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => store.changeRest(-15)} aria-label="Reduzir descanso em 15 segundos">
+                    <button
+                      type="button"
+                      className="btn-secondary min-h-11 px-3"
+                      onClick={() => store.changeRest(-15)}
+                      aria-label="Reduzir descanso em 15 segundos"
+                    >
                       −15
                     </button>
-                    <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => store.changeRest(15)} aria-label="Aumentar descanso em 15 segundos">
+                    <button
+                      type="button"
+                      className="btn-secondary min-h-11 px-3"
+                      onClick={() => store.changeRest(15)}
+                      aria-label="Aumentar descanso em 15 segundos"
+                    >
                       +15
                     </button>
                     <button type="button" className="btn-ghost min-h-11 px-3 text-sm" aria-label="Pular descanso" onClick={() => store.endRest()}>
@@ -263,17 +356,51 @@ export default function TreinoAtivoPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="col-span-2">
-                  <Stepper id="carga" label="Carga" suffix="kg" step={2.5} max={1000} value={form.loadKg} onChange={(v) => setForm((f) => ({ ...f, loadKg: v }))} />
-                  {(exercise.equipment === "barra" || exercise.equipment === "smith") && (
-                    <PlateLine totalKg={form.loadKg} barKg={barKg} onBar={setBarKg} />
-                  )}
+                  <Stepper
+                    id="carga"
+                    label="Carga"
+                    suffix="kg"
+                    step={2.5}
+                    max={1000}
+                    value={form.loadKg}
+                    onChange={(v) => setForm((f) => ({ ...f, loadKg: v }))}
+                  />
+                  {(exercise.equipment === "barra" || exercise.equipment === "smith") && <PlateLine totalKg={form.loadKg} barKg={barKg} onBar={setBarKg} />}
                 </div>
                 <Stepper id="reps" label={iso ? "Segundos" : "Repetições"} max={300} value={form.reps} onChange={(v) => setForm((f) => ({ ...f, reps: v }))} />
                 <Stepper id="rir" label="RIR" max={10} value={form.rir} onChange={(v) => setForm((f) => ({ ...f, rir: v }))} />
               </div>
 
+              <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Tipo de série">
+                {(
+                  [
+                    ["", "Série válida"],
+                    ["aquecimento", SET_KINDS.aquecimento],
+                    ["drop", SET_KINDS.drop]
+                  ] as const
+                ).map(([k, text]) => (
+                  <button
+                    key={k || "normal"}
+                    type="button"
+                    role="radio"
+                    aria-checked={form.kind === k}
+                    className={clsx("chip", form.kind === k && "chip-on")}
+                    onClick={() => setForm((f) => ({ ...f, kind: k }))}
+                  >
+                    {text}
+                  </button>
+                ))}
+                {form.kind && <span className="text-xs text-muted">Não conta nas séries da meta, não inicia descanso e fica fora dos recordes.</span>}
+              </div>
+
               <div>
-                <button type="button" className="flex min-h-10 items-center gap-1 text-sm text-sand" aria-expanded={showPain} aria-controls="campo-dor" onClick={() => setShowPain((v) => !v)}>
+                <button
+                  type="button"
+                  className="flex min-h-10 items-center gap-1 text-sm text-sand"
+                  aria-expanded={showPain}
+                  aria-controls="campo-dor"
+                  onClick={() => setShowPain((v) => !v)}
+                >
                   <ChevronDown size={16} className={clsx("transition-transform", showPain && "rotate-180")} aria-hidden />
                   Registrar dor ou desconforto (opcional)
                 </button>
@@ -282,19 +409,34 @@ export default function TreinoAtivoPage() {
                     <label htmlFor="dor" className="sr-only">
                       Descreva a dor ou desconforto
                     </label>
-                    <input id="dor" className="input" maxLength={200} placeholder="Ex.: incômodo leve no ombro direito" value={form.pain} onChange={(e) => setForm((f) => ({ ...f, pain: e.target.value }))} />
+                    <input
+                      id="dor"
+                      className="input"
+                      maxLength={200}
+                      placeholder="Ex.: incômodo leve no ombro direito"
+                      value={form.pain}
+                      onChange={(e) => setForm((f) => ({ ...f, pain: e.target.value }))}
+                    />
                     <p className="mt-1 text-xs text-muted">Se a dor for forte ou persistir, interrompa o exercício e procure um profissional.</p>
                   </div>
                 )}
               </div>
 
               <button key={flash} type="button" className={clsx("btn-primary w-full text-lg", flash > 0 && "anim-set-done")} onClick={logSet}>
-                <Check size={20} aria-hidden /> Concluir série
+                <Check size={20} aria-hidden />{" "}
+                {form.kind === "aquecimento" ? "Registrar aquecimento" : form.kind === "drop" ? "Registrar drop set" : "Concluir série"}
               </button>
+              {estimate1RM(form.loadKg, form.reps) !== null && !form.kind && !iso && (
+                <p className="-mt-2 text-center text-xs text-muted">1RM estimado desta série: {fmt(estimate1RM(form.loadKg, form.reps)!)} kg</p>
+              )}
             </section>
           </>
         )
       )}
+
+      <p className="text-center text-xs text-muted" data-testid="aviso-tela">
+        Mantenha o app aberto durante o descanso: com a tela bloqueada, o navegador pode silenciar o alerta. O tempo continua sendo contado corretamente.
+      </p>
 
       <section className="grid grid-cols-2 gap-2" aria-label="Ações do treino">
         <button type="button" className="btn-secondary" disabled={complete} onClick={() => store.skipCurrent()}>
@@ -345,7 +487,12 @@ function PlateLine({ totalKg, barKg, onBar }: { totalKg: number; barKg: number; 
   return (
     <div className="mt-1.5 flex min-h-8 flex-wrap items-center gap-x-2 text-xs text-muted" data-testid="anilhas">
       <label htmlFor="barra-kg">Barra</label>
-      <select id="barra-kg" className="rounded-md border border-line bg-iron px-1 py-0.5 text-sand" value={barKg} onChange={(e) => onBar(Number(e.target.value))}>
+      <select
+        id="barra-kg"
+        className="rounded-md border border-line bg-iron px-1 py-0.5 text-sand"
+        value={barKg}
+        onChange={(e) => onBar(Number(e.target.value))}
+      >
         {[20, 15, 10, 0].map((b) => (
           <option key={b} value={b}>
             {b ? `${b} kg` : "sem barra"}

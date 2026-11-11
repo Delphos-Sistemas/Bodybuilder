@@ -6,7 +6,13 @@ export const MUSIC_STYLES: { id: MusicStyle; label: string }[] = [
   { id: "hiphop", label: "Hip Hop" }
 ];
 
-export type BundledTrack = { title: string; artist: string; src: string; license: string; sourceUrl: string };
+export type BundledTrack = {
+  title: string;
+  artist: string;
+  src: string;
+  license: string;
+  sourceUrl: string;
+};
 
 /**
  * Faixas incluídas no app. Vazio de propósito: ainda não há faixas com licença
@@ -24,7 +30,16 @@ export const BUNDLED_TRACKS: Record<MusicStyle, BundledTrack[]> = {
  * O usuário pode trocar por qualquer playlist, álbum ou artista colando o link.
  */
 export const SPOTIFY_DEFAULTS: Record<MusicStyle, { title: string; url: string }> = {
-  metal: { title: "Kickass Metal", url: "https://open.spotify.com/playlist/37i9dQZF1DWTcqUzwhNmKv" },
-  rock: { title: "Rock Classics", url: "https://open.spotify.com/playlist/37i9dQZF1DWXRqgorJj26U" },
-  hiphop: { title: "RapCaviar", url: "https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd" }
+  metal: {
+    title: "Kickass Metal",
+    url: "https://open.spotify.com/playlist/37i9dQZF1DWTcqUzwhNmKv"
+  },
+  rock: {
+    title: "Rock Classics",
+    url: "https://open.spotify.com/playlist/37i9dQZF1DWXRqgorJj26U"
+  },
+  hiphop: {
+    title: "RapCaviar",
+    url: "https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd"
+  }
 };

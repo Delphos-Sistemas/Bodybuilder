@@ -1,7 +1,14 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
 
-export function Card({ className, children, ...rest }: { className?: string; children: ReactNode } & React.HTMLAttributes<HTMLDivElement>) {
+export function Card({
+  className,
+  children,
+  ...rest
+}: {
+  className?: string;
+  children: ReactNode;
+} & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={clsx("card", className)} {...rest}>
       {children}
@@ -34,7 +41,14 @@ export function EmptyState({ title, text, action }: { title: string; text: strin
 export function ProgressBar({ value, label }: { value: number; label: string }) {
   const pct = Math.max(0, Math.min(100, Math.round(value * 100)));
   return (
-    <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} className="h-2.5 w-full overflow-hidden rounded-full bg-steel">
+    <div
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct}
+      className="h-2.5 w-full overflow-hidden rounded-full bg-steel"
+    >
       <div className="progress-bar h-full rounded-full bg-bronze" style={{ width: `${pct}%` }} />
     </div>
   );
@@ -67,7 +81,12 @@ export function Stepper({
         {suffix && <span className="text-muted"> ({suffix})</span>}
       </label>
       <div className="flex items-stretch overflow-hidden rounded-xl border border-line bg-iron focus-within:border-bronze">
-        <button type="button" aria-label={`Diminuir ${label.toLowerCase()}`} className="w-11 shrink-0 text-xl text-sand hover:bg-steel" onClick={() => onChange(clamp(value - step))}>
+        <button
+          type="button"
+          aria-label={`Diminuir ${label.toLowerCase()}`}
+          className="w-11 shrink-0 text-xl text-sand hover:bg-steel"
+          onClick={() => onChange(clamp(value - step))}
+        >
           −
         </button>
         <div className="flex min-w-0 flex-1 items-center justify-center">
@@ -83,7 +102,12 @@ export function Stepper({
             onChange={(e) => onChange(clamp(parseFloat(e.target.value.replace(",", ".")) || 0))}
           />
         </div>
-        <button type="button" aria-label={`Aumentar ${label.toLowerCase()}`} className="w-11 shrink-0 text-xl text-sand hover:bg-steel" onClick={() => onChange(clamp(value + step))}>
+        <button
+          type="button"
+          aria-label={`Aumentar ${label.toLowerCase()}`}
+          className="w-11 shrink-0 text-xl text-sand hover:bg-steel"
+          onClick={() => onChange(clamp(value + step))}
+        >
           +
         </button>
       </div>
@@ -91,7 +115,19 @@ export function Stepper({
   );
 }
 
-export function Toggle({ checked, onChange, label, description, id }: { checked: boolean; onChange: (v: boolean) => void; label: string; description?: string; id: string }) {
+export function Toggle({
+  checked,
+  onChange,
+  label,
+  description,
+  id
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  description?: string;
+  id: string;
+}) {
   return (
     <div className="flex items-center justify-between gap-4 py-2">
       <div>

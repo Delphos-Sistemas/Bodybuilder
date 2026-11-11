@@ -57,7 +57,10 @@ export default function TreinosPage() {
                     </p>
                   </div>
                   <p className="line-clamp-2 text-sm text-sand">
-                    {w.exercises.map((e) => EXERCISE_MAP[e.exerciseId]?.name).filter(Boolean).join(" · ") || "Nenhum exercício adicionado."}
+                    {w.exercises
+                      .map((e) => EXERCISE_MAP[e.exerciseId]?.name)
+                      .filter(Boolean)
+                      .join(" · ") || "Nenhum exercício adicionado."}
                   </p>
                   <div className="mt-auto flex flex-wrap gap-2">
                     <StartWorkoutButton workoutId={w.id} className="btn-primary min-h-11 flex-1" />

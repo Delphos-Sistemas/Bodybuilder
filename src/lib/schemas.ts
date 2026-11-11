@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EQUIPMENT, EXPERIENCE, GOALS } from "./types";
+import { EQUIPMENT, EXPERIENCE, GOALS, MEASUREMENTS, MUSCLES } from "./types";
 
 const equipment = z.enum(Object.keys(EQUIPMENT) as [keyof typeof EQUIPMENT, ...(keyof typeof EQUIPMENT)[]]);
 
@@ -28,6 +28,7 @@ const setLogSchema = z.object({
   loadKg: z.number().min(0),
   rir: z.number().min(0),
   pain: z.string().max(200).optional(),
+  kind: z.enum(["aquecimento", "drop"]).optional(),
   completedAt: z.number()
 });
 
@@ -53,6 +54,21 @@ const sessionSchema = z.object({
   rest: z.object({ startedAt: z.number(), endsAt: z.number() }).nullable()
 });
 
+const muscle = z.enum(Object.keys(MUSCLES) as [keyof typeof MUSCLES, ...(keyof typeof MUSCLES)[]]);
+
+export const customExerciseSchema = z.object({
+  id: z.string().regex(/^cx_/),
+  name: z.string().min(1).max(80),
+  primary: muscle,
+  secondary: z.array(muscle),
+  equipment,
+  isometric: z.boolean().optional(),
+  instructions: z.array(z.string().max(300)).max(10),
+  errors: z.array(z.string().max(300)).max(10),
+  substitutions: z.array(z.string()).max(10),
+  custom: z.boolean().optional()
+});
+
 export const profileSchema = z.object({
   name: z.string().max(60),
   goal: z.enum(Object.keys(GOALS) as [keyof typeof GOALS, ...(keyof typeof GOALS)[]]),
@@ -68,7 +84,23 @@ export const datasetSchema = z.object({
   workouts: z.array(workoutSchema),
   sessions: z.array(sessionSchema),
   activeSession: sessionSchema.nullable(),
-  bodyWeights: z.array(z.object({ id: z.string(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), kg: z.number().min(20).max(400) }))
+  bodyWeights: z.array(
+    z.object({
+      id: z.string(),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      kg: z.number().min(20).max(400)
+    })
+  ),
+  customExercises: z.array(customExerciseSchema).optional(),
+  measurements: z
+    .array(
+      z.object({
+        id: z.string(),
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        cm: z.partialRecord(z.enum(Object.keys(MEASUREMENTS) as [keyof typeof MEASUREMENTS, ...(keyof typeof MEASUREMENTS)[]]), z.number().min(10).max(300))
+      })
+    )
+    .optional()
 });
 
 export const exportSchema = z.object({

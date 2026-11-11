@@ -9,7 +9,11 @@ export function buildDemoDataset(now: number): Dataset {
   const workouts = workoutsFromTemplate(TEMPLATES[0], base).map((w, i) => ({
     ...w,
     id: `demo_w${i}`,
-    exercises: w.exercises.map((e, j) => ({ ...e, uid: `demo_we${i}_${j}`, loadKg: demoStartLoad(e.exerciseId) }))
+    exercises: w.exercises.map((e, j) => ({
+      ...e,
+      uid: `demo_we${i}_${j}`,
+      loadKg: demoStartLoad(e.exerciseId)
+    }))
   }));
   const sessions: Session[] = [];
   let n = 0;
@@ -33,7 +37,14 @@ export function buildDemoDataset(now: number): Dataset {
       });
       return {
         exerciseId: e.exerciseId,
-        planned: { sets: e.sets, repsMin: e.repsMin, repsMax: e.repsMax, loadKg: e.loadKg, rir: e.rir, restSec: e.restSec },
+        planned: {
+          sets: e.sets,
+          repsMin: e.repsMin,
+          repsMax: e.repsMax,
+          loadKg: e.loadKg,
+          rir: e.rir,
+          restSec: e.restSec
+        },
         sets,
         skipped: false,
         startedAt: sets[0].completedAt - 40_000,
@@ -55,7 +66,11 @@ export function buildDemoDataset(now: number): Dataset {
   const bodyWeights = Array.from({ length: 9 }, (_, i) => {
     const d = new Date(base + i * 3 * DAY + DAY);
     const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return { id: `demo_bw${i}`, date, kg: Math.round((82.4 - i * 0.25 + (i % 2 ? 0.3 : 0)) * 10) / 10 };
+    return {
+      id: `demo_bw${i}`,
+      date,
+      kg: Math.round((82.4 - i * 0.25 + (i % 2 ? 0.3 : 0)) * 10) / 10
+    };
   });
   return {
     profile: {

@@ -16,11 +16,7 @@ export function TrainingCalendar({ sessions }: { sessions: Session[] }) {
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
-    for (const s of sessions)
-      m.set(
-        dayKey(new Date(s.startedAt)),
-        (m.get(dayKey(new Date(s.startedAt))) ?? 0) + 1
-      );
+    for (const s of sessions) m.set(dayKey(new Date(s.startedAt)), (m.get(dayKey(new Date(s.startedAt))) ?? 0) + 1);
     return m;
   }, [sessions]);
 
@@ -29,31 +25,17 @@ export function TrainingCalendar({ sessions }: { sessions: Session[] }) {
   const first = new Date(year, month, 1).getDay();
   const total = new Date(year, month + 1, 0).getDate();
   const today = dayKey(new Date());
-  const cells: (number | null)[] = [
-    ...Array<null>(first).fill(null),
-    ...Array.from({ length: total }, (_, i) => i + 1)
-  ];
-  const trained = cells.filter(
-    (d) => d && counts.has(dayKey(new Date(year, month, d)))
-  ).length;
+  const cells: (number | null)[] = [...Array<null>(first).fill(null), ...Array.from({ length: total }, (_, i) => i + 1)];
+  const trained = cells.filter((d) => d && counts.has(dayKey(new Date(year, month, d)))).length;
   const title = cursor.toLocaleDateString("pt-BR", {
     month: "long",
     year: "numeric"
   });
 
   return (
-    <section
-      aria-labelledby="calendario-titulo"
-      className="rounded-2xl border border-line bg-graphite p-4"
-      data-testid="calendario"
-    >
+    <section aria-labelledby="calendario-titulo" className="rounded-2xl border border-line bg-graphite p-4" data-testid="calendario">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          className="btn-ghost min-h-10 px-2"
-          onClick={() => setCursor(new Date(year, month - 1, 1))}
-          aria-label="Mês anterior"
-        >
+        <button type="button" className="btn-ghost min-h-10 px-2" onClick={() => setCursor(new Date(year, month - 1, 1))} aria-label="Mês anterior">
           <ChevronLeft size={18} aria-hidden />
         </button>
         <div className="text-center">
@@ -64,20 +46,11 @@ export function TrainingCalendar({ sessions }: { sessions: Session[] }) {
             {trained} {trained === 1 ? "dia treinado" : "dias treinados"}
           </p>
         </div>
-        <button
-          type="button"
-          className="btn-ghost min-h-10 px-2"
-          onClick={() => setCursor(new Date(year, month + 1, 1))}
-          aria-label="Próximo mês"
-        >
+        <button type="button" className="btn-ghost min-h-10 px-2" onClick={() => setCursor(new Date(year, month + 1, 1))} aria-label="Próximo mês">
           <ChevronRight size={18} aria-hidden />
         </button>
       </div>
-      <div
-        className="grid grid-cols-7 gap-1 text-center text-xs"
-        role="grid"
-        aria-label={`Dias treinados em ${title}`}
-      >
+      <div className="grid grid-cols-7 gap-1 text-center text-xs" role="grid" aria-label={`Dias treinados em ${title}`}>
         {WEEKDAYS.map((w) => (
           <div key={w} className="pb-1 text-muted" aria-hidden>
             {w}

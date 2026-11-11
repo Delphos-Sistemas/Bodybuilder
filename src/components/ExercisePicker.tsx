@@ -2,8 +2,9 @@
 
 import { Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { EXERCISES } from "@/data/exercises";
-import { getMedia } from "@/data/media";
+import { useAllExercises } from "@/lib/useExercises";
+import { CustomExerciseForm } from "./CustomExerciseForm";
+import { ExerciseThumb } from "./ExerciseThumb";
 import { matchesSearch } from "@/lib/text";
 import { EQUIPMENT, MUSCLES } from "@/lib/types";
 
@@ -22,10 +23,17 @@ export function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClo
     if (!open && d.open) d.close();
   }, [open]);
 
-  const list = useMemo(() => EXERCISES.filter((e) => matchesSearch([e.name, MUSCLES[e.primary], EQUIPMENT[e.equipment]], q)), [q]);
+  const [creating, setCreating] = useState(false);
+  const all = useAllExercises();
+  const list = useMemo(() => all.filter((e) => matchesSearch([e.name, MUSCLES[e.primary], EQUIPMENT[e.equipment]], q)), [q, all]);
 
   return (
-    <dialog ref={ref} onClose={onClose} aria-labelledby="picker-titulo" className="m-0 h-full max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-black/70 sm:m-auto sm:h-[85vh] sm:max-w-xl sm:rounded-2xl">
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      aria-labelledby="picker-titulo"
+      className="m-0 h-full max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-black/70 sm:m-auto sm:h-[85vh] sm:max-w-xl sm:rounded-2xl"
+    >
       <div className="anim-sheet flex h-full flex-col bg-graphite text-parchment sm:rounded-2xl sm:border sm:border-line">
         <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
           <h2 id="picker-titulo" className="font-display text-xl font-bold">
@@ -58,21 +66,38 @@ export function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClo
                   }}
                   aria-label={`Adicionar ${e.name}`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={getMedia(e.id)?.poster} alt="" className="h-14 w-[74px] shrink-0 rounded-lg bg-[#ECEBE7] object-contain" loading="lazy" width={74} height={56} />
+                  <ExerciseThumb id={e.id} className="h-14 w-[74px]" width={74} height={56} />
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{e.name}</span>
                     <span className="block text-sm text-muted">
                       {MUSCLES[e.primary]} · {EQUIPMENT[e.equipment]}
                     </span>
                   </span>
-                  {count > 0 ? <span className="text-sm text-ok">Adicionado{count > 1 ? ` ×${count}` : ""}</span> : <Plus size={20} className="text-bronze-light" aria-hidden />}
+                  {count > 0 ? (
+                    <span className="text-sm text-ok">Adicionado{count > 1 ? ` ×${count}` : ""}</span>
+                  ) : (
+                    <Plus size={20} className="text-bronze-light" aria-hidden />
+                  )}
                 </button>
               </li>
             );
           })}
+          <li className="p-4 text-center">
+            <p className="mb-2 text-sm text-muted">Não encontrou o aparelho da sua academia?</p>
+            <button type="button" className="btn-secondary" onClick={() => setCreating(true)}>
+              <Plus size={18} aria-hidden /> Criar exercício
+            </button>
+          </li>
         </ul>
       </div>
+      <CustomExerciseForm
+        open={creating}
+        onClose={() => setCreating(false)}
+        onSaved={(id) => {
+          onPick(id);
+          setAdded((a) => [...a, id]);
+        }}
+      />
     </dialog>
   );
 }

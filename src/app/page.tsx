@@ -2,6 +2,7 @@
 
 import { ArrowRight, Dumbbell, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { BackupReminder } from "@/components/BackupReminder";
 import { StartWorkoutButton } from "@/components/StartWorkout";
 import { Card, ProgressBar } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
@@ -52,16 +53,30 @@ export default function InicioPage() {
       )}
 
       <header>
-        <p className="eyebrow">{new Date(now).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</p>
+        <p className="eyebrow">
+          {new Date(now).toLocaleDateString("pt-BR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long"
+          })}
+        </p>
         <h1 className="h1">{greeting}</h1>
       </header>
+
+      <BackupReminder />
 
       {data.activeSession && (
         <Card className="flex flex-wrap items-center justify-between gap-3 border-bronze">
           <div>
             <p className="eyebrow">Sessão interrompida</p>
             <p className="font-semibold">{data.activeSession.workoutName}</p>
-            <p className="text-sm text-muted">Iniciada em {new Date(data.activeSession.startedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
+            <p className="text-sm text-muted">
+              Iniciada em{" "}
+              {new Date(data.activeSession.startedAt).toLocaleString("pt-BR", {
+                dateStyle: "short",
+                timeStyle: "short"
+              })}
+            </p>
           </div>
           <Link href="/treino-ativo" className="btn-primary">
             Retomar treino

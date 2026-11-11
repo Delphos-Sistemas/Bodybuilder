@@ -39,6 +39,8 @@ export type Exercise = {
   instructions: string[];
   errors: string[];
   substitutions: string[];
+  /** criado pelo usuário (sem demonstração em mídia) */
+  custom?: boolean;
 };
 
 export type WorkoutExercise = {
@@ -61,7 +63,15 @@ export type Workout = {
   updatedAt: number;
 };
 
+export const SET_KINDS = {
+  aquecimento: "Aquecimento",
+  drop: "Drop set"
+} as const;
+/** Série extra: não conta nas séries planejadas nem nos recordes. Sem tipo = série válida. */
+export type SetKind = keyof typeof SET_KINDS;
+
 export type SetLog = {
+  kind?: SetKind;
   reps: number;
   loadKg: number;
   rir: number;
@@ -99,6 +109,23 @@ export type Session = {
 
 export type BodyWeight = { id: string; date: string; kg: number };
 
+export const MEASUREMENTS = {
+  cintura: "Cintura",
+  abdomen: "Abdômen",
+  quadril: "Quadril",
+  peito: "Peito",
+  braco: "Braço",
+  coxa: "Coxa",
+  panturrilha: "Panturrilha"
+} as const;
+export type MeasurementKey = keyof typeof MEASUREMENTS;
+/** Medidas em centímetros em uma data. */
+export type Measurement = {
+  id: string;
+  date: string;
+  cm: Partial<Record<MeasurementKey, number>>;
+};
+
 export const GOALS = {
   hipertrofia: "Ganhar massa muscular",
   forca: "Ganhar força",
@@ -133,6 +160,9 @@ export type Dataset = {
   sessions: Session[];
   activeSession: Session | null;
   bodyWeights: BodyWeight[];
+  /** exercícios criados pelo usuário */
+  customExercises?: Exercise[];
+  measurements?: Measurement[];
 };
 
 export type Settings = {
@@ -145,6 +175,10 @@ export type Settings = {
   spotify?: Partial<Record<"metal" | "rock" | "hiphop", string>>;
   /** O usuário aceitou carregar o player do Spotify (conteúdo de terceiros) */
   spotifyEnabled?: boolean;
+  /** quando o último backup foi exportado (ms) */
+  lastBackupAt?: number;
+  /** o usuário adiou o lembrete de backup até este instante (ms) */
+  backupSnoozeUntil?: number;
 };
 
 export type Mode = "usuario" | "demo";

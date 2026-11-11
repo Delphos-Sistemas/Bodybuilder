@@ -1,12 +1,13 @@
 "use client";
 
 import { Download, Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AudioControls } from "@/components/AudioControls";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { Card, PageHeader } from "@/components/ui";
 import { EXERCISES } from "@/data/exercises";
 import { getMedia } from "@/data/media";
+import { downloadBackup, isStoragePersisted, requestPersistentStorage } from "@/lib/backup";
 import { useStore } from "@/lib/store";
 
 export default function ConfiguracoesPage() {
@@ -20,15 +21,20 @@ export default function ConfiguracoesPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
+  const markBackupDone = useStore((s) => s.markBackupDone);
+  const lastBackupAt = useStore((s) => s.settings.lastBackupAt);
+  const [persisted, setPersisted] = useState<boolean | null>(null);
+  useEffect(() => {
+    void isStoragePersisted().then(setPersisted);
+  }, []);
+
   const download = () => {
-    const blob = new Blob([JSON.stringify(exportData(), null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `bodybuilder-dados-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setMsg({ ok: true, text: "Arquivo de backup gerado com os seus dados (sem os dados de demonstração)." });
+    downloadBackup(exportData());
+    markBackupDone();
+    setMsg({
+      ok: true,
+      text: "Arquivo de backup gerado com os seus dados (sem os dados de demonstração)."
+    });
   };
 
   const onImport = async (f: File | undefined) => {
@@ -37,7 +43,10 @@ export default function ConfiguracoesPage() {
       const res = importData(JSON.parse(await f.text()));
       setMsg(res.ok ? { ok: true, text: "Dados importados com sucesso." } : { ok: false, text: res.error });
     } catch {
-      setMsg({ ok: false, text: "Não foi possível ler o arquivo. Use um backup exportado pelo BODYBUILDER." });
+      setMsg({
+        ok: false,
+        text: "Não foi possível ler o arquivo. Use um backup exportado pelo BODYBUILDER."
+      });
     }
   };
 
@@ -47,7 +56,9 @@ export default function ConfiguracoesPage() {
 
       <Card className="space-y-3">
         <h2 className="font-display text-xl font-bold">Som e vibração</h2>
-        <p className="text-sm text-muted">Os alertas tocam no início do treino, no fim de cada descanso e no encerramento. O treino funciona normalmente mesmo sem som.</p>
+        <p className="text-sm text-muted">
+          Os alertas tocam no início do treino, no fim de cada descanso e no encerramento. O treino funciona normalmente mesmo sem som.
+        </p>
         <AudioControls />
       </Card>
 
@@ -58,7 +69,10 @@ export default function ConfiguracoesPage() {
 
       <Card className="space-y-3">
         <h2 className="font-display text-xl font-bold">Seus dados</h2>
-        <p className="text-sm text-muted">Tudo fica salvo apenas neste aparelho (armazenamento local do navegador). Faça backups para não perder seus treinos ao limpar o navegador ou trocar de aparelho.</p>
+        <p className="text-sm text-muted">
+          Tudo fica salvo apenas neste aparelho (armazenamento local do navegador). Faça backups para não perder seus treinos ao limpar o navegador ou trocar de
+          aparelho.
+        </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" className="btn-secondary" onClick={download}>
             <Download size={18} aria-hidden /> Exportar dados
@@ -66,9 +80,33 @@ export default function ConfiguracoesPage() {
           <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()}>
             <Upload size={18} aria-hidden /> Importar dados
           </button>
-          <input ref={fileRef} type="file" accept="application/json,.json" className="sr-only" aria-label="Escolher arquivo de backup" onChange={(e) => void onImport(e.target.files?.[0]).then(() => (e.target.value = ""))} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="sr-only"
+            aria-label="Escolher arquivo de backup"
+            onChange={(e) => void onImport(e.target.files?.[0]).then(() => (e.target.value = ""))}
+          />
         </div>
         <p className="text-xs text-muted">Importar substitui os dados atuais deste aparelho pelos do arquivo.</p>
+        <p className="text-sm text-sand" data-testid="status-backup">
+          Último backup: {lastBackupAt ? new Date(lastBackupAt).toLocaleDateString("pt-BR") : "nenhum ainda"}.
+        </p>
+        {persisted !== null && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className={persisted ? "text-ok" : "text-sand"}>
+              {persisted
+                ? "Armazenamento protegido: o navegador não apaga os dados sozinho."
+                : "Armazenamento não protegido: o navegador pode apagar os dados se faltar espaço ou após muito tempo sem uso. No iPhone, instale o app na tela de início para o Safari não apagar os dados."}
+            </span>
+            {!persisted && (
+              <button type="button" className="btn-ghost min-h-10 px-2 text-sm" onClick={() => void requestPersistentStorage().then((v) => setPersisted(!!v))}>
+                Pedir proteção
+              </button>
+            )}
+          </div>
+        )}
         {msg && (
           <p role="status" className={msg.ok ? "text-sm text-ok" : "text-sm text-danger"}>
             {msg.text}
@@ -117,14 +155,21 @@ export default function ConfiguracoesPage() {
 
       <Card className="space-y-2">
         <h2 className="font-display text-xl font-bold">Uso sem internet</h2>
-        <p className="text-sm text-sand">Depois da primeira visita, o app pode ser instalado na tela inicial e abre sem internet: telas, treinos, treino ativo, histórico, gráficos e imagens dos exercícios.</p>
-        <p className="text-sm text-muted">Os vídeos das demonstrações são baixados quando você toca em reproduzir; os que já foram vistos ficam disponíveis offline. Músicas adicionadas do aparelho ficam salvas neste navegador.</p>
+        <p className="text-sm text-sand">
+          Depois da primeira visita, o app pode ser instalado na tela inicial e abre sem internet: telas, treinos, treino ativo, histórico, gráficos e imagens
+          dos exercícios.
+        </p>
+        <p className="text-sm text-muted">
+          Os vídeos das demonstrações são baixados quando você toca em reproduzir; os que já foram vistos ficam disponíveis offline. Músicas adicionadas do
+          aparelho ficam salvas neste navegador.
+        </p>
       </Card>
 
       <Card className="space-y-2">
         <h2 className="font-display text-xl font-bold">Créditos de mídia</h2>
         <p className="text-sm text-muted">
-          Ilustrações dos exercícios: Everkinetic (everkinetic.com), licença CC BY-SA 4.0, adaptadas (recorte, cores e vídeo curto). As adaptações seguem a mesma licença.
+          Ilustrações dos exercícios: Everkinetic (everkinetic.com), licença CC BY-SA 4.0, adaptadas (recorte, cores e vídeo curto). As adaptações seguem a
+          mesma licença.
         </p>
         <details>
           <summary className="cursor-pointer text-sm text-sand">Fonte por exercício ({EXERCISES.length})</summary>
@@ -133,7 +178,8 @@ export default function ConfiguracoesPage() {
               const m = getMedia(e.id);
               return (
                 <li key={e.id}>
-                  <span className="text-sand">{e.name}</span>: {m ? `${m.credit.author}, ${m.credit.license}, arquivos ${m.credit.originalFiles.join(", ")}` : "sem mídia"}
+                  <span className="text-sand">{e.name}</span>:{" "}
+                  {m ? `${m.credit.author}, ${m.credit.license}, arquivos ${m.credit.originalFiles.join(", ")}` : "sem mídia"}
                 </li>
               );
             })}

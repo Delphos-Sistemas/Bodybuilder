@@ -114,11 +114,7 @@ export const EXERCISES: Exercise[] = [
       "Feche os braços à frente do peito, contraindo o peitoral.",
       "Retorne devagar até sentir alongamento, sem passar da linha do ombro."
     ],
-    errors: [
-      "Banco muito baixo ou muito alto, deixando as mãos fora da linha do peito.",
-      "Soltar o peso na volta.",
-      "Afastar as costas do encosto."
-    ],
+    errors: ["Banco muito baixo ou muito alto, deixando as mãos fora da linha do peito.", "Soltar o peso na volta.", "Afastar as costas do encosto."],
     substitutions: ["crossover", "crucifixo-halteres", "supino-reto-halteres"]
   },
   {
@@ -133,11 +129,7 @@ export const EXERCISES: Exercise[] = [
       "Incline levemente o tronco à frente e desça flexionando os cotovelos até cerca de 90°.",
       "Empurre as barras para voltar à posição inicial."
     ],
-    errors: [
-      "Descer muito além de 90° com desconforto no ombro.",
-      "Deixar os ombros subirem em direção às orelhas.",
-      "Usar impulso das pernas na plataforma."
-    ],
+    errors: ["Descer muito além de 90° com desconforto no ombro.", "Deixar os ombros subirem em direção às orelhas.", "Usar impulso das pernas na plataforma."],
     substitutions: ["supino-reto", "flexao-de-braco", "triceps-polia"]
   },
   {
@@ -152,11 +144,7 @@ export const EXERCISES: Exercise[] = [
       "Desça o peito em direção ao chão, com os cotovelos a cerca de 45° do tronco.",
       "Empurre o chão até estender os braços."
     ],
-    errors: [
-      "Deixar o quadril cair ou subir demais.",
-      "Fazer meia repetição sem aproximar o peito do chão.",
-      "Projetar a cabeça à frente do corpo."
-    ],
+    errors: ["Deixar o quadril cair ou subir demais.", "Fazer meia repetição sem aproximar o peito do chão.", "Projetar a cabeça à frente do corpo."],
     substitutions: ["supino-reto-halteres", "supino-reto", "paralelas"]
   },
 
@@ -173,11 +161,7 @@ export const EXERCISES: Exercise[] = [
       "Puxe a barra em direção à parte baixa do peito/umbigo, levando os cotovelos para trás.",
       "Desça a barra com controle até estender os braços, sem mudar o ângulo do tronco."
     ],
-    errors: [
-      "Arredondar a lombar.",
-      "Levantar o tronco a cada repetição para ajudar na puxada.",
-      "Puxar só com os braços, sem aproximar as escápulas."
-    ],
+    errors: ["Arredondar a lombar.", "Levantar o tronco a cada repetição para ajudar na puxada.", "Puxar só com os braços, sem aproximar as escápulas."],
     substitutions: ["remada-baixa", "remada-invertida", "puxada-frontal"]
   },
   {
@@ -192,11 +176,7 @@ export const EXERCISES: Exercise[] = [
       "Puxe o puxador até o abdômen, aproximando as escápulas.",
       "Retorne estendendo os braços sem deixar o tronco cair à frente."
     ],
-    errors: [
-      "Balançar o tronco para trás e para a frente.",
-      "Encolher os ombros ao puxar.",
-      "Travar os joelhos completamente estendidos."
-    ],
+    errors: ["Balançar o tronco para trás e para a frente.", "Encolher os ombros ao puxar.", "Travar os joelhos completamente estendidos."],
     substitutions: ["remada-curvada", "remada-invertida", "puxada-frontal"]
   },
   {
@@ -211,11 +191,7 @@ export const EXERCISES: Exercise[] = [
       "Puxe a barra até a parte alta do peito, levando os cotovelos para baixo e para trás.",
       "Suba a barra com controle até estender os braços."
     ],
-    errors: [
-      "Puxar a barra atrás da nuca.",
-      "Inclinar muito o tronco para trás.",
-      "Deixar a barra subir rápido demais."
-    ],
+    errors: ["Puxar a barra atrás da nuca.", "Inclinar muito o tronco para trás.", "Deixar a barra subir rápido demais."],
     substitutions: ["puxada-supinada", "barra-fixa", "remada-baixa"]
   },
   {
@@ -230,11 +206,7 @@ export const EXERCISES: Exercise[] = [
       "Puxe a barra até o peito, mantendo os cotovelos próximos ao corpo.",
       "Retorne devagar até estender os braços."
     ],
-    errors: [
-      "Usar o balanço do tronco.",
-      "Não completar a extensão dos braços.",
-      "Puxar com os punhos dobrados."
-    ],
+    errors: ["Usar o balanço do tronco.", "Não completar a extensão dos braços.", "Puxar com os punhos dobrados."],
     substitutions: ["puxada-frontal", "barra-fixa", "remada-baixa"]
   },
   {
@@ -249,11 +221,7 @@ export const EXERCISES: Exercise[] = [
       "Puxe o corpo até o queixo passar a barra, sem balançar.",
       "Desça com controle até estender os braços."
     ],
-    errors: [
-      "Usar impulso das pernas (kipping) sem domínio da técnica.",
-      "Fazer meia amplitude.",
-      "Esticar o pescoço para passar o queixo."
-    ],
+    errors: ["Usar impulso das pernas (kipping) sem domínio da técnica.", "Fazer meia amplitude.", "Esticar o pescoço para passar o queixo."],
     substitutions: ["puxada-frontal", "puxada-supinada", "remada-invertida"]
   },
   {
@@ -268,11 +236,7 @@ export const EXERCISES: Exercise[] = [
       "Puxe o peito em direção à barra, aproximando as escápulas.",
       "Desça com controle até estender os braços."
     ],
-    errors: [
-      "Deixar o quadril cair.",
-      "Puxar a barra em direção ao pescoço.",
-      "Perder a contração do abdômen."
-    ],
+    errors: ["Deixar o quadril cair.", "Puxar a barra em direção ao pescoço.", "Perder a contração do abdômen."],
     substitutions: ["remada-curvada", "remada-baixa", "barra-fixa"]
   },
   {
@@ -287,11 +251,7 @@ export const EXERCISES: Exercise[] = [
       "Empurre o chão e estenda quadril e joelhos ao mesmo tempo, mantendo a barra próxima ao corpo.",
       "Desça empurrando o quadril para trás e deslizando a barra pelas coxas até o chão."
     ],
-    errors: [
-      "Arredondar a lombar ao tirar a barra do chão.",
-      "Afastar a barra do corpo.",
-      "Hiperestender a coluna no topo."
-    ],
+    errors: ["Arredondar a lombar ao tirar a barra do chão.", "Afastar a barra do corpo.", "Hiperestender a coluna no topo."],
     substitutions: ["stiff", "hiperextensao-lombar", "ponte-de-gluteo"]
   },
   {
@@ -327,11 +287,7 @@ export const EXERCISES: Exercise[] = [
       "Desça até onde mantiver a coluna neutra e os calcanhares no chão, com os joelhos na direção dos pés.",
       "Suba empurrando o chão até estender quadril e joelhos."
     ],
-    errors: [
-      "Deixar os joelhos caírem para dentro.",
-      "Tirar os calcanhares do chão.",
-      "Arredondar a lombar no fundo do movimento."
-    ],
+    errors: ["Deixar os joelhos caírem para dentro.", "Tirar os calcanhares do chão.", "Arredondar a lombar no fundo do movimento."],
     substitutions: ["agachamento-smith", "leg-press", "afundo-halteres"]
   },
   {
@@ -346,11 +302,7 @@ export const EXERCISES: Exercise[] = [
       "Desça a plataforma flexionando os joelhos até cerca de 90°, sem tirar o quadril do banco.",
       "Empurre a plataforma de volta até quase estender as pernas."
     ],
-    errors: [
-      "Descer tanto que o quadril sai do encosto.",
-      "Travar os joelhos no topo.",
-      "Empurrar com a ponta dos pés."
-    ],
+    errors: ["Descer tanto que o quadril sai do encosto.", "Travar os joelhos no topo.", "Empurrar com a ponta dos pés."],
     substitutions: ["agachamento-smith", "agachamento-livre", "cadeira-extensora"]
   },
   {
@@ -365,11 +317,7 @@ export const EXERCISES: Exercise[] = [
       "Desça flexionando joelhos e quadril até as coxas ficarem próximas da paralela.",
       "Suba empurrando o chão e trave a barra ao final da série."
     ],
-    errors: [
-      "Pés muito para trás, jogando os joelhos à frente.",
-      "Esquecer de travar a barra ao terminar.",
-      "Descer sem controle."
-    ],
+    errors: ["Pés muito para trás, jogando os joelhos à frente.", "Esquecer de travar a barra ao terminar.", "Descer sem controle."],
     substitutions: ["agachamento-livre", "leg-press", "afundo-halteres"]
   },
   {
@@ -384,11 +332,7 @@ export const EXERCISES: Exercise[] = [
       "Estenda os joelhos até as pernas ficarem retas, contraindo o quadríceps.",
       "Desça com controle sem deixar o peso bater."
     ],
-    errors: [
-      "Joelho desalinhado com o eixo da máquina.",
-      "Chutar o peso com impulso.",
-      "Tirar o quadril do banco."
-    ],
+    errors: ["Joelho desalinhado com o eixo da máquina.", "Chutar o peso com impulso.", "Tirar o quadril do banco."],
     substitutions: ["leg-press", "agachamento-smith", "afundo-halteres"]
   },
   {
@@ -403,11 +347,7 @@ export const EXERCISES: Exercise[] = [
       "Flexione os joelhos trazendo os calcanhares em direção aos glúteos.",
       "Retorne devagar até quase estender as pernas."
     ],
-    errors: [
-      "Tirar o quadril do banco.",
-      "Fazer meia amplitude.",
-      "Soltar o peso na descida."
-    ],
+    errors: ["Tirar o quadril do banco.", "Fazer meia amplitude.", "Soltar o peso na descida."],
     substitutions: ["cadeira-flexora", "stiff", "ponte-de-gluteo"]
   },
   {
@@ -422,11 +362,7 @@ export const EXERCISES: Exercise[] = [
       "Flexione os joelhos levando os calcanhares para baixo e para trás.",
       "Retorne com controle até estender as pernas."
     ],
-    errors: [
-      "Apoio de coxa solto, deixando o quadril subir.",
-      "Movimento curto.",
-      "Retorno rápido."
-    ],
+    errors: ["Apoio de coxa solto, deixando o quadril subir.", "Movimento curto.", "Retorno rápido."],
     substitutions: ["mesa-flexora", "stiff", "levantamento-terra"]
   },
   {
@@ -441,11 +377,7 @@ export const EXERCISES: Exercise[] = [
       "Desça a barra rente às pernas até sentir alongamento nos posteriores, com a coluna neutra.",
       "Suba levando o quadril à frente e contraindo os glúteos."
     ],
-    errors: [
-      "Arredondar as costas para descer mais.",
-      "Flexionar demais os joelhos, transformando em agachamento.",
-      "Afastar a barra das pernas."
-    ],
+    errors: ["Arredondar as costas para descer mais.", "Flexionar demais os joelhos, transformando em agachamento.", "Afastar a barra das pernas."],
     substitutions: ["levantamento-terra", "mesa-flexora", "hiperextensao-lombar"]
   },
   {
@@ -460,11 +392,7 @@ export const EXERCISES: Exercise[] = [
       "O joelho da frente fica alinhado com o pé, sem cair para dentro.",
       "Empurre o pé da frente para voltar à posição inicial e alterne as pernas."
     ],
-    errors: [
-      "Passo curto demais, jogando o joelho muito à frente.",
-      "Tronco inclinado à frente.",
-      "Bater o joelho de trás no chão."
-    ],
+    errors: ["Passo curto demais, jogando o joelho muito à frente.", "Tronco inclinado à frente.", "Bater o joelho de trás no chão."],
     substitutions: ["avanco-caminhando", "agachamento-smith", "leg-press"]
   },
   {
@@ -479,11 +407,7 @@ export const EXERCISES: Exercise[] = [
       "Empurre com a perna da frente e traga a perna de trás à frente no próximo passo.",
       "Continue avançando, alternando as pernas."
     ],
-    errors: [
-      "Perder o equilíbrio por pisar em linha reta (base estreita).",
-      "Inclinar o tronco à frente.",
-      "Passos curtos e apressados."
-    ],
+    errors: ["Perder o equilíbrio por pisar em linha reta (base estreita).", "Inclinar o tronco à frente.", "Passos curtos e apressados."],
     substitutions: ["afundo-halteres", "agachamento-livre", "leg-press"]
   },
   {
@@ -498,11 +422,7 @@ export const EXERCISES: Exercise[] = [
       "Segure um instante na abertura máxima.",
       "Retorne devagar sem deixar as placas baterem."
     ],
-    errors: [
-      "Usar impulso do tronco.",
-      "Amplitude curta.",
-      "Soltar o peso na volta."
-    ],
+    errors: ["Usar impulso do tronco.", "Amplitude curta.", "Soltar o peso na volta."],
     substitutions: ["ponte-de-gluteo", "afundo-halteres", "agachamento-livre"]
   },
   {
@@ -517,11 +437,7 @@ export const EXERCISES: Exercise[] = [
       "Feche as pernas contraindo a parte interna das coxas.",
       "Abra devagar até a posição inicial."
     ],
-    errors: [
-      "Começar com abertura além do confortável.",
-      "Bater as placas no fechamento.",
-      "Tirar as costas do encosto."
-    ],
+    errors: ["Começar com abertura além do confortável.", "Bater as placas no fechamento.", "Tirar as costas do encosto."],
     substitutions: ["agachamento-livre", "afundo-halteres", "leg-press"]
   },
   {
@@ -536,11 +452,7 @@ export const EXERCISES: Exercise[] = [
       "Eleve o quadril contraindo os glúteos até alinhar ombros, quadril e joelhos.",
       "Desça com controle sem relaxar totalmente entre as repetições."
     ],
-    errors: [
-      "Subir arqueando a lombar em vez de contrair os glúteos.",
-      "Pés longe demais do quadril.",
-      "Fazer o movimento rápido."
-    ],
+    errors: ["Subir arqueando a lombar em vez de contrair os glúteos.", "Pés longe demais do quadril.", "Fazer o movimento rápido."],
     substitutions: ["cadeira-abdutora", "stiff", "hiperextensao-lombar"]
   },
   {
@@ -555,11 +467,7 @@ export const EXERCISES: Exercise[] = [
       "Eleve os calcanhares o máximo possível.",
       "Desça devagar, controlando o alongamento."
     ],
-    errors: [
-      "Fazer repetições curtas e rápidas.",
-      "Apoiar a barra sem proteção sobre as coxas.",
-      "Deixar os tornozelos virarem para fora."
-    ],
+    errors: ["Fazer repetições curtas e rápidas.", "Apoiar a barra sem proteção sobre as coxas.", "Deixar os tornozelos virarem para fora."],
     substitutions: ["panturrilha-leg-press"]
   },
   {
@@ -574,11 +482,7 @@ export const EXERCISES: Exercise[] = [
       "Empurre a plataforma com a ponta dos pés, estendendo os tornozelos.",
       "Volte devagar até sentir alongamento na panturrilha."
     ],
-    errors: [
-      "Flexionar os joelhos durante o movimento.",
-      "Pés escorregando da plataforma: use apoio firme.",
-      "Amplitude curta."
-    ],
+    errors: ["Flexionar os joelhos durante o movimento.", "Pés escorregando da plataforma: use apoio firme.", "Amplitude curta."],
     substitutions: ["panturrilha-sentada"]
   },
 
@@ -595,11 +499,7 @@ export const EXERCISES: Exercise[] = [
       "Empurre os halteres para cima até estender os braços.",
       "Desça com controle até a altura das orelhas."
     ],
-    errors: [
-      "Arquear a lombar para empurrar.",
-      "Bater os halteres no topo.",
-      "Descer os halteres muito abaixo da linha dos ombros com desconforto."
-    ],
+    errors: ["Arquear a lombar para empurrar.", "Bater os halteres no topo.", "Descer os halteres muito abaixo da linha dos ombros com desconforto."],
     substitutions: ["desenvolvimento-militar", "desenvolvimento-arnold", "elevacao-lateral"]
   },
   {
@@ -614,11 +514,7 @@ export const EXERCISES: Exercise[] = [
       "Empurre a barra para cima até estender os braços acima da cabeça.",
       "Desça devagar até a parte alta do peito."
     ],
-    errors: [
-      "Levar a barra atrás da nuca.",
-      "Arquear excessivamente a lombar.",
-      "Usar impulso das pernas."
-    ],
+    errors: ["Levar a barra atrás da nuca.", "Arquear excessivamente a lombar.", "Usar impulso das pernas."],
     substitutions: ["desenvolvimento-halteres", "desenvolvimento-arnold", "elevacao-frontal"]
   },
   {
@@ -652,11 +548,7 @@ export const EXERCISES: Exercise[] = [
       "Faça uma breve pausa no topo.",
       "Desça com controle."
     ],
-    errors: [
-      "Jogar o tronco para trás.",
-      "Subir acima da cabeça sem necessidade.",
-      "Descer sem controle."
-    ],
+    errors: ["Jogar o tronco para trás.", "Subir acima da cabeça sem necessidade.", "Descer sem controle."],
     substitutions: ["desenvolvimento-halteres", "desenvolvimento-militar", "elevacao-lateral"]
   },
   {
@@ -671,11 +563,7 @@ export const EXERCISES: Exercise[] = [
       "Estenda os braços acima da cabeça.",
       "Desça fazendo a rotação inversa até a posição inicial."
     ],
-    errors: [
-      "Girar rápido demais, perdendo o controle.",
-      "Arquear a lombar.",
-      "Encurtar a amplitude na descida."
-    ],
+    errors: ["Girar rápido demais, perdendo o controle.", "Arquear a lombar.", "Encurtar a amplitude na descida."],
     substitutions: ["desenvolvimento-halteres", "desenvolvimento-militar", "elevacao-lateral"]
   },
   {
@@ -690,11 +578,7 @@ export const EXERCISES: Exercise[] = [
       "Pare quando os cotovelos chegarem perto da altura dos ombros.",
       "Desça devagar até estender os braços."
     ],
-    errors: [
-      "Pegada muito fechada, com desconforto no ombro.",
-      "Subir os cotovelos muito acima dos ombros.",
-      "Balançar o tronco."
-    ],
+    errors: ["Pegada muito fechada, com desconforto no ombro.", "Subir os cotovelos muito acima dos ombros.", "Balançar o tronco."],
     substitutions: ["elevacao-lateral", "encolhimento-barra", "desenvolvimento-halteres"]
   },
   {
@@ -709,11 +593,7 @@ export const EXERCISES: Exercise[] = [
       "Segure um instante no topo.",
       "Desça os ombros devagar."
     ],
-    errors: [
-      "Girar os ombros em círculos.",
-      "Flexionar os cotovelos para ajudar.",
-      "Projetar a cabeça à frente."
-    ],
+    errors: ["Girar os ombros em círculos.", "Flexionar os cotovelos para ajudar.", "Projetar a cabeça à frente."],
     substitutions: ["remada-alta", "levantamento-terra"]
   },
   {
@@ -728,11 +608,7 @@ export const EXERCISES: Exercise[] = [
       "Abra os braços para os lados até a linha dos ombros, aproximando as escápulas.",
       "Desça com controle."
     ],
-    errors: [
-      "Puxar com os braços dobrados, virando uma remada.",
-      "Tirar o peito do banco.",
-      "Carga excessiva."
-    ],
+    errors: ["Puxar com os braços dobrados, virando uma remada.", "Tirar o peito do banco.", "Carga excessiva."],
     substitutions: ["elevacao-lateral", "remada-baixa", "remada-curvada"]
   },
 
@@ -749,11 +625,7 @@ export const EXERCISES: Exercise[] = [
       "Flexione os cotovelos levando a barra até a altura dos ombros.",
       "Desça devagar até estender os braços."
     ],
-    errors: [
-      "Balançar o tronco para subir a barra.",
-      "Levar os cotovelos à frente.",
-      "Não estender os braços na descida."
-    ],
+    errors: ["Balançar o tronco para subir a barra.", "Levar os cotovelos à frente.", "Não estender os braços na descida."],
     substitutions: ["rosca-alternada", "rosca-scott", "rosca-martelo"]
   },
   {
@@ -768,11 +640,7 @@ export const EXERCISES: Exercise[] = [
       "Suba até os halteres ficarem próximos aos ombros.",
       "Desça com controle."
     ],
-    errors: [
-      "Afastar os cotovelos do tronco.",
-      "Girar o punho durante o movimento.",
-      "Usar balanço."
-    ],
+    errors: ["Afastar os cotovelos do tronco.", "Girar o punho durante o movimento.", "Usar balanço."],
     substitutions: ["rosca-direta", "rosca-alternada"]
   },
   {
@@ -787,11 +655,7 @@ export const EXERCISES: Exercise[] = [
       "Desça com controle e repita com o outro braço.",
       "Mantenha o tronco imóvel durante toda a série."
     ],
-    errors: [
-      "Girar o tronco para ajudar.",
-      "Subir o cotovelo à frente.",
-      "Pressa na troca entre os braços."
-    ],
+    errors: ["Girar o tronco para ajudar.", "Subir o cotovelo à frente.", "Pressa na troca entre os braços."],
     substitutions: ["rosca-direta", "rosca-martelo", "rosca-scott"]
   },
   {
@@ -806,11 +670,7 @@ export const EXERCISES: Exercise[] = [
       "Flexione os cotovelos até a barra se aproximar dos ombros.",
       "Desça devagar até quase estender os braços, sem tirá-los do apoio."
     ],
-    errors: [
-      "Estender o cotovelo de forma brusca no final.",
-      "Tirar os braços da almofada.",
-      "Banco alto ou baixo demais."
-    ],
+    errors: ["Estender o cotovelo de forma brusca no final.", "Tirar os braços da almofada.", "Banco alto ou baixo demais."],
     substitutions: ["rosca-direta", "rosca-alternada"]
   },
 
@@ -827,11 +687,7 @@ export const EXERCISES: Exercise[] = [
       "Estenda os cotovelos empurrando a barra até as coxas.",
       "Volte devagar até os antebraços ficarem um pouco acima da horizontal."
     ],
-    errors: [
-      "Deixar os cotovelos irem para a frente.",
-      "Inclinar o tronco sobre a barra.",
-      "Usar o peso do corpo para empurrar."
-    ],
+    errors: ["Deixar os cotovelos irem para a frente.", "Inclinar o tronco sobre a barra.", "Usar o peso do corpo para empurrar."],
     substitutions: ["triceps-corda", "triceps-testa", "triceps-frances"]
   },
   {
@@ -846,11 +702,7 @@ export const EXERCISES: Exercise[] = [
       "Estenda os cotovelos e afaste as pontas da corda no final.",
       "Retorne devagar."
     ],
-    errors: [
-      "Cotovelos abrindo para os lados.",
-      "Movimento curto, sem extensão total.",
-      "Balanço do tronco."
-    ],
+    errors: ["Cotovelos abrindo para os lados.", "Movimento curto, sem extensão total.", "Balanço do tronco."],
     substitutions: ["triceps-polia", "triceps-frances", "triceps-testa"]
   },
   {
@@ -865,11 +717,7 @@ export const EXERCISES: Exercise[] = [
       "Desça a barra em direção à testa ou um pouco atrás da cabeça.",
       "Estenda os cotovelos para voltar."
     ],
-    errors: [
-      "Abrir os cotovelos para os lados.",
-      "Mover os ombros junto, virando um supino.",
-      "Descer sem controle próximo ao rosto."
-    ],
+    errors: ["Abrir os cotovelos para os lados.", "Mover os ombros junto, virando um supino.", "Descer sem controle próximo ao rosto."],
     substitutions: ["triceps-frances", "triceps-polia", "triceps-corda"]
   },
   {
@@ -884,11 +732,7 @@ export const EXERCISES: Exercise[] = [
       "Desça o halter atrás da cabeça flexionando os cotovelos.",
       "Estenda os braços para voltar."
     ],
-    errors: [
-      "Abrir demais os cotovelos.",
-      "Arquear a lombar.",
-      "Descer o halter rápido atrás da cabeça."
-    ],
+    errors: ["Abrir demais os cotovelos.", "Arquear a lombar.", "Descer o halter rápido atrás da cabeça."],
     substitutions: ["triceps-testa", "triceps-corda", "triceps-polia"]
   },
 
@@ -906,11 +750,7 @@ export const EXERCISES: Exercise[] = [
       "Mantenha o corpo alinhado da cabeça aos calcanhares, contraindo abdômen e glúteos.",
       "Sustente a posição pelo tempo planejado, respirando normalmente."
     ],
-    errors: [
-      "Deixar o quadril cair, sobrecarregando a lombar.",
-      "Elevar demais o quadril.",
-      "Prender a respiração."
-    ],
+    errors: ["Deixar o quadril cair, sobrecarregando a lombar.", "Elevar demais o quadril.", "Prender a respiração."],
     substitutions: ["abdominal-supra", "elevacao-de-pernas"]
   },
   {
@@ -925,11 +765,7 @@ export const EXERCISES: Exercise[] = [
       "Enrole o tronco tirando as escápulas do chão, aproximando as costelas do quadril.",
       "Desça devagar."
     ],
-    errors: [
-      "Puxar a cabeça com as mãos.",
-      "Subir com impulso.",
-      "Tirar a lombar do chão."
-    ],
+    errors: ["Puxar a cabeça com as mãos.", "Subir com impulso.", "Tirar a lombar do chão."],
     substitutions: ["abdominal-polia", "prancha", "elevacao-de-pernas"]
   },
   {
@@ -944,11 +780,7 @@ export const EXERCISES: Exercise[] = [
       "Contraia o abdômen no final.",
       "Retorne devagar até alongar o abdômen."
     ],
-    errors: [
-      "Movimentar o quadril em vez de flexionar o tronco.",
-      "Puxar com os braços.",
-      "Carga alta com amplitude curta."
-    ],
+    errors: ["Movimentar o quadril em vez de flexionar o tronco.", "Puxar com os braços.", "Carga alta com amplitude curta."],
     substitutions: ["abdominal-supra", "prancha"]
   },
   {
@@ -963,16 +795,23 @@ export const EXERCISES: Exercise[] = [
       "Desça devagar sem deixar a lombar sair do chão.",
       "Pare antes de encostar os pés no chão e repita."
     ],
-    errors: [
-      "Arquear a lombar na descida.",
-      "Usar impulso das pernas.",
-      "Descer rápido demais."
-    ],
+    errors: ["Arquear a lombar na descida.", "Usar impulso das pernas.", "Descer rápido demais."],
     substitutions: ["abdominal-supra", "prancha", "abdominal-polia"]
   }
 ];
 
 export const EXERCISE_MAP: Record<string, Exercise> = Object.fromEntries(EXERCISES.map((e) => [e.id, e]));
+
+const BUILTIN_IDS = new Set(EXERCISES.map((e) => e.id));
+
+/**
+ * Registra os exercícios criados pelo usuário no mapa global, para que todas as telas
+ * encontrem o exercício pelo id. Chamado pelo store sempre que os dados mudam.
+ */
+export function syncCustomExercises(list: Exercise[] | undefined): void {
+  for (const id of Object.keys(EXERCISE_MAP)) if (!BUILTIN_IDS.has(id)) delete EXERCISE_MAP[id];
+  for (const e of list ?? []) if (!BUILTIN_IDS.has(e.id)) EXERCISE_MAP[e.id] = { ...e, custom: true };
+}
 
 export function getExercise(id: string): Exercise | undefined {
   return EXERCISE_MAP[id];

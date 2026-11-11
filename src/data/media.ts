@@ -18,7 +18,15 @@ export type MediaCredit = {
   originalFiles: string[];
 };
 
-type Generated = Record<string, { frames: string[]; poster: string; video: ExerciseMedia["video"]; sources: string[] }>;
+type Generated = Record<
+  string,
+  {
+    frames: string[];
+    poster: string;
+    video: ExerciseMedia["video"];
+    sources: string[];
+  }
+>;
 
 const EVERKINETIC = {
   author: "Everkinetic (everkinetic.com)",
@@ -33,7 +41,12 @@ const EVERKINETIC = {
 export const MEDIA: Record<string, ExerciseMedia> = Object.fromEntries(
   Object.entries(generated as Generated).map(([id, m]) => [
     id,
-    { frames: m.frames, poster: m.poster, video: m.video, credit: { ...EVERKINETIC, originalFiles: m.sources } }
+    {
+      frames: m.frames,
+      poster: m.poster,
+      video: m.video,
+      credit: { ...EVERKINETIC, originalFiles: m.sources }
+    }
   ])
 );
 

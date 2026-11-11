@@ -1,13 +1,4 @@
-import {
-  adjustRest,
-  completeSet,
-  createSession,
-  finishSession,
-  isSessionComplete,
-  sessionSetCount,
-  sessionVolume,
-  skipExercise
-} from "@/lib/session";
+import { adjustRest, completeSet, createSession, finishSession, isSessionComplete, sessionSetCount, sessionVolume, skipExercise } from "@/lib/session";
 import type { Workout } from "@/lib/types";
 
 const workout: Workout = {

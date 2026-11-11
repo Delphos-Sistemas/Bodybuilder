@@ -1,25 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import {
-  ExternalLink,
-  Music2,
-  Pause,
-  Play,
-  SkipForward,
-  Trash2,
-  Upload,
-  Volume2
-} from "lucide-react";
+import { ExternalLink, Music2, Pause, Play, SkipForward, Trash2, Upload, Volume2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BUNDLED_TRACKS, MUSIC_STYLES, SPOTIFY_DEFAULTS } from "@/data/music";
-import {
-  addTrack,
-  listTracks,
-  removeTrack,
-  type LocalTrack,
-  type MusicStyle
-} from "@/lib/musicDb";
+import { addTrack, listTracks, removeTrack, type LocalTrack, type MusicStyle } from "@/lib/musicDb";
 import { uid } from "@/lib/id";
 import { embedUrl, openUrl, parseSpotify } from "@/lib/spotify";
 import { useStore } from "@/lib/store";
@@ -44,11 +29,7 @@ export function MusicPlayer({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div
-        className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-iron p-1"
-        role="tablist"
-        aria-label="Fonte da música"
-      >
+      <div className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-iron p-1" role="tablist" aria-label="Fonte da música">
         {(
           [
             ["spotify", "Spotify"],
@@ -62,9 +43,7 @@ export function MusicPlayer({ compact = false }: { compact?: boolean }) {
             aria-selected={source === id}
             className={clsx(
               "min-h-10 rounded-lg px-2 text-sm font-medium transition",
-              source === id
-                ? "bg-graphite text-bronze-light"
-                : "text-muted hover:text-parchment"
+              source === id ? "bg-graphite text-bronze-light" : "text-muted hover:text-parchment"
             )}
             onClick={() => updateSettings({ musicSource: id })}
           >
@@ -73,11 +52,7 @@ export function MusicPlayer({ compact = false }: { compact?: boolean }) {
         ))}
       </div>
 
-      <div
-        className="flex flex-wrap gap-2"
-        role="radiogroup"
-        aria-label="Estilo musical"
-      >
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Estilo musical">
         {MUSIC_STYLES.map((s) => (
           <button
             key={s.id}
@@ -92,11 +67,7 @@ export function MusicPlayer({ compact = false }: { compact?: boolean }) {
         ))}
       </div>
 
-      {source === "spotify" ? (
-        <SpotifyPlayer style={style} compact={compact} />
-      ) : (
-        <LocalPlayer key={style} style={style} />
-      )}
+      {source === "spotify" ? <SpotifyPlayer style={style} compact={compact} /> : <LocalPlayer key={style} style={style} />}
 
       {compact && (
         <div className="border-t border-line pt-3">
@@ -109,13 +80,7 @@ export function MusicPlayer({ compact = false }: { compact?: boolean }) {
 
 const NO_LINKS: Partial<Record<MusicStyle, string>> = {};
 
-function SpotifyPlayer({
-  style,
-  compact
-}: {
-  style: MusicStyle;
-  compact: boolean;
-}) {
+function SpotifyPlayer({ style, compact }: { style: MusicStyle; compact: boolean }) {
   const enabled = useStore((s) => s.settings.spotifyEnabled ?? false);
   const custom = useStore((s) => s.settings.spotify) ?? NO_LINKS;
   const updateSettings = useStore((s) => s.updateSettings);
@@ -125,8 +90,7 @@ function SpotifyPlayer({
 
   const label = MUSIC_STYLES.find((s) => s.id === style)?.label;
   const chosen = custom[style];
-  const ref =
-    parseSpotify(chosen ?? "") ?? parseSpotify(SPOTIFY_DEFAULTS[style].url)!;
+  const ref = parseSpotify(chosen ?? "") ?? parseSpotify(SPOTIFY_DEFAULTS[style].url)!;
 
   const saveLink = () => {
     if (!draft.trim()) {
@@ -137,9 +101,7 @@ function SpotifyPlayer({
       return;
     }
     if (!parseSpotify(draft)) {
-      setError(
-        "Link não reconhecido. Use “Compartilhar → Copiar link” de uma playlist, álbum ou artista no Spotify."
-      );
+      setError("Link não reconhecido. Use “Compartilhar → Copiar link” de uma playlist, álbum ou artista no Spotify.");
       return;
     }
     updateSettings({ spotify: { ...custom, [style]: draft.trim() } });
@@ -149,27 +111,21 @@ function SpotifyPlayer({
 
   if (!enabled) {
     return (
-      <div
-        className="space-y-3 rounded-xl border border-line bg-iron p-4"
-        data-testid="spotify-consentimento"
-      >
+      <div className="space-y-3 rounded-xl border border-line bg-iron p-4" data-testid="spotify-consentimento">
         <p className="flex items-center gap-2 font-semibold">
-          <Music2 size={18} className="text-bronze-light" aria-hidden /> Ouça
-          pelo Spotify
+          <Music2 size={18} className="text-bronze-light" aria-hidden /> Ouça pelo Spotify
         </p>
         <p className="text-sm text-sand">
-          O player oficial do Spotify é carregado dos servidores do Spotify, que
-          podem usar cookies. Só carregamos depois que você permitir. Com login
-          no Spotify Premium, as faixas tocam inteiras; sem login, o Spotify
-          toca prévias de 30 segundos.
+          O player oficial do Spotify é carregado dos servidores do Spotify, que podem usar cookies. Só carregamos depois que você permitir. Com login no
+          Spotify Premium, as faixas tocam inteiras; sem login, o Spotify toca prévias de 30 segundos.
         </p>
-        <button
-          type="button"
-          className="btn-primary min-h-11"
-          onClick={() => updateSettings({ spotifyEnabled: true })}
-        >
+        <button type="button" className="btn-primary min-h-11" onClick={() => updateSettings({ spotifyEnabled: true })}>
           Carregar player do Spotify
         </button>
+        <a className="btn-secondary ml-2 min-h-11" href={openUrl(ref)} target="_blank" rel="noopener noreferrer">
+          <ExternalLink size={16} aria-hidden /> Abrir no app do Spotify
+        </a>
+        <p className="text-xs text-muted">Dica: no celular, o app do Spotify continua tocando com a tela bloqueada; o player dentro do navegador pode parar.</p>
       </div>
     );
   }
@@ -187,19 +143,13 @@ function SpotifyPlayer({
         className="w-full rounded-xl border-0"
         data-testid="spotify-player"
       />
+      <p className="text-xs text-muted">
+        Se a música parar ao bloquear a tela, use o app do Spotify: ele toca em segundo plano melhor que o player do navegador.
+      </p>
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-muted">
-          {chosen
-            ? "Sua escolha para " + label
-            : `Padrão: ${SPOTIFY_DEFAULTS[style].title}`}
-        </span>
-        <a
-          className="btn-ghost min-h-10 px-2"
-          href={openUrl(ref)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <ExternalLink size={16} aria-hidden /> Abrir no Spotify
+        <span className="text-muted">{chosen ? "Sua escolha para " + label : `Padrão: ${SPOTIFY_DEFAULTS[style].title}`}</span>
+        <a className="btn-secondary min-h-10 px-3" href={openUrl(ref)} target="_blank" rel="noopener noreferrer">
+          <ExternalLink size={16} aria-hidden /> Abrir no app do Spotify
         </a>
         <button
           type="button"
@@ -227,47 +177,28 @@ function SpotifyPlayer({
             value={draft}
             onChange={(e) => (setDraft(e.target.value), setError(""))}
             aria-invalid={!!error}
-            aria-describedby={
-              error ? `spotify-erro-${style}` : `spotify-dica-${style}`
-            }
+            aria-describedby={error ? `spotify-erro-${style}` : `spotify-dica-${style}`}
           />
           {error ? (
-            <p
-              id={`spotify-erro-${style}`}
-              role="alert"
-              className="text-sm text-danger"
-            >
+            <p id={`spotify-erro-${style}`} role="alert" className="text-sm text-danger">
               {error}
             </p>
           ) : (
             <p id={`spotify-dica-${style}`} className="text-xs text-muted">
-              Aceita playlist, álbum, artista ou faixa. Deixe vazio para voltar
-              à playlist padrão.
+              Aceita playlist, álbum, artista ou faixa. Deixe vazio para voltar à playlist padrão.
             </p>
           )}
           <div className="flex gap-2">
-            <button
-              type="button"
-              className="btn-primary min-h-10"
-              onClick={saveLink}
-            >
+            <button type="button" className="btn-primary min-h-10" onClick={saveLink}>
               Salvar
             </button>
-            <button
-              type="button"
-              className="btn-ghost min-h-10"
-              onClick={() => setEditing(false)}
-            >
+            <button type="button" className="btn-ghost min-h-10" onClick={() => setEditing(false)}>
               Cancelar
             </button>
           </div>
         </div>
       )}
-      <button
-        type="button"
-        className="text-xs text-muted underline"
-        onClick={() => updateSettings({ spotifyEnabled: false })}
-      >
+      <button type="button" className="text-xs text-muted underline" onClick={() => updateSettings({ spotifyEnabled: false })}>
         Desligar o player do Spotify
       </button>
     </div>
@@ -347,11 +278,7 @@ function LocalPlayer({ style }: { style: MusicStyle }) {
     if (a.paused) {
       a.play()
         .then(() => setError(""))
-        .catch(() =>
-          setError(
-            "O navegador bloqueou a reprodução. Toque em tocar novamente."
-          )
-        );
+        .catch(() => setError("O navegador bloqueou a reprodução. Toque em tocar novamente."));
     } else a.pause();
   };
 
@@ -376,8 +303,7 @@ function LocalPlayer({ style }: { style: MusicStyle }) {
       }
       added.push(t);
     }
-    if (!added.length)
-      setError("Escolha arquivos de áudio (MP3, M4A, OGG, WAV…).");
+    if (!added.length) setError("Escolha arquivos de áudio (MP3, M4A, OGG, WAV…).");
     setLocal((l) => [...l, ...added]);
   };
 
@@ -385,57 +311,27 @@ function LocalPlayer({ style }: { style: MusicStyle }) {
 
   return (
     <div className="space-y-4">
-      <audio
-        ref={audioRef}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={next}
-        preload="none"
-      />
+      <audio ref={audioRef} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={next} preload="none" />
 
       {tracks.length === 0 ? (
-        <p
-          className="rounded-xl border border-line bg-iron p-3 text-sm text-sand"
-          data-testid="musica-indisponivel"
-        >
-          Nenhuma faixa de {label} incluída no app: ainda não há músicas com
-          licença verificada para distribuição. Você pode tocar arquivos do seu
-          aparelho.
+        <p className="rounded-xl border border-line bg-iron p-3 text-sm text-sand" data-testid="musica-indisponivel">
+          Nenhuma faixa de {label} incluída no app: ainda não há músicas com licença verificada para distribuição. Você pode tocar arquivos do seu aparelho.
         </p>
       ) : (
         <p className="text-sm">
-          <span className="text-muted">Tocando agora:</span>{" "}
-          <span className="font-medium">{current?.title}</span>
+          <span className="text-muted">Tocando agora:</span> <span className="font-medium">{current?.title}</span>
         </p>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          className="btn-primary min-h-11"
-          onClick={toggle}
-          disabled={!current}
-        >
-          {playing ? (
-            <Pause size={18} aria-hidden />
-          ) : (
-            <Play size={18} aria-hidden />
-          )}
+        <button type="button" className="btn-primary min-h-11" onClick={toggle} disabled={!current}>
+          {playing ? <Pause size={18} aria-hidden /> : <Play size={18} aria-hidden />}
           {playing ? "Pausar" : "Tocar"}
         </button>
-        <button
-          type="button"
-          className="btn-secondary min-h-11"
-          onClick={next}
-          disabled={tracks.length < 2}
-        >
+        <button type="button" className="btn-secondary min-h-11" onClick={next} disabled={tracks.length < 2}>
           <SkipForward size={18} aria-hidden /> Próxima
         </button>
-        <button
-          type="button"
-          className="btn-secondary min-h-11"
-          onClick={() => fileRef.current?.click()}
-        >
+        <button type="button" className="btn-secondary min-h-11" onClick={() => fileRef.current?.click()}>
           <Upload size={18} aria-hidden /> Adicionar arquivo
         </button>
         <input
@@ -445,9 +341,7 @@ function LocalPlayer({ style }: { style: MusicStyle }) {
           multiple
           className="sr-only"
           aria-label={`Adicionar arquivos de música ao estilo ${label}`}
-          onChange={(e) =>
-            void onFiles(e.target.files).then(() => (e.target.value = ""))
-          }
+          onChange={(e) => void onFiles(e.target.files).then(() => (e.target.value = ""))}
         />
       </div>
 
@@ -478,18 +372,8 @@ function LocalPlayer({ style }: { style: MusicStyle }) {
         <ul className="divide-y divide-line rounded-xl border border-line">
           {tracks.map((t, i) =>
             t.local ? (
-              <li
-                key={t.key}
-                className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm"
-              >
-                <button
-                  type="button"
-                  className={clsx(
-                    "min-h-10 flex-1 truncate text-left",
-                    i === index && "text-bronze-light"
-                  )}
-                  onClick={() => setIndex(i)}
-                >
+              <li key={t.key} className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm">
+                <button type="button" className={clsx("min-h-10 flex-1 truncate text-left", i === index && "text-bronze-light")} onClick={() => setIndex(i)}>
                   {t.title}
                 </button>
                 <button
@@ -509,10 +393,7 @@ function LocalPlayer({ style }: { style: MusicStyle }) {
           )}
         </ul>
       )}
-      <p className="text-xs text-muted">
-        Arquivos adicionados ficam salvos só neste navegador e não são enviados
-        para nenhum servidor.
-      </p>
+      <p className="text-xs text-muted">Arquivos adicionados ficam salvos só neste navegador e não são enviados para nenhum servidor.</p>
     </div>
   );
 }

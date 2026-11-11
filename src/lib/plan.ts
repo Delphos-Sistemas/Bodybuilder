@@ -1,7 +1,11 @@
 import type { Profile, Workout } from "./types";
 import { TEMPLATES, adaptToEquipment, workoutsFromTemplate } from "@/data/templates";
 
-export type PlanSuggestion = { templateId: string; reason: string; workouts: Workout[] };
+export type PlanSuggestion = {
+  templateId: string;
+  reason: string;
+  workouts: Workout[];
+};
 
 /**
  * Sugestão inicial simples, baseada em regras fixas (dias disponíveis, experiência e equipamentos).
@@ -32,14 +36,15 @@ export function suggestPlan(profile: Profile, now: number): PlanSuggestion {
   if (profile.goal === "forca") {
     workouts = workouts.map((w) => ({
       ...w,
-      exercises: w.exercises.map((e, i) =>
-        i < 2 && e.repsMin > 3 ? { ...e, repsMin: 4, repsMax: 6, restSec: Math.max(e.restSec, 180) } : e
-      )
+      exercises: w.exercises.map((e, i) => (i < 2 && e.repsMin > 3 ? { ...e, repsMin: 4, repsMax: 6, restSec: Math.max(e.restSec, 180) } : e))
     }));
   } else if (profile.goal === "emagrecimento" || profile.goal === "condicionamento") {
     workouts = workouts.map((w) => ({
       ...w,
-      exercises: w.exercises.map((e) => ({ ...e, restSec: Math.min(e.restSec, 75) }))
+      exercises: w.exercises.map((e) => ({
+        ...e,
+        restSec: Math.min(e.restSec, 75)
+      }))
     }));
   }
   return { templateId, reason, workouts };

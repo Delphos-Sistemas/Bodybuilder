@@ -16,12 +16,21 @@ export function AudioControls() {
     const ok = await unlockAudio();
     update({ audioEnabled: ok });
     setStatus(ok ? "Som ativado." : "O navegador bloqueou o áudio. O treino funciona normalmente sem som.");
-    if (ok) playAlert("teste", { sound: true, vibrate: false, volume: settings.alertVolume });
+    if (ok)
+      playAlert("teste", {
+        sound: true,
+        vibrate: false,
+        volume: settings.alertVolume
+      });
   };
 
   const test = async (kind: AlertKind) => {
     const ok = await unlockAudio();
-    const played = playAlert(kind, { sound: ok && settings.audioEnabled, vibrate: settings.vibration, volume: settings.alertVolume });
+    const played = playAlert(kind, {
+      sound: ok && settings.audioEnabled,
+      vibrate: settings.vibration,
+      volume: settings.alertVolume
+    });
     if (!settings.audioEnabled) setStatus("O som está desligado. Ative para ouvir os alertas.");
     else if (!played) setStatus("Não foi possível tocar o som neste navegador.");
     else setStatus("");
@@ -61,7 +70,16 @@ export function AudioControls() {
         <label htmlFor="volume-alertas" className="label">
           Volume dos alertas
         </label>
-        <input id="volume-alertas" type="range" min={0.1} max={1} step={0.05} value={settings.alertVolume} onChange={(e) => update({ alertVolume: parseFloat(e.target.value) })} className="w-full accent-[#B07D45]" />
+        <input
+          id="volume-alertas"
+          type="range"
+          min={0.1}
+          max={1}
+          step={0.05}
+          value={settings.alertVolume}
+          onChange={(e) => update({ alertVolume: parseFloat(e.target.value) })}
+          className="w-full accent-[#B07D45]"
+        />
       </div>
       <Toggle
         id="vibracao"

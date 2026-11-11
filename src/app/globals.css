@@ -15,9 +15,7 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background:
-    radial-gradient(circle at 0% 0%, rgba(176, 125, 69, 0.12), transparent 26rem),
-    #0b0a09;
+  background: radial-gradient(circle at 0% 0%, rgba(176, 125, 69, 0.12), transparent 26rem), #0b0a09;
   color: #f3eee6;
   font-size: 16px;
   line-height: 1.5;
@@ -88,24 +86,54 @@ input[type="number"] {
 
 /* Motion discreto: abertura da ficha, feedback de série e barras de progresso */
 @keyframes sheet-in {
-  from { transform: translateY(24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes set-done {
-  0% { box-shadow: 0 0 0 0 rgba(127, 183, 126, 0.55); }
-  100% { box-shadow: 0 0 0 14px rgba(127, 183, 126, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(127, 183, 126, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(127, 183, 126, 0);
+  }
 }
-.anim-sheet { animation: sheet-in 220ms ease-out; }
-.anim-fade { animation: fade-in 180ms ease-out; }
-.anim-set-done { animation: set-done 700ms ease-out; }
-.progress-bar { transition: width 400ms ease-out; }
+.anim-sheet {
+  animation: sheet-in 220ms ease-out;
+}
+.anim-fade {
+  animation: fade-in 180ms ease-out;
+}
+.anim-set-done {
+  animation: set-done 700ms ease-out;
+}
+.progress-bar {
+  transition: width 400ms ease-out;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-sheet, .anim-fade, .anim-set-done { animation: none; }
-  .progress-bar { transition: none; }
-  * { scroll-behavior: auto !important; }
+  .anim-sheet,
+  .anim-fade,
+  .anim-set-done {
+    animation: none;
+  }
+  .progress-bar {
+    transition: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
 }
