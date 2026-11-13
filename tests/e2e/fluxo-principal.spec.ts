@@ -5,8 +5,12 @@ import { expect, test, type Page } from "@playwright/test";
  * No WebKit o localStorage é gravado de forma assíncrona; sem esperar, a página seguinte pode abrir sem a demonstração.
  */
 async function enterDemo(page: Page) {
-  await page.getByRole("button", { name: "Ver demonstração" }).click();
-  await expect(page.getByText("Modo demonstração.")).toBeVisible();
+  // No WebKit do CI, o toque às vezes chega antes do botão estar pronto e se perde; tenta de novo enquanto ele ainda estiver lá.
+  await expect(async () => {
+    const button = page.getByRole("button", { name: "Ver demonstração" });
+    if (await button.isVisible()) await button.click();
+    await expect(page.getByText("Modo demonstração.")).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 15_000 });
   await page.waitForFunction(() => localStorage.getItem("bodybuilder:v2")?.includes('"mode":"demo"'));
 }
 
