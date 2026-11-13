@@ -103,6 +103,7 @@ test("biblioteca: busca sem acento, ficha e demonstração", async ({ page }) =>
 
   // com o GIF do ExerciseDB disponível, ele aparece no lugar da animação
   await expect(page.locator("video")).toHaveCount(0);
+  await page.getByRole("article").filter({ hasText: "Leg press 45°" }).scrollIntoViewIfNeeded();
   await expect(page.getByRole("img", { name: "Demonstração: Leg press 45°" })).toBeVisible();
 });
 
@@ -110,6 +111,7 @@ test("sem o GIF (offline), volta para a animação própria, que pode ser pausad
   await page.route("https://static.exercisedb.dev/**", (r) => r.abort());
   await page.goto("/biblioteca");
   await page.getByLabel("Filtrar por equipamento").selectOption("maquina");
+  await page.getByRole("article").filter({ hasText: "Leg press 45°" }).scrollIntoViewIfNeeded();
   await expect(page.getByRole("img", { name: "Animação: Leg press 45°" })).toBeVisible();
   await page.getByRole("button", { name: "Pausar demonstração de Leg press 45°" }).click();
   await expect(page.getByRole("button", { name: "Reproduzir demonstração de Leg press 45°" })).toBeVisible();

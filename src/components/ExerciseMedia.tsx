@@ -47,13 +47,9 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
   const moving = !!spec && spec.keys.length > 1 && !exercise.isometric;
   const gif = exercisedbGif(exercise.id);
   const [gifFailed, setGifFailed] = useState(false);
-  const showGif = !!gif && !gifFailed;
-  const imgRef = useRef<HTMLImageElement>(null);
-  // o erro pode acontecer antes do React ligar o onError (página pré-renderizada): confere ao montar
-  useEffect(() => {
-    const img = imgRef.current;
-    if (img && img.complete && img.naturalWidth === 0) setGifFailed(true);
-  }, [gif]);
+  const [gifReady, setGifReady] = useState(false);
+  // mostra a animação própria até o GIF terminar de baixar; se não baixar (sem internet), fica com ela
+  const showGif = !!gif && gifReady && !gifFailed;
   const [view, setView] = useState<"anim" | "posicoes">("anim");
   const [playing, setPlaying] = useState(() => !prefersReducedMotion());
   const boxRef = useRef<HTMLDivElement>(null);
@@ -66,6 +62,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
   useEffect(() => {
     setView("anim");
     setGifFailed(false);
+    setGifReady(false);
   }, [exercise.id]);
 
   useEffect(() => {
@@ -78,6 +75,19 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
     io.observe(el);
     return () => io.disconnect();
   }, [view]);
+
+  // baixa o GIF só quando o quadro aparece na tela
+  useEffect(() => {
+    if (!gif || !visible || gifReady || gifFailed) return;
+    const im = new Image();
+    let alive = true;
+    im.onload = () => alive && setGifReady(true);
+    im.onerror = () => alive && setGifFailed(true);
+    im.src = gif;
+    return () => {
+      alive = false;
+    };
+  }, [gif, visible, gifReady, gifFailed]);
 
   // desenha o quadro; anima só quando faz sentido
   useEffect(() => {
@@ -120,10 +130,8 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
         <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            ref={imgRef}
             src={gif}
             alt={`Demonstração: ${exercise.name}`}
-            loading="lazy"
             decoding="async"
             onError={() => setGifFailed(true)}
             className="h-full w-full object-contain"
