@@ -48,7 +48,8 @@ export async function unlockAudio(): Promise<boolean> {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return false;
     ctx = ctx ?? new AC();
-    if (ctx.state === "suspended") await ctx.resume();
+    // alguns navegadores (WebKit sem saída de áudio) nunca resolvem o resume(): não travar a tela
+    if (ctx.state === "suspended") await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 1500))]);
     return ctx.state === "running";
   } catch {
     return false;

@@ -140,7 +140,8 @@ test("configurações: som exige ação do usuário e player indica falta de fai
   await page.goto("/configuracoes");
   await expect(page.getByText("Som dos alertas: desligado.")).toBeVisible();
   await page.getByRole("button", { name: "Ativar som dos alertas" }).click();
-  await expect(page.getByRole("button", { name: "Desligar som dos alertas" })).toBeVisible();
+  // sem saída de áudio (WebKit no CI) o app avisa do bloqueio em vez de ligar o som; os dois são corretos
+  await expect(page.getByRole("button", { name: "Desligar som dos alertas" }).or(page.getByText(/O navegador bloqueou o áudio/))).toBeVisible();
   await page.getByRole("tab", { name: "Arquivos do aparelho" }).click();
   await expect(page.getByTestId("musica-indisponivel")).toContainText("Nenhuma faixa de Metal");
   await page.getByRole("radio", { name: "Rock" }).click();
