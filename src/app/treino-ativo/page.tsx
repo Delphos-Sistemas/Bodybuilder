@@ -13,7 +13,9 @@ import { EmptyState, ProgressBar, Stepper } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
 import { playAlert } from "@/lib/audio";
 import { currentItem, isItemDone, isSessionComplete, sessionSetCount, workingSets } from "@/lib/session";
-import { estimate1RM, exerciseRecords, setRecordHits } from "@/lib/records";
+import { estimate1RM, exerciseRecords, recordCardInfo, setRecordHits } from "@/lib/records";
+import { ShareRecord } from "@/components/ShareRecord";
+import type { RecordCardInfo } from "@/lib/shareCard";
 import { useData, useStore } from "@/lib/store";
 import { fmt, lastPerformance, platesPerSide, suggestNext } from "@/lib/progression";
 import { formatClock, formatDateShort, restRemaining, secondsBetween, workoutElapsed } from "@/lib/time";
@@ -38,7 +40,7 @@ export default function TreinoAtivoPage() {
     pain: string;
     kind: SetKind | "";
   }>({ loadKg: 0, reps: 0, rir: 2, pain: "", kind: "" });
-  const [record, setRecord] = useState<string | null>(null);
+  const [record, setRecord] = useState<{ text: string; info: RecordCardInfo } | null>(null);
   const alertedRest = useRef<number | null>(null);
 
   const item = session ? currentItem(session) : undefined;
@@ -87,12 +89,6 @@ export default function TreinoAtivoPage() {
       void lock?.release().catch(() => undefined);
     };
   }, [session?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!record) return;
-    const t = setTimeout(() => setRecord(null), 6000);
-    return () => clearTimeout(t);
-  }, [record]);
 
   const rest = session?.rest ?? null;
   const remaining = restRemaining(rest, now);
@@ -143,6 +139,8 @@ export default function TreinoAtivoPage() {
   };
 
   const logSet = (repsOverride?: number) => {
+    // o aviso de recorde fica na tela até a próxima série (dá tempo de compartilhar)
+    setRecord(null);
     if (item && !form.kind) {
       // recorde em relação ao histórico e às séries anteriores desta sessão
       const history = exerciseRecords(data.sessions, item.exerciseId);
@@ -151,11 +149,15 @@ export default function TreinoAtivoPage() {
         const hits = setRecordHits({ loadKg: form.loadKg, reps: repsOverride ?? form.reps }, before, item.exerciseId);
         if (hits.length) {
           const h = hits.find((x) => x.type === "carga") ?? hits[0];
-          setRecord(
-            h.type === "carga"
-              ? `Novo recorde de carga: ${fmt(h.value)} kg (antes ${fmt(h.previous ?? 0)} kg).`
-              : `Novo recorde de força: 1RM estimado de ${fmt(h.value)} kg (antes ${fmt(h.previous ?? 0)} kg).`
-          );
+          const reps = repsOverride ?? form.reps;
+          setRecord({
+            text:
+              h.type === "carga"
+                ? `Novo recorde de carga: ${fmt(h.value)} kg (antes ${fmt(h.previous ?? 0)} kg).`
+                : `Novo recorde de força: 1RM estimado de ${fmt(h.value)} kg (antes ${fmt(h.previous ?? 0)} kg).`,
+            info: recordCardInfo(h, exercise?.name ?? item.exerciseId, now, `${fmt(form.loadKg)} kg × ${reps}`)
+          });
+          if (settings.vibration && "vibrate" in navigator) navigator.vibrate?.([120, 60, 120, 60, 240]);
         }
       }
     }
@@ -299,12 +301,13 @@ export default function TreinoAtivoPage() {
 
             <div aria-live="polite">
               {record && (
-                <p
-                  className="anim-fade flex items-center gap-2 rounded-xl border border-bronze bg-bronze/15 px-3 py-2 text-sm font-semibold text-bronze-light"
+                <div
+                  className="anim-fade flex flex-wrap items-center gap-2 rounded-xl border border-bronze bg-bronze/15 px-3 py-2 text-sm font-semibold text-bronze-light"
                   data-testid="recorde"
                 >
-                  <Trophy size={18} aria-hidden /> {record}
-                </p>
+                  <Trophy size={18} aria-hidden /> <span className="min-w-0 flex-1">{record.text}</span>
+                  <ShareRecord info={record.info} label="Compartilhar" className="min-h-9" />
+                </div>
               )}
             </div>
 

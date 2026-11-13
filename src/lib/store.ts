@@ -9,6 +9,11 @@ import { syncCustomExercises } from "@/data/exercises";
 import { uid } from "./id";
 import { buildDemoDataset } from "@/data/demo";
 import { exportSchema, type ExportFile } from "./schemas";
+import { applyProgression, planProgression } from "./progression";
+import { markReminderDone } from "./reminders";
+import { dailyGoals } from "./nutrition";
+import { todayISO } from "./time";
+import { EXERCISE_MAP } from "@/data/exercises";
 import { adjustRest, clearRest, completeSet, createSession, finishSession, goToExercise, setItemTimes, skipExercise } from "./session";
 
 export const STORAGE_KEY = "bodybuilder:v2";
@@ -63,6 +68,8 @@ type Actions = {
   skipCurrent: () => void;
   goTo: (index: number) => void;
   finish: (manual: boolean) => string | null;
+  /** desfaz (ou refaz) a atualização de cargas da ficha feita ao finalizar uma sessão */
+  toggleProgression: (sessionId: string) => void;
   deleteSession: (id: string) => void;
   setSessionNotes: (id: string, notes: string) => void;
   addBodyWeight: (date: string, kg: number) => void;
@@ -215,13 +222,46 @@ export const useStore = create<Store>()(
         finish: (manual) => {
           const active = current().activeSession;
           if (!active) return null;
-          const done = finishSession(active, Date.now(), manual);
+          const now = Date.now();
+          let done = finishSession(active, now, manual);
+          const auto = get().settings.autoProgress !== false;
+          const changes = planProgression(done, (id) => EXERCISE_MAP[id]?.equipment);
+          const workout = current().workouts.find((w) => w.id === done.workoutId);
+          const progression = changes.map((c) => ({ ...c, applied: auto && !!workout && c.toKg !== c.fromKg }));
+          if (progression.length) done = { ...done, progression };
           update((d) => ({
             ...d,
             activeSession: null,
-            sessions: [done, ...d.sessions]
+            sessions: [done, ...d.sessions],
+            workouts:
+              auto && workout
+                ? d.workouts.map((w) =>
+                    w.id === workout.id
+                      ? applyProgression(
+                          w,
+                          progression.filter((c) => c.applied),
+                          now
+                        )
+                      : w
+                  )
+                : d.workouts
           }));
+          if (get().settings.remindersOn && get().mode === "usuario") void markReminderDone("treino");
           return done.id;
+        },
+        toggleProgression: (sessionId) => {
+          const s = current().sessions.find((x) => x.id === sessionId);
+          if (!s?.progression?.length) return;
+          const applicable = s.progression.filter((c) => c.toKg !== c.fromKg);
+          const undo = applicable.some((c) => c.applied);
+          const now = Date.now();
+          update((d) => ({
+            ...d,
+            workouts: d.workouts.map((w) => (w.id === s.workoutId ? applyProgression(w, applicable, now, undo) : w)),
+            sessions: d.sessions.map((x) =>
+              x.id === sessionId ? { ...x, updatedAt: now, progression: x.progression!.map((c) => ({ ...c, applied: !undo && c.toKg !== c.fromKg })) } : x
+            )
+          }));
         },
         deleteSession: (id) =>
           update((d) => ({
@@ -314,11 +354,18 @@ export const useStore = create<Store>()(
               backupSnoozeUntil: undefined
             }
           })),
-        logNutrition: (date, delta) =>
+        logNutrition: (date, delta) => {
+          const before = current();
+          const goal = dailyGoals(before.nutrition, before.bodyWeights).waterMl;
+          const had = dayOf(before.nutrition, date).waterMl;
           update((d) => {
             const n = d.nutrition ?? { days: {} };
             return { ...d, nutrition: { ...n, days: { ...n.days, [date]: bumpDay(dayOf(n, date), delta) } } };
-          }),
+          });
+          // bateu a meta de água hoje: os lembretes de água param até amanhã
+          const now = dayOf(current().nutrition, date).waterMl;
+          if (get().settings.remindersOn && get().mode === "usuario" && date === todayISO() && had < goal && now >= goal) void markReminderDone("agua");
+        },
         setNutritionDay: (date, patch) =>
           update((d) => {
             const n = d.nutrition ?? { days: {} };

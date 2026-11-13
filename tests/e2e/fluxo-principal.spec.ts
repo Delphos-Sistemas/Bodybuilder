@@ -354,3 +354,52 @@ test("nutrição: receita vai para a lista de compras sem duplicar", async ({ pa
   await page.getByRole("tab", { name: /Compras/ }).click();
   await expect(page.getByTestId("item-compra")).toHaveCount(3);
 });
+
+test("novidades: treinos prontos por objetivo, quadro de recordes, card do recorde e lembretes", async ({ page }) => {
+  await page.goto("/");
+  await enterDemo(page);
+  await page.goto("/treinos");
+  await page.getByRole("radio", { name: "Força" }).click();
+  await expect(page.getByTestId("modelos")).toContainText("Força 5×5");
+  await expect(page.getByTestId("modelos")).not.toContainText("Push/Pull/Legs");
+  await page.getByRole("button", { name: "Usar modelo Força 5×5" }).click();
+  await expect(page.getByText("2 treinos criados a partir do modelo Força 5×5")).toBeVisible();
+
+  await page.goto("/evolucao");
+  await expect(page.getByTestId("quadro-recordes")).toContainText("Maior carga");
+  await page.getByTestId("quadro-recordes").getByRole("button", { name: "Card" }).first().click();
+  await expect(page.getByRole("heading", { name: "Card do recorde" })).toBeVisible();
+  await page.getByRole("button", { name: "Fechar" }).click();
+
+  await page.goto("/configuracoes");
+  await expect(page.getByRole("heading", { name: "Lembretes no celular" })).toBeVisible();
+  await expect(page.getByTestId("lembretes").or(page.getByTestId("lembretes-instalar"))).toBeVisible();
+  await expect(page.getByRole("switch", { name: "Atualizar a ficha sozinho" })).toHaveAttribute("aria-checked", "true");
+});
+
+test("progressão automática: ao finalizar, a ficha sobe a carga e dá para desfazer", async ({ page }) => {
+  await page.goto("/treinos/editar?novo=1");
+  await page.getByLabel("Nome do treino").fill("Teste progressão");
+  await page.getByRole("button", { name: "Adicionar exercício" }).click();
+  await page.getByLabel("Buscar exercício").fill("supino reto com barra");
+  await page.getByRole("button", { name: "Adicionar Supino reto com barra" }).click();
+  await page.getByRole("button", { name: "Concluir" }).click();
+  const item = page.getByTestId("item-exercicio");
+  await item.getByRole("button", { name: "Diminuir séries" }).click();
+  await item.getByRole("button", { name: "Diminuir séries" }).click(); // 3 → 1
+  await item.getByLabel("Carga (kg)").fill("100");
+  await page.getByRole("button", { name: "Salvar treino" }).click();
+  await expect(page).toHaveURL(/\/treinos\/?$/);
+
+  await page.getByRole("listitem").filter({ hasText: "Teste progressão" }).getByRole("button", { name: "Iniciar treino" }).click();
+  await expect(page).toHaveURL(/treino-ativo/);
+  await page.getByRole("spinbutton", { name: "Repetições" }).fill("20");
+  await page.getByRole("button", { name: "Concluir série" }).click();
+  await page.getByRole("button", { name: "Finalizar e salvar treino" }).click();
+
+  const prog = page.getByTestId("progressao");
+  await expect(prog).toContainText("102,5 kg");
+  await expect(prog).toContainText("A ficha já foi atualizada");
+  await prog.getByRole("button", { name: /Desfazer/ }).click();
+  await expect(prog.getByRole("button", { name: "Atualizar a ficha com essas cargas" })).toBeVisible();
+});

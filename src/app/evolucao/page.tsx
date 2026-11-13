@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { BodyProgress } from "@/components/BodyProgress";
+import { RecordsList } from "@/components/RecordsList";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { WeeklyVolume } from "@/components/WeeklyVolume";
 import { fmt } from "@/lib/progression";
@@ -56,6 +57,12 @@ export default function EvolucaoPage() {
       <Card>
         <WeeklyVolume sessions={data.sessions} now={now} />
       </Card>
+
+      {data.sessions.some((s) => s.endedAt) && (
+        <Card>
+          <RecordsList sessions={data.sessions} />
+        </Card>
+      )}
 
       <Card className="space-y-4">
         <h2 className="font-display text-xl font-bold">Peso corporal</h2>

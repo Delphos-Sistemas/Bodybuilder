@@ -6,7 +6,8 @@ import { useState } from "react";
 import { StartWorkoutButton } from "@/components/StartWorkout";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
-import { TEMPLATES, workoutsFromTemplate } from "@/data/templates";
+import { TEMPLATE_GOALS, TEMPLATES, workoutsFromTemplate, type TemplateGoal } from "@/data/templates";
+import clsx from "clsx";
 import { useData, useStore } from "@/lib/store";
 import { formatDuration } from "@/lib/time";
 import { estimateMinutes } from "@/lib/session";
@@ -18,6 +19,8 @@ export default function TreinosPage() {
   const remove = useStore((s) => s.deleteWorkout);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [goal, setGoal] = useState<TemplateGoal | "">("");
+  const templates = goal ? TEMPLATES.filter((t) => t.goal === goal) : TEMPLATES;
 
   const applyTemplate = (id: string) => {
     const t = TEMPLATES.find((x) => x.id === id)!;
@@ -102,15 +105,33 @@ export default function TreinosPage() {
       </section>
 
       <section aria-labelledby="modelos">
-        <h2 id="modelos" className="mb-3 font-display text-2xl font-bold">
-          Modelos
+        <h2 id="modelos" className="font-display text-2xl font-bold">
+          Treinos prontos
         </h2>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {TEMPLATES.map((t) => (
+        <p className="mb-3 text-sm text-muted">Escolha pelo seu objetivo. O modelo vira treinos seus, e você pode editar tudo depois.</p>
+        <div className="mb-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Objetivo do treino pronto">
+          {([["", "Todos"], ...Object.entries(TEMPLATE_GOALS)] as [TemplateGoal | "", string][]).map(([k, label]) => (
+            <button
+              key={k || "todos"}
+              type="button"
+              role="radio"
+              aria-checked={goal === k}
+              className={clsx("chip", goal === k && "chip-on")}
+              onClick={() => setGoal(k)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="modelos">
+          {templates.map((t) => (
             <li key={t.id}>
               <Card className="flex h-full flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ok">{TEMPLATE_GOALS[t.goal]}</p>
                 <h3 className="text-lg font-semibold">{t.name}</h3>
-                <p className="text-xs text-bronze-light">{t.daysPerWeek}</p>
+                <p className="text-xs text-bronze-light">
+                  {t.daysPerWeek} · {t.level}
+                </p>
                 <p className="text-sm text-sand">{t.description}</p>
                 <ul className="text-sm text-muted">
                   {t.days.map((d) => (

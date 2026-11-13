@@ -31,9 +31,18 @@ export function suggestPlan(profile: Profile, now: number): PlanSuggestion {
         ? "Com 5 ou mais dias, o ABC repetido mantém sessões curtas e organizadas."
         : "Com 5 ou mais dias, o Push/Pull/Legs permite repetir cada treino duas vezes por semana.";
   }
+  // objetivo força: modelos próprios de força (o iniciante aprende a técnica antes, com o plano padrão)
+  if (profile.goal === "forca" && profile.experience !== "iniciante" && days >= 3) {
+    templateId = days >= 4 ? "forca-4-dias" : "forca-5x5";
+    reason =
+      days >= 4
+        ? "Para ganhar força com 4 ou mais dias, o Força 4 dias treina os básicos pesados duas vezes por semana."
+        : "Para ganhar força com 3 dias, o 5×5 foca nos básicos com carga alta e progressão constante.";
+  }
   const template = TEMPLATES.find((t) => t.id === templateId)!;
+  const strengthTemplate = template.goal === "forca";
   let workouts = workoutsFromTemplate(template, now).map((w) => adaptToEquipment(w, profile.equipment));
-  if (profile.goal === "forca") {
+  if (profile.goal === "forca" && !strengthTemplate) {
     workouts = workouts.map((w) => ({
       ...w,
       exercises: w.exercises.map((e, i) => (i < 2 && e.repsMin > 3 ? { ...e, repsMin: 4, repsMax: 6, restSec: Math.max(e.restSec, 180) } : e))

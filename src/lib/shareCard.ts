@@ -195,3 +195,103 @@ export async function shareCanvas(canvas: HTMLCanvasElement, fileName: string): 
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   return "baixado";
 }
+
+export type RecordCardInfo = {
+  exerciseName: string;
+  /** "Recorde de carga" | "Recorde de força" … */
+  label: string;
+  value: string;
+  detail?: string;
+  previous?: string;
+  date: number;
+};
+
+/** Card de recorde pessoal em formato de story (1080 × 1920). */
+export function drawRecordCard(canvas: HTMLCanvasElement, info: RecordCardInfo, logo?: HTMLImageElement): void {
+  const W = 1080;
+  const H = 1920;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, "#2A1F14");
+  grad.addColorStop(0.55, "#130F0B");
+  grad.addColorStop(1, C.bg);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // brilho atrás do troféu
+  const glow = ctx.createRadialGradient(W / 2, 640, 40, W / 2, 640, 520);
+  glow.addColorStop(0, "rgba(211,164,107,0.35)");
+  glow.addColorStop(1, "rgba(211,164,107,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 100, W, 1100);
+
+  ctx.textBaseline = "middle";
+  if (logo?.complete && logo.naturalWidth) ctx.drawImage(logo, 75, 95, 160, 160);
+  ctx.textAlign = "left";
+  ctx.fillStyle = C.text;
+  ctx.font = `bold 60px ${DISPLAY}`;
+  ctx.fillText("BODYBUILDER", logo?.complete && logo.naturalWidth ? 250 : 90, 178);
+
+  // troféu desenhado (sem imagem externa)
+  ctx.save();
+  ctx.translate(W / 2, 600);
+  ctx.fillStyle = C.bronzeLight;
+  ctx.strokeStyle = C.bronzeLight;
+  ctx.lineWidth = 26;
+  ctx.beginPath();
+  ctx.arc(-150, -60, 70, Math.PI * 0.5, Math.PI * 1.5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(150, -60, 70, Math.PI * 1.5, Math.PI * 0.5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-170, -170);
+  ctx.lineTo(170, -170);
+  ctx.quadraticCurveTo(170, 90, 0, 120);
+  ctx.quadraticCurveTo(-170, 90, -170, -170);
+  ctx.fill();
+  ctx.fillRect(-28, 110, 56, 90);
+  ctx.beginPath();
+  ctx.roundRect(-130, 195, 260, 60, 14);
+  ctx.fill();
+  ctx.fillStyle = C.bg;
+  ctx.font = `bold 120px ${DISPLAY}`;
+  ctx.textAlign = "center";
+  ctx.fillText("1", 0, -40);
+  ctx.restore();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = C.bronzeLight;
+  ctx.font = `bold 52px ${DISPLAY}`;
+  ctx.fillText("NOVO RECORDE PESSOAL", W / 2, 1000);
+
+  ctx.fillStyle = C.text;
+  fitFont(ctx, info.exerciseName, W - 160, "bold", 92, DISPLAY, 50);
+  const lines = wrap(ctx, info.exerciseName, W - 160, 2);
+  lines.forEach((t, i) => ctx.fillText(t, W / 2, 1120 + i * 100));
+  let y = 1120 + (lines.length - 1) * 100;
+
+  ctx.fillStyle = C.text;
+  fitFont(ctx, info.value, W - 160, "bold", 230, DISPLAY, 120);
+  ctx.fillText(info.value, W / 2, y + 260);
+  y += 260;
+
+  ctx.fillStyle = C.sand;
+  ctx.font = `600 44px ${SANS}`;
+  ctx.fillText(info.label + (info.detail ? ` · ${info.detail}` : ""), W / 2, y + 90);
+  if (info.previous) {
+    ctx.fillStyle = C.muted;
+    ctx.font = `500 38px ${SANS}`;
+    ctx.fillText(info.previous, W / 2, y + 150);
+  }
+
+  ctx.fillStyle = C.muted;
+  ctx.font = `500 34px ${SANS}`;
+  ctx.fillText(new Date(info.date).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" }), W / 2, H - 160);
+  ctx.font = `500 28px ${SANS}`;
+  ctx.fillText("Desenvolvido por Delphos Sistemas", W / 2, H - 90);
+  ctx.textAlign = "left";
+}

@@ -4,8 +4,9 @@ import { Download, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AudioControls } from "@/components/AudioControls";
 import { MusicPlayer } from "@/components/MusicPlayer";
+import { RemindersPanel } from "@/components/RemindersPanel";
 import { SyncPanel } from "@/components/SyncPanel";
-import { Card, PageHeader } from "@/components/ui";
+import { Card, PageHeader, Toggle } from "@/components/ui";
 import { downloadBackup, isStoragePersisted, requestPersistentStorage } from "@/lib/backup";
 import { useStore } from "@/lib/store";
 
@@ -20,6 +21,8 @@ export default function ConfiguracoesPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
+  const autoProgress = useStore((s) => s.settings.autoProgress !== false);
+  const updateSettings = useStore((s) => s.updateSettings);
   const markBackupDone = useStore((s) => s.markBackupDone);
   const lastBackupAt = useStore((s) => s.settings.lastBackupAt);
   const [persisted, setPersisted] = useState<boolean | null>(null);
@@ -59,6 +62,22 @@ export default function ConfiguracoesPage() {
           Os alertas tocam no início do treino, no fim de cada descanso e no encerramento. O treino funciona normalmente mesmo sem som.
         </p>
         <AudioControls />
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="font-display text-xl font-bold">Lembretes no celular</h2>
+        <RemindersPanel />
+      </Card>
+
+      <Card className="space-y-1">
+        <h2 className="font-display text-xl font-bold">Progressão de carga</h2>
+        <Toggle
+          id="progressao-automatica"
+          label="Atualizar a ficha sozinho"
+          description="Ao finalizar o treino, se você bateu o topo das repetições em todas as séries, a carga da ficha sobe para a próxima vez (2,5 kg na barra e máquinas, 2 kg nos halteres). Se ficou abaixo da faixa chegando à falha, ela desce. Dá para desfazer no histórico."
+          checked={autoProgress}
+          onChange={(v) => updateSettings({ autoProgress: v })}
+        />
       </Card>
 
       <Card className="space-y-3">
@@ -172,7 +191,8 @@ export default function ConfiguracoesPage() {
       <Card className="space-y-2">
         <h2 className="font-display text-xl font-bold">Créditos de mídia</h2>
         <p className="text-sm text-muted">
-          Os GIFs dos exercícios vêm do ExerciseDB (exercisedb.dev) e precisam de internet. Sem internet, ou nos exercícios sem GIF, o app mostra a animação própria do BODYBUILDER, desenhada em código.
+          Os GIFs dos exercícios vêm do ExerciseDB (exercisedb.dev) e precisam de internet. Sem internet, ou nos exercícios sem GIF, o app mostra a animação
+          própria do BODYBUILDER, desenhada em código.
         </p>
       </Card>
     </div>

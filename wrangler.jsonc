@@ -5,6 +5,11 @@
   "name": "bodybuilder",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-01",
+  "durable_objects": {
+    // lembretes de treino e água (notificações push); criado sozinho no deploy, sem configurar nada na conta
+    "bindings": [{ "name": "LEMBRETES", "class_name": "Lembretes" }]
+  },
+  "migrations": [{ "tag": "v1-lembretes", "new_sqlite_classes": ["Lembretes"] }],
   "assets": {
     "directory": "./out",
     "binding": "ASSETS",

@@ -5,12 +5,14 @@ import { Trash2, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
+import { ProgressionSummary } from "@/components/ProgressionSummary";
+import { ShareRecord } from "@/components/ShareRecord";
 import { ShareSession } from "@/components/ShareSession";
 import { TrainingCalendar } from "@/components/TrainingCalendar";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
 import { sessionSetCount, sessionVolume } from "@/lib/session";
-import { sessionRecordHits } from "@/lib/records";
+import { recordCardInfo, sessionRecordHits } from "@/lib/records";
 import { useData, useStore } from "@/lib/store";
 import { SET_KINDS } from "@/lib/types";
 import { formatClock, formatDate, workoutElapsed } from "@/lib/time";
@@ -104,6 +106,28 @@ function Historico() {
                         </span>
                       </summary>
                       <div className="mt-3 space-y-3 border-t border-line pt-3">
+                        <ProgressionSummary session={s} />
+                        {(records.get(s.id)?.length ?? 0) > 0 && (
+                          <section className="rounded-xl border border-bronze/50 bg-bronze/10 p-3" aria-label="Recordes desta sessão">
+                            <h3 className="mb-1 flex items-center gap-2 font-semibold text-bronze-light">
+                              <Trophy size={16} aria-hidden /> Recordes pessoais
+                            </h3>
+                            <ul className="space-y-2 text-sm">
+                              {records.get(s.id)!.map((r) => {
+                                const name = EXERCISE_MAP[r.exerciseId]?.name ?? r.exerciseId;
+                                const info = recordCardInfo(r, name, s.startedAt);
+                                return (
+                                  <li key={`${r.exerciseId}-${r.type}`} className="flex flex-wrap items-center gap-2">
+                                    <span className="min-w-0 flex-1">
+                                      {name}: <strong>{info.value}</strong> <span className="text-muted">({info.label.toLowerCase()})</span>
+                                    </span>
+                                    <ShareRecord info={info} label="Card" className="min-h-9" />
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </section>
+                        )}
                         {s.items.map((it, i) => {
                           const ex = EXERCISE_MAP[it.exerciseId];
                           return (

@@ -1,4 +1,4 @@
-import type { Equipment, Session, SessionItem, SetLog } from "./types";
+import type { Equipment, ProgressionChange, Session, SessionItem, SetLog, Workout } from "./types";
 
 export type LastPerformance = { date: number; sets: SetLog[] };
 
@@ -70,6 +70,46 @@ export function suggestNext(planned: SessionItem["planned"], last: LastPerforman
     kind: "manter",
     reason: "Mantenha a carga e tente somar repetições até chegar ao topo da faixa em todas as séries."
   };
+}
+
+/**
+ * Progressão automática ao finalizar: para cada exercício feito na sessão, calcula a carga da próxima vez
+ * com a mesma regra da sugestão (progressão dupla). Exercícios sem séries válidas ficam de fora.
+ */
+export function planProgression(session: Session, equipmentOf: (exerciseId: string) => Equipment | undefined): ProgressionChange[] {
+  const out: ProgressionChange[] = [];
+  const seen = new Set<string>();
+  for (const it of session.items) {
+    if (seen.has(it.exerciseId)) continue;
+    const sets = it.sets.filter((x) => !x.kind);
+    const eq = equipmentOf(it.exerciseId);
+    if (!sets.length || !eq) continue;
+    seen.add(it.exerciseId);
+    let sug = suggestNext(it.planned, { date: session.startedAt, sets }, eq);
+    if (!sug) continue;
+    // só sobe a carga se fez todas as séries planejadas (treino encerrado no meio não conta como meta batida)
+    if (sug.kind === "subir" && sets.length < it.planned.sets) {
+      const top = Math.max(...sets.map((x) => x.loadKg));
+      sug = { ...sug, kind: "manter", loadKg: top, repsTarget: it.planned.repsMax };
+    }
+    out.push({ exerciseId: it.exerciseId, fromKg: it.planned.loadKg, toKg: sug.loadKg, reps: sug.repsTarget, kind: sug.kind, applied: false });
+  }
+  return out;
+}
+
+/** Aplica (ou desfaz, com `undo`) as cargas da progressão na ficha do treino. */
+export function applyProgression(workout: Workout, changes: ProgressionChange[], now: number, undo = false): Workout {
+  const byId = new Map(changes.map((c) => [c.exerciseId, c]));
+  let changed = false;
+  const exercises = workout.exercises.map((we) => {
+    const c = byId.get(we.exerciseId);
+    if (!c) return we;
+    const loadKg = undo ? c.fromKg : c.toKg;
+    if (loadKg === we.loadKg) return we;
+    changed = true;
+    return { ...we, loadKg };
+  });
+  return changed ? { ...workout, exercises, updatedAt: now } : workout;
 }
 
 /** Anilhas por lado da barra (algoritmo guloso com anilhas comuns de academia). */

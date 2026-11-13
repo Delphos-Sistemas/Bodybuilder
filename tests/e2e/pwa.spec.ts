@@ -22,6 +22,6 @@ test("PWA: manifesto, service worker e abertura sem internet", async ({ page, co
   await expect(page.getByRole("heading", { name: "Biblioteca" })).toBeVisible();
   await expect(page.getByText("50 exercícios encontrados")).toBeVisible();
   await page.goto("/treinos");
-  await expect(page.getByRole("heading", { name: "Modelos" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Treinos prontos" })).toBeVisible();
   await context.setOffline(false);
 });

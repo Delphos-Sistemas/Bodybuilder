@@ -1,3 +1,7 @@
+import { Lembretes, remindersApi, type ReminderEnv } from "./reminders";
+
+export { Lembretes };
+
 /**
  * Worker da Cloudflare: serve o app estático (./out) e a API de sincronização em /api/*.
  * A sincronização só funciona quando o banco D1 está ligado ao binding DB (ver README).
@@ -12,7 +16,7 @@ type D1Prepared = {
   all: <T>() => Promise<D1Result<T>>;
 };
 type D1Database = { prepare: (sql: string) => D1Prepared };
-type Env = { ASSETS: { fetch: (r: Request) => Promise<Response> }; DB?: D1Database };
+type Env = { ASSETS: { fetch: (r: Request) => Promise<Response> }; DB?: D1Database } & ReminderEnv;
 
 const MAX_BYTES = 4 * 1024 * 1024;
 const CODE = /^([A-Z0-9]{4}-){5}[A-Z0-9]{4}$/;
@@ -31,6 +35,7 @@ async function keyFrom(req: Request): Promise<string | null> {
 }
 
 async function api(req: Request, env: Env, path: string): Promise<Response> {
+  if (path === "/api/lembretes" || path.startsWith("/api/lembretes/")) return remindersApi(req, env, path);
   if (path === "/api/sync/status") return json({ ok: true, configured: !!env.DB });
   if (path !== "/api/sync") return json({ error: "não encontrado" }, 404);
   if (!env.DB) return json({ error: "Sincronização não configurada neste servidor." }, 503);

@@ -1,3 +1,5 @@
+import type { ReminderConfig } from "../../worker/schedule";
+
 export const MUSCLES = {
   peito: "Peito",
   costas: "Costas",
@@ -92,6 +94,17 @@ export type SessionItem = {
   finishedAt?: number;
 };
 
+export type ProgressionChange = {
+  exerciseId: string;
+  fromKg: number;
+  toKg: number;
+  /** meta de repetições sugerida para a próxima vez */
+  reps: number;
+  kind: "subir" | "manter" | "reduzir";
+  /** a ficha foi atualizada (false = só sugestão, progressão automática desligada ou desfeita) */
+  applied: boolean;
+};
+
 export type RestState = {
   startedAt: number;
   endsAt: number;
@@ -109,6 +122,8 @@ export type Session = {
   /** última alteração depois de encerrada (anotação), para a sincronização */
   updatedAt?: number;
   items: SessionItem[];
+  /** cargas da ficha alteradas pela progressão automática ao finalizar */
+  progression?: ProgressionChange[];
   currentIndex: number;
   rest: RestState | null;
 };
@@ -237,6 +252,12 @@ export type Settings = {
   soundMode?: "misturar" | "alto";
   /** nome da voz do aparelho escolhida */
   voiceName?: string;
+  /** lembretes por notificação (treino e água) */
+  reminders?: ReminderConfig;
+  /** este aparelho está inscrito nos lembretes */
+  remindersOn?: boolean;
+  /** ao finalizar o treino, atualiza as cargas da ficha com a sugestão de progressão. Padrão: ligado */
+  autoProgress?: boolean;
 };
 
 export type Mode = "usuario" | "demo";

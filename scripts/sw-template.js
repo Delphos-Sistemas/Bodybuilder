@@ -97,3 +97,41 @@ self.addEventListener("fetch", (event) => {
     })()
   );
 });
+
+// Lembretes (treino e água) enviados pelo servidor. O iPhone exige mostrar uma notificação a cada push.
+self.addEventListener("push", (event) => {
+  let msg = { title: "BODYBUILDER", body: "Hora de cuidar do treino.", url: "/", tag: "lembrete" };
+  try {
+    if (event.data) msg = { ...msg, ...event.data.json() };
+  } catch {
+    /* mensagem sem JSON: usa o texto padrão */
+  }
+  event.waitUntil(
+    self.registration.showNotification(msg.title, {
+      body: msg.body,
+      tag: msg.tag,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      lang: "pt-BR",
+      data: { url: msg.url }
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin).href;
+  event.waitUntil(
+    (async () => {
+      const list = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const c of list) {
+        if ("focus" in c) {
+          await c.focus();
+          if ("navigate" in c) await c.navigate(url).catch(() => undefined);
+          return;
+        }
+      }
+      await self.clients.openWindow(url);
+    })()
+  );
+});

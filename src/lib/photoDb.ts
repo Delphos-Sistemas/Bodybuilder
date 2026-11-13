@@ -1,11 +1,16 @@
 "use client";
 
 /** Fotos de progresso: ficam só no IndexedDB deste navegador e não entram no backup em JSON. */
+export const POSES = { frente: "Frente", lado: "Lado", costas: "Costas" } as const;
+export type Pose = keyof typeof POSES;
+
 export type ProgressPhoto = {
   id: string;
   date: string;
   blob: Blob;
   addedAt: number;
+  /** posição da foto, para comparar frente com frente */
+  pose?: Pose;
 };
 
 const DB = "bodybuilder-fotos";

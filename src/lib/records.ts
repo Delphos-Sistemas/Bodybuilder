@@ -104,3 +104,32 @@ export function sessionRecordHits(session: Session, all: Session[]): RecordHit[]
   }
   return hits;
 }
+
+const HIT_LABEL: Record<RecordHit["type"], string> = { carga: "Recorde de carga", "1rm": "1RM estimado", volume: "Melhor série" };
+
+const kg = (n: number) => `${n.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} kg`;
+
+/** Dados do card de compartilhar para um recorde batido. */
+export function recordCardInfo(hit: RecordHit, exerciseName: string, date: number, detail?: string) {
+  return {
+    exerciseName,
+    label: HIT_LABEL[hit.type],
+    value: kg(hit.value),
+    detail,
+    previous: hit.previous !== null ? `Antes: ${kg(hit.previous)} (+${kg(Math.round((hit.value - hit.previous) * 100) / 100)})` : undefined,
+    date
+  };
+}
+
+/** Recordes de todos os exercícios com histórico, do mais recente para o mais antigo. */
+export function allRecords(sessions: Session[]): (Records & { lastDate: number })[] {
+  const ids = new Set<string>();
+  for (const s of sessions) if (s.endedAt) for (const it of s.items) if (workingSets(it.sets).some((x) => x.loadKg > 0)) ids.add(it.exerciseId);
+  return [...ids]
+    .map((id) => {
+      const r = exerciseRecords(sessions, id);
+      return { ...r, lastDate: Math.max(r.maxLoad?.date ?? 0, r.best1RM?.date ?? 0) };
+    })
+    .filter((r) => r.maxLoad)
+    .sort((a, b) => b.lastDate - a.lastDate);
+}

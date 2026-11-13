@@ -53,6 +53,19 @@ const sessionSchema = z.object({
       finishedAt: z.number().optional()
     })
   ),
+  progression: z
+    .array(
+      z.object({
+        exerciseId: z.string(),
+        fromKg: z.number().min(0),
+        toKg: z.number().min(0),
+        reps: z.number().min(0),
+        kind: z.enum(["subir", "manter", "reduzir"]),
+        applied: z.boolean()
+      })
+    )
+    .max(60)
+    .optional(),
   currentIndex: z.number().int().min(0),
   rest: z.object({ startedAt: z.number(), endsAt: z.number() }).nullable()
 });
