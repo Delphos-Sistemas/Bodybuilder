@@ -1,4 +1,14 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+/**
+ * Entra no modo demonstração e espera o estado estar gravado antes de navegar com page.goto.
+ * No WebKit o localStorage é gravado de forma assíncrona; sem esperar, a página seguinte pode abrir sem a demonstração.
+ */
+async function enterDemo(page: Page) {
+  await page.getByRole("button", { name: "Ver demonstração" }).click();
+  await expect(page.getByText("Modo demonstração.")).toBeVisible();
+  await page.waitForFunction(() => localStorage.getItem("bodybuilder:v2")?.includes('"mode":"demo"'));
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -110,8 +120,7 @@ test("prancha mostra a posição sustentada, sem vídeo", async ({ page }) => {
 
 test("modo demonstração fica separado dos dados do usuário", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Ver demonstração" }).click();
-  await expect(page.getByText("Modo demonstração.")).toBeVisible();
+  await enterDemo(page);
   await page.goto("/historico");
   await expect(page.getByTestId("sessao-historico").first()).toBeVisible();
   await page.goto("/");
@@ -170,7 +179,7 @@ test("spotify: só carrega após consentimento e aceita playlist própria", asyn
 
 test("histórico: calendário marca dias treinados e salva anotação", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Ver demonstração" }).click();
+  await enterDemo(page);
   await page.goto("/historico");
   const cal = page.getByTestId("calendario");
   await expect(cal).toBeVisible();
@@ -212,7 +221,7 @@ test("exercício personalizado: criar na biblioteca e usar no treino", async ({ 
 
 test("treino ativo: aquecimento não conta e recorde é avisado", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Ver demonstração" }).click();
+  await enterDemo(page);
   await page.goto("/treinos");
   await page.getByRole("button", { name: "Iniciar treino" }).first().click();
   await expect(page).toHaveURL(/treino-ativo/);
@@ -233,7 +242,7 @@ test("treino ativo: aquecimento não conta e recorde é avisado", async ({ page 
 
 test("evolução: volume semanal, recordes, medidas", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Ver demonstração" }).click();
+  await enterDemo(page);
   await page.goto("/evolucao");
   await expect(page.getByTestId("volume-semanal")).toBeVisible();
   await expect(page.getByTestId("recordes")).toContainText("1RM estimado");
@@ -247,7 +256,7 @@ test("evolução: volume semanal, recordes, medidas", async ({ page }) => {
 
 test("histórico: card do treino para compartilhar", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Ver demonstração" }).click();
+  await enterDemo(page);
   await page.goto("/historico");
   const first = page.getByTestId("sessao-historico").first();
   await first.locator("summary").click();
