@@ -4,8 +4,8 @@ import clsx from "clsx";
 import { Pause, Play, Images, Film } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { getAnim } from "@/data/media";
-import { SVG_DEFS, fitTransform, renderFrame, sample, type AnimSpec } from "@/lib/anim/render";
-import type { Exercise } from "@/lib/types";
+import { MUSCLE_COLORS, SVG_DEFS, fitTransform, renderFrame, sample, type AnimSpec } from "@/lib/anim/render";
+import { MUSCLES, type Exercise } from "@/lib/types";
 
 type Props = {
   exercise: Exercise;
@@ -158,12 +158,31 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
               <Images size={16} aria-hidden /> Posições
             </button>
           </div>
-          <p className="text-xs text-muted">
-            {moving ? "Em laranja forte o músculo principal; em laranja claro, os que ajudam." : "Exercício isométrico: mantenha a posição mostrada."}
-          </p>
+          {!moving && <p className="text-xs text-muted">Exercício isométrico: mantenha a posição mostrada.</p>}
         </div>
       )}
+      <MuscleLegend exercise={exercise} compact={!large} />
     </div>
+  );
+}
+
+/** Legenda das cores: cada músculo trabalhado tem a sua */
+export function MuscleLegend({ exercise, compact = false }: { exercise: Exercise; compact?: boolean }) {
+  const list = [exercise.primary, ...exercise.secondary];
+  return (
+    <ul className={clsx("flex flex-wrap gap-x-3 gap-y-1", compact ? "mt-2 text-xs" : "mt-3 text-sm")} aria-label="Cores dos músculos na animação">
+      {list.map((m, i) => (
+        <li key={m} className={clsx("flex items-center gap-1.5", i === 0 ? "font-semibold text-parchment" : "text-sand")}>
+          <span
+            aria-hidden
+            className={clsx("inline-block rounded-full", i === 0 ? "h-3 w-3" : "h-2.5 w-2.5 opacity-80")}
+            style={{ background: MUSCLE_COLORS[m], boxShadow: i === 0 ? `0 0 8px ${MUSCLE_COLORS[m]}` : undefined }}
+          />
+          {MUSCLES[m]}
+          {i === 0 && !compact && <span className="font-normal text-muted">(principal)</span>}
+        </li>
+      ))}
+    </ul>
   );
 }
 

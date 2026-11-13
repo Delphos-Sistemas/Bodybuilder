@@ -60,9 +60,30 @@ const C = {
   pad: "#2E2924",
   padEdge: "#4A433B",
   floor: "#3A352E",
-  prim: "#F09A3E",
-  sec: "#C98A4B"
+  /** contorno dos músculos desenhados no corpo (definição muscular) */
+  def: "#B9A88E"
 };
+
+/** cor de cada músculo quando está trabalhando */
+export const MUSCLE_COLORS: Record<Muscle, string> = {
+  peito: "#FF5D47",
+  costas: "#3F9BFF",
+  ombros: "#FFB020",
+  trapezio: "#9B84FF",
+  biceps: "#2FD88C",
+  triceps: "#22C3E0",
+  antebraco: "#A6E04A",
+  abdomen: "#FFE04A",
+  lombar: "#6C7DFF",
+  gluteos: "#FF5FA8",
+  quadriceps: "#FF8A2E",
+  posteriores: "#D06BFF",
+  adutores: "#FF9FCB",
+  panturrilhas: "#3FDDB8"
+};
+
+const SIDE_MUSCLES: Muscle[] = ["peito", "abdomen", "costas", "lombar", "trapezio"];
+const LIMB_MUSCLES: Muscle[] = ["ombros", "biceps", "triceps", "antebraco", "gluteos", "quadriceps", "posteriores", "panturrilhas"];
 
 const f = (n: number) => Math.round(n * 10) / 10;
 const pt = (p: Pt) => `${f(p[0])} ${f(p[1])}`;
@@ -84,10 +105,12 @@ function circle(c: Pt, r: number, fill: string, extra = ""): string {
 }
 
 /** "barriga" do músculo: elipse ao longo de um segmento, deslocada para um dos lados */
+
 function belly(a: Pt, b: Pt, t0: number, t1: number, side: number, off: number, thick: number, color: string, opacity: number): string {
   const d = ang(a, b);
   const L = dist(a, b);
-  const mid = step(step(a, d, L * ((t0 + t1) / 2)), d + 90 * side, off);
+  // deslocado um pouco para fora do contorno do membro: o músculo "estufa"
+  const mid = step(step(a, d, L * ((t0 + t1) / 2)), d + 90 * side, off * 1.25);
   const rx = (L * (t1 - t0)) / 2;
   return `<ellipse cx="${f(mid[0])}" cy="${f(mid[1])}" rx="${f(rx)}" ry="${f(thick)}" transform="rotate(${f(d)} ${f(mid[0])} ${f(mid[1])})" fill="${color}" opacity="${opacity}"/>`;
 }
@@ -114,7 +137,7 @@ function muscleShapes(m: Muscle, j: Joints, color: string, op: number, side: Sid
     case "trapezio":
       return side === "N" ? belly(hip, j.neck, 0.84, 1.0, -1, tr * 0.35, tr * 0.5, color, op) : "";
     case "ombros":
-      return circle(sh, RAD.ua[0] * 1.35, color, `opacity="${op}"`);
+      return circle(step(sh, ang(sh, e), 3), RAD.ua[0] * 1.3, color, `opacity="${op}"`);
     case "biceps":
       return belly(sh, e, 0.18, 0.88, -1, RAD.ua[0] * 0.38, RAD.ua[0] * 0.62, color, op);
     case "triceps":
@@ -317,21 +340,34 @@ export function renderFrame(spec: AnimSpec, pose: Pose, at: Pt, opts: RenderOpts
     s += `<ellipse cx="${f((j.ankleN[0] + j.hip[0]) / 2 + 6)}" cy="${floor + 1}" rx="62" ry="5" fill="#000" opacity=".28"/>`;
     s += `<line x1="-200" y1="${floor}" x2="520" y2="${floor}" stroke="${C.floor}" stroke-width="1.5"/>`;
   }
-  const muscles = (side: Side) =>
-    opts.secondary.map((m) => muscleShapes(m, j, C.sec, side === "N" ? 0.7 : 0.45, side)).join("") +
-    `<g filter="url(#bbglow)">${muscleShapes(opts.primary, j, C.prim, side === "N" ? 0.95 : 0.6, side)}</g>`;
+  const worked = [opts.primary, ...opts.secondary];
+  const anatomy = (list: Muscle[], side: Side, fill: string) => {
+    const shapes = (c: string) => list.map((m) => muscleShapes(m, j, c, 1, side)).join("");
+    return `<g transform="translate(.7 1)">${shapes(C.def)}</g>${shapes(fill)}`;
+  };
+  // secundários na cor própria; o principal brilha e fica por cima de tudo
+  const lit = (list: Muscle[], side: Side, withPrimary: boolean) =>
+    list
+      .filter((m) => worked.includes(m) && (withPrimary || m !== opts.primary))
+      .map((m) => {
+        const shape = muscleShapes(m, j, MUSCLE_COLORS[m], m === opts.primary ? (side === "N" ? 0.97 : 0.65) : side === "N" ? 0.7 : 0.45, side);
+        return m === opts.primary ? `<g filter="url(#bbglow)">${shape}</g>` : shape;
+      })
+      .join("");
 
   s += (spec.back ?? []).map((p) => drawProp(p, j)).join("");
   // lado de lá
   s += body(j, "F", C.bodyF, !!spec.hideFarArm, !!spec.hideFarLeg || !!spec.hideLegs);
-  s += `<g>${muscles("F")}</g>`;
+  if (!spec.hideFarArm) s += lit(LIMB_MUSCLES, "F", true);
   // tronco e cabeça
-  s += capsule(j.shoulder, j.neck, 4.6, 4.6, C.bodyN, EDGE);
+  s += capsule(j.shoulder, j.neck, 5.8, 5.8, C.bodyN, EDGE);
   s += capsule(j.hip, j.shoulder, RAD.torso[0], RAD.torso[1], C.bodyN, EDGE);
   s += circle(j.head, LEN.headR, C.head, EDGE);
+  s += anatomy(SIDE_MUSCLES, "N", C.bodyN) + lit(SIDE_MUSCLES, "N", false);
   // lado de cá
   s += body(j, "N", C.bodyN, false, !!spec.hideLegs);
-  s += muscles("N");
+  s += anatomy(spec.hideLegs ? ["ombros", "biceps", "triceps", "antebraco"] : LIMB_MUSCLES, "N", C.bodyN) + lit(LIMB_MUSCLES, "N", false);
+  s += lit([opts.primary], "N", true);
   s += (spec.front ?? []).map((p) => drawProp(p, j)).join("");
   return s;
 }
@@ -402,7 +438,7 @@ function renderFront(spec: AnimSpec, j: Joints, opts: RenderOpts): string {
   const waistN = step(step(j.hip, tA, dist(j.hip, j.shoulder) * 0.45), tA + 90, HALF.hip + 2);
   const waistF = step(step(j.hip, tA, dist(j.hip, j.shoulder) * 0.45), tA - 90, HALF.hip + 2);
   const poly = `M${pt(sN)}L${pt(waistN)}L${pt(hN)}L${pt(hF)}L${pt(waistF)}L${pt(sF)}Z`;
-  s += capsule(j.shoulder, j.neck, 4.6, 4.6, fill, EDGE);
+  s += capsule(j.shoulder, j.neck, 5.8, 5.8, fill, EDGE);
   s += circle(j.head, LEN.headR, C.head, EDGE);
   s += `<path d="${poly}" fill="#1B1815" stroke="#1B1815" stroke-width="13.2" stroke-linejoin="round"/>`;
   s += `<path d="${poly}" fill="${fill}" stroke="${fill}" stroke-width="11" stroke-linejoin="round"/>`;
@@ -412,8 +448,13 @@ function renderFront(spec: AnimSpec, j: Joints, opts: RenderOpts): string {
     s += limb(j[`elbow${side}`], j[`wrist${side}`], RAD.fa, fill);
     s += circle(j[`hand${side}`], 3.8, fill, EDGE);
   }
-  s += opts.secondary.map((m) => frontMuscle(m, j, C.sec, 0.7)).join("");
-  s += `<g filter="url(#bbglow)">${frontMuscle(opts.primary, j, C.prim, 0.95)}</g>`;
+  const FRONT_ANATOMY: Muscle[] = spec.hideLegs
+    ? ["peito", "abdomen", "trapezio", "ombros", "biceps", "antebraco"]
+    : ["peito", "abdomen", "trapezio", "ombros", "biceps", "antebraco", "quadriceps", "panturrilhas"];
+  const fa = (c: string) => FRONT_ANATOMY.map((m) => frontMuscle(m, j, c, 1)).join("");
+  s += `<g transform="translate(.7 1)">${fa(C.def)}</g>${fa(fill)}`;
+  s += opts.secondary.map((m) => frontMuscle(m, j, MUSCLE_COLORS[m], 0.75)).join("");
+  s += `<g filter="url(#bbglow)">${frontMuscle(opts.primary, j, MUSCLE_COLORS[opts.primary], 0.97)}</g>`;
   s += (spec.front ?? []).map((p) => drawProp(p, j)).join("");
   return s;
 }
