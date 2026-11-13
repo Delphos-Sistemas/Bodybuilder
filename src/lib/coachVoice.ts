@@ -11,7 +11,7 @@ export function coachPrefs(s: Settings): { style: VoiceStyle; pack: VoicePack } 
 /** Prepara a voz dentro de um toque do usuário: modo de mistura, fala do aparelho e download das falas. */
 export function prepareCoach(s: Settings): void {
   const { style, pack } = coachPrefs(s);
-  setMixMode(Boolean(s.duckMusic));
+  setMixMode(s.soundMode ?? "misturar");
   unlockSpeech();
   if (pack !== "aparelho") {
     const urls = voiceUrls(style, pack);

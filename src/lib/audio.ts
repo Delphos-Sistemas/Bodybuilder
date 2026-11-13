@@ -58,7 +58,7 @@ export async function unlockAudio(): Promise<boolean> {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return false;
     // não pausar o Spotify/música de outros apps no iPhone
-    setMixMode(duckOthers);
+    setMixMode(soundMode);
     ctx = ctx ?? new AC();
     // alguns navegadores (WebKit sem saída de áudio) nunca resolvem o resume(): não travar a tela
     if (ctx.state === "suspended") await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 1500))]);
@@ -107,19 +107,26 @@ export function playAlert(kind: AlertKind, opts: { sound: boolean; vibrate: bool
 }
 
 /**
- * Mistura com a música de outros apps (Spotify) em vez de pausá-la.
- * Safari 16.4+: "ambient" toca junto; "transient" abaixa a música enquanto fala. Outros navegadores ignoram.
+ * Como o som do app convive com a música de outros apps (Spotify), no Safari 16.4+:
+ * "misturar" (ambient): toca por cima sem pausar a música, mas a chave do silencioso do iPhone emudece o app.
+ * "alto" (playback): toca mesmo no silencioso, mas pausa a música de outros apps.
+ * Outros navegadores ignoram.
  */
-let duckOthers = false;
+export type SoundMode = "misturar" | "alto";
+let soundMode: SoundMode = "misturar";
 
-export function setMixMode(duck: boolean): void {
-  duckOthers = duck;
+export function setMixMode(mode: SoundMode): void {
+  soundMode = mode;
   const nav = typeof navigator !== "undefined" ? (navigator as Navigator & { audioSession?: { type: string } }) : undefined;
   try {
-    if (nav?.audioSession) nav.audioSession.type = duck ? "transient" : "ambient";
+    if (nav?.audioSession) nav.audioSession.type = mode === "alto" ? "playback" : "ambient";
   } catch {
     /* sem Audio Session API */
   }
+}
+
+export function hasAudioSession(): boolean {
+  return typeof navigator !== "undefined" && "audioSession" in navigator;
 }
 
 /** Falas gravadas (MP3 curtos), tocadas pelo mesmo AudioContext dos bipes. */
@@ -166,6 +173,7 @@ async function playViaContext(url: string, volume: number): Promise<boolean> {
     }
   }
   currentClip?.stop();
+  el?.pause();
   const src = ctx.createBufferSource();
   const gain = ctx.createGain();
   gain.gain.value = Math.max(0, Math.min(1.5, volume * 1.3));
@@ -179,22 +187,22 @@ async function playViaContext(url: string, volume: number): Promise<boolean> {
 /** Elemento <audio> liberado num toque: reserva para quando o Web Audio falhar (comum no iPhone). */
 let el: HTMLAudioElement | null = null;
 
-/** Chamar dentro de um toque do usuário. */
+/** Chamar dentro de um toque do usuário. Só libera uma vez: liberar de novo tocaria a fala de teste junto. */
 export function unlockClipElement(sampleUrl: string): void {
-  if (typeof Audio === "undefined") return;
+  if (typeof Audio === "undefined" || el) return;
   try {
-    el = el ?? new Audio();
-    el.preload = "auto";
-    el.muted = true;
-    el.src = sampleUrl;
-    void el
+    const a = new Audio();
+    el = a;
+    a.preload = "auto";
+    a.muted = true;
+    a.src = sampleUrl;
+    void a
       .play()
-      .then(() => {
-        el?.pause();
-        if (el) el.muted = false;
-      })
-      .catch(() => {
-        if (el) el.muted = false;
+      .catch(() => undefined)
+      .finally(() => {
+        a.pause();
+        a.currentTime = 0;
+        a.muted = false;
       });
   } catch {
     /* sem <audio> */
@@ -203,6 +211,7 @@ export function unlockClipElement(sampleUrl: string): void {
 
 async function playViaElement(url: string, volume: number): Promise<boolean> {
   if (!el) return false;
+  currentClip?.stop();
   try {
     el.pause();
     el.muted = false;

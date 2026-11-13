@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { lastClipError, portugueseVoices, speechAvailable, unlockAudio } from "@/lib/audio";
+import { hasAudioSession, lastClipError, portugueseVoices, setMixMode, speechAvailable, unlockAudio } from "@/lib/audio";
 import { coachPrefs, coachSay, prepareCoach } from "@/lib/coachVoice";
 import { useStore } from "@/lib/store";
 import { VOICE_PACKS, VOICE_STYLES, type VoicePack, type VoiceStyle } from "@/lib/voiceLines";
@@ -37,7 +37,7 @@ export function VoiceSettings() {
       p === "aparelho"
         ? ""
         : r === "gravada"
-          ? `Tocando a voz ${VOICE_PACKS[p]}.`
+          ? `Tocando a voz ${VOICE_PACKS[p]}.${hasAudioSession() && (s.soundMode ?? "misturar") === "misturar" ? " Não ouviu? Desligue a chave do silencioso." : ""}`
           : `A voz gravada não tocou neste aparelho (${lastClipError || "erro desconhecido"}). ${r === "aparelho" ? "Usando a voz do aparelho." : ""}`
     );
   };
@@ -100,18 +100,38 @@ export function VoiceSettings() {
           </select>
         </div>
       )}
-      <label className="flex min-h-11 items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          className="h-5 w-5 accent-[#B07D45]"
-          checked={Boolean(settings.duckMusic)}
-          onChange={(e) => store.updateSettings({ duckMusic: e.target.checked })}
-        />
-        Abaixar a música (Spotify) enquanto a voz fala
-      </label>
-      <p className="text-xs text-muted">
-        A música de outros apps continua tocando. No iPhone, marcar esta opção abaixa o Spotify durante cada fala; desmarcado, a voz toca por cima.
-      </p>
+      {hasAudioSession() && (
+        <div>
+          <p className="label">Som no iPhone</p>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Som no iPhone">
+            {(
+              [
+                ["misturar", "Junto com a música"],
+                ["alto", "Tocar mesmo no silencioso"]
+              ] as const
+            ).map(([k, text]) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={(settings.soundMode ?? "misturar") === k}
+                className={clsx("chip", (settings.soundMode ?? "misturar") === k && "chip-on")}
+                onClick={() => {
+                  store.updateSettings({ soundMode: k });
+                  setMixMode(k);
+                }}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            {(settings.soundMode ?? "misturar") === "misturar"
+              ? "A voz toca por cima do Spotify sem pausar. Deixe a chave lateral do silencioso desligada, senão a voz fica muda."
+              : "A voz toca mesmo com o silencioso ligado, mas o iPhone pausa a música de outros apps."}
+          </p>
+        </div>
+      )}
       <button type="button" className="btn-secondary min-h-11 w-full" onClick={() => void test()}>
         <Volume2 size={16} aria-hidden /> Testar voz
       </button>

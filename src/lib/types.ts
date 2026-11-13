@@ -233,8 +233,8 @@ export type Settings = {
   voiceStyle?: "neutro" | "zoeira";
   /** voz gravada (dora, alex, santa) ou "aparelho" (síntese do navegador). Padrão: dora */
   voicePack?: "dora" | "alex" | "santa" | "aparelho";
-  /** abaixar a música de outros apps (Spotify) enquanto a voz fala. Padrão: não, só mistura */
-  duckMusic?: boolean;
+  /** iPhone: "misturar" toca por cima do Spotify (respeita o silencioso); "alto" toca no silencioso e pausa a música */
+  soundMode?: "misturar" | "alto";
   /** nome da voz do aparelho escolhida */
   voiceName?: string;
 };
