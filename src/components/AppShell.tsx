@@ -33,10 +33,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-6xl flex-col">
       <header className="sticky top-0 z-30 border-b border-line/70 bg-iron/90 backdrop-blur">
-        <div className="flex h-16 items-center gap-3 px-4">
-          <Link href="/" className="flex items-center gap-2.5" aria-label="BODYBUILDER, ir para o início">
-            <Monogram size={36} />
-            <span className="font-display text-lg font-bold tracking-wide">BODYBUILDER</span>
+        <div className="flex h-16 items-center gap-2 px-3 sm:gap-3 sm:px-4">
+          <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="BODYBUILDER, ir para o início">
+            <Monogram size={40} />
+            {/* em telas estreitas o nome sai para caber o aviso de demonstração; a logo continua */}
+            <span className="font-display text-lg font-bold tracking-wide max-[409px]:sr-only">BODYBUILDER</span>
           </Link>
           {hydrated && <DemoBadge />}
           <nav aria-label="Navegação principal" className="ml-6 hidden gap-1 lg:flex">

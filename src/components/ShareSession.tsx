@@ -19,6 +19,9 @@ export function ShareSession({ session, records }: { session: Session; records: 
     if (open && !d.open) {
       d.showModal();
       if (canvasRef.current) drawShareCard(canvasRef.current, session, records);
+      const logo = new Image();
+      logo.onload = () => canvasRef.current && drawShareCard(canvasRef.current, session, records, logo);
+      logo.src = "/brand/logo-512.png";
     }
     if (!open && d.open) d.close();
   }, [open, session, records]);

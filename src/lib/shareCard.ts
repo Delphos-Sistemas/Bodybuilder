@@ -48,7 +48,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, max: number, lines: n
 }
 
 /** Desenha o resumo do treino em formato de story (1080 × 1920). */
-export function drawShareCard(canvas: HTMLCanvasElement, session: Session, records: RecordHit[]): void {
+export function drawShareCard(canvas: HTMLCanvasElement, session: Session, records: RecordHit[], logo?: HTMLImageElement): void {
   const W = 1080;
   const H = 1920;
   canvas.width = W;
@@ -60,17 +60,21 @@ export function drawShareCard(canvas: HTMLCanvasElement, session: Session, recor
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  // monograma
-  ctx.strokeStyle = C.bronze;
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.roundRect(90, 110, 130, 130, 28);
-  ctx.stroke();
-  ctx.fillStyle = C.bronzeLight;
-  ctx.font = `bold 64px ${DISPLAY}`;
-  ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("BB", 155, 178);
+  if (logo?.complete && logo.naturalWidth) {
+    ctx.drawImage(logo, 75, 95, 160, 160);
+  } else {
+    // monograma, enquanto a logo não carregou
+    ctx.strokeStyle = C.bronze;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.roundRect(90, 110, 130, 130, 28);
+    ctx.stroke();
+    ctx.fillStyle = C.bronzeLight;
+    ctx.font = `bold 64px ${DISPLAY}`;
+    ctx.textAlign = "center";
+    ctx.fillText("BB", 155, 178);
+  }
   ctx.textAlign = "left";
   ctx.fillStyle = C.text;
   ctx.font = `bold 60px ${DISPLAY}`;
