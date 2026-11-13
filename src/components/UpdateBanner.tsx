@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useStore } from "@/lib/store";
 
 /**
  * Registra o service worker e avisa quando há uma nova versão em espera.
@@ -11,6 +12,15 @@ let updateRequested = false;
 
 export function UpdateBanner() {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
+  // treino em andamento (do usuário): aí a atualização espera o toque em "Atualizar"
+  const training = useStore((s) => Boolean(s.usuario.activeSession));
+
+  // fora de um treino, aplica a nova versão sozinho (antes ficava presa até o usuário tocar no aviso)
+  useEffect(() => {
+    if (!waiting || training) return;
+    updateRequested = true;
+    waiting.postMessage({ type: "SKIP_WAITING" });
+  }, [waiting, training]);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || process.env.NODE_ENV !== "production") return;
