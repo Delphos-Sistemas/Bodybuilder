@@ -87,6 +87,9 @@ test("retomar sessão interrompida e encerrar manualmente", async ({ page }) => 
 });
 
 test("biblioteca: busca sem acento, ficha e demonstração", async ({ page }) => {
+  // GIF falso de 1 pixel no lugar do ExerciseDB, para o teste não depender da internet
+  const gif = Buffer.from("R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==", "base64");
+  await page.route("https://static.exercisedb.dev/**", (r) => r.fulfill({ status: 200, contentType: "image/gif", body: gif }));
   await page.goto("/biblioteca");
   await expect(page.getByText("50 exercícios encontrados")).toBeVisible();
   await page.getByLabel("Buscar exercício").fill("triceps frances");
@@ -98,8 +101,15 @@ test("biblioteca: busca sem acento, ficha e demonstração", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Leg press 45°" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Supino reto com barra" })).toHaveCount(0);
 
-  // animação própria em SVG: toca sozinha e pode ser pausada
+  // com o GIF do ExerciseDB disponível, ele aparece no lugar da animação
   await expect(page.locator("video")).toHaveCount(0);
+  await expect(page.getByRole("img", { name: "Demonstração: Leg press 45°" })).toBeVisible();
+});
+
+test("sem o GIF (offline), volta para a animação própria, que pode ser pausada", async ({ page }) => {
+  await page.route("https://static.exercisedb.dev/**", (r) => r.abort());
+  await page.goto("/biblioteca");
+  await page.getByLabel("Filtrar por equipamento").selectOption("maquina");
   await expect(page.getByRole("img", { name: "Animação: Leg press 45°" })).toBeVisible();
   await page.getByRole("button", { name: "Pausar demonstração de Leg press 45°" }).click();
   await expect(page.getByRole("button", { name: "Reproduzir demonstração de Leg press 45°" })).toBeVisible();
