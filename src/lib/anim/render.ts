@@ -157,7 +157,7 @@ function muscleShapes(m: Muscle, j: Joints, color: string, op: number, side: Sid
   }
 }
 
-function drawProp(p: Prop, j: Joints): string {
+export function drawProp(p: Prop, j: Joints): string {
   switch (p.k) {
     case "plate": {
       const r = p.r ?? 21;
