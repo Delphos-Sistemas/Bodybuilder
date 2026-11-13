@@ -33,11 +33,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-6xl flex-col">
       <header className="sticky top-0 z-30 border-b border-line/70 bg-iron/90 backdrop-blur">
-        <div className="flex h-16 items-center gap-2 px-3 sm:gap-3 sm:px-4">
-          <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="BODYBUILDER, ir para o início">
+        <div className="flex h-16 min-w-0 items-center gap-2 overflow-hidden px-3 sm:gap-3 sm:px-4">
+          <Link href="/" className="flex min-w-0 items-center gap-2" aria-label="BODYBUILDER, ir para o início">
             <Monogram size={40} />
-            {/* em telas estreitas o nome sai para caber o aviso de demonstração; a logo continua */}
-            <span className="font-display text-lg font-bold tracking-wide max-[409px]:sr-only">BODYBUILDER</span>
+            {/* em telas estreitas o nome sai (ou encurta) para caber o aviso de demonstração; a logo continua.
+                O cabeçalho nunca pode passar da largura da tela: com outra fonte, isso empurra a página para o lado. */}
+            <span className="truncate font-display text-lg font-bold tracking-wide max-[409px]:sr-only">BODYBUILDER</span>
           </Link>
           {hydrated && <DemoBadge />}
           <nav aria-label="Navegação principal" className="ml-6 hidden gap-1 lg:flex">
@@ -55,7 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             <Link href="/historico" className={clsx("btn-ghost min-h-11 px-3", isActive(pathname, "/historico") && "text-bronze-light")} aria-label="Histórico">
               <History size={20} aria-hidden />
               <span className="hidden sm:inline">Histórico</span>
@@ -124,7 +125,7 @@ function DemoBadge() {
     <button
       type="button"
       onClick={exitDemo}
-      className="rounded-full border border-bronze/60 bg-bronze/10 px-2.5 py-1 text-xs font-semibold text-bronze-light"
+      className="shrink-0 whitespace-nowrap rounded-full border border-bronze/60 bg-bronze/10 px-2.5 py-1 text-xs font-semibold text-bronze-light"
       title="Sair do modo demonstração"
     >
       Demonstração · sair
