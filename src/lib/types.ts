@@ -230,7 +230,7 @@ export type Settings = {
   /** voz falada no timer guiado ("Bora lá, iniciar série"). Padrão: ligada */
   voiceCues?: boolean;
   /** estilo das falas: neutro ou zoeira ácida */
-  voiceStyle?: "neutro" | "zoeira";
+  voiceStyle?: "neutro" | "zoeira" | "comico" | "estoico" | "maromba";
   /** voz gravada (dora, alex, santa) ou "aparelho" (síntese do navegador). Padrão: dora */
   voicePack?: "dora" | "alex" | "santa" | "aparelho";
   /** iPhone: "misturar" toca por cima do Spotify (respeita o silencioso); "alto" toca no silencioso e pausa a música */

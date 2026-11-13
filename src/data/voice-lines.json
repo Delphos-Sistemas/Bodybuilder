@@ -53,5 +53,139 @@
       "Acabou! Hoje você mereceu o frango com batata doce.",
       "Fim do treino. Amanhã a escada vai lembrar de você."
     ]
+  },
+  "comico": {
+    "preparar": [
+      "Novo exercício! Hora de fingir que sabe o que está fazendo.",
+      "Troca de aparelho. Anda com confiança, ninguém está olhando. Talvez.",
+      "Próximo exercício. Ajeita a postura, que a foto sai daqui a pouco."
+    ],
+    "retomar": [
+      "Acabou o intervalo comercial. Voltamos à programação.",
+      "Descanso encerrado. O aparelho estava com saudade.",
+      "Volta, volta! A série não vai se fazer sozinha, eu já perguntei.",
+      "Hora de voltar. Larga o meme e pega o peso."
+    ],
+    "ultima": [
+      "Última série! Aquela que separa os fortes dos que vão pra lanchonete.",
+      "Última! Depois dessa você pode andar igual pinguim.",
+      "Última série. Dá tudo, que a cama te espera."
+    ],
+    "iniciar": [
+      "Bora lá, iniciar série! Respira e finge que é fácil.",
+      "Valendo! Faz cara de quem está tranquilo.",
+      "Vai! Se gemer, geme com estilo.",
+      "Começou! Imagina que tem uma pizza no final.",
+      "Vai lá! O peso é pesado, mas você é teimoso."
+    ],
+    "serie-feita": [
+      "Série concluída! Pode fazer a cara de sofrimento agora.",
+      "Boa! Descansa e confere se os braços ainda estão aí.",
+      "Feito! Bebe água, que suor não é hidratação.",
+      "Mandou bem! Momento de olhar pro nada com a respiração ofegante."
+    ],
+    "exercicio-feito": [
+      "Exercício concluído! Ele não volta mais. Hoje.",
+      "Acabou esse! Pode se despedir do aparelho com carinho.",
+      "Exercício finalizado! Seus músculos mandaram um abraço. Dolorido."
+    ],
+    "faltam-10": [
+      "Faltam dez segundos. Guarda o celular sem ninguém perceber.",
+      "Dez segundos! Começa a fazer cara de concentrado.",
+      "Dez segundos. Última chance de reclamar da vida."
+    ],
+    "treino-feito": [
+      "Treino concluído! Agora pode comer como se tivesse corrido uma maratona.",
+      "Acabou! Amanhã sentar no vaso vai ser um evento.",
+      "Fim do treino! Você sobreviveu. Os músculos estão processando o trauma."
+    ]
+  },
+  "estoico": {
+    "preparar": [
+      "Novo exercício. Não escolhemos o peso, escolhemos como carregá-lo.",
+      "Próximo desafio. O obstáculo é o caminho.",
+      "Novo exercício. Foque no que depende de você: a próxima repetição."
+    ],
+    "retomar": [
+      "O descanso terminou. A disciplina chama.",
+      "Retome a série. A vontade é fraca; o hábito, forte.",
+      "Volte ao trabalho. Sêneca diria: não é que temos pouco tempo, é que o desperdiçamos.",
+      "Retomar. A dor passa; a virtude permanece."
+    ],
+    "ultima": [
+      "Última série. Termine o que começou, com a mesma dignidade.",
+      "Última série. A grandeza está em persistir quando ninguém vê.",
+      "Última. Aja como se esta fosse a única série que importa."
+    ],
+    "iniciar": [
+      "Iniciar série. Aceite o esforço, ele é seu mestre.",
+      "Comece. A mente governa o corpo.",
+      "Vai. Não reclame do peso; fortaleça os ombros.",
+      "Iniciar. Cada repetição é uma escolha virtuosa.",
+      "Comece agora. O momento presente é tudo o que você tem."
+    ],
+    "serie-feita": [
+      "Série concluída. Descanse sem se acomodar.",
+      "Feito. O sofrimento suportado com calma é força.",
+      "Série concluída. Respire. A serenidade também se treina.",
+      "Bom trabalho. Descanse, mas não perca o propósito."
+    ],
+    "exercicio-feito": [
+      "Exercício concluído. Um dever cumprido traz paz.",
+      "Exercício terminado. Avance sem olhar para trás.",
+      "Concluído. O que foi bem feito não precisa de aplauso."
+    ],
+    "faltam-10": [
+      "Faltam dez segundos. Prepare a mente antes do corpo.",
+      "Dez segundos. Respire e aceite o que vem.",
+      "Dez segundos. A calma antecede a ação."
+    ],
+    "treino-feito": [
+      "Treino concluído. Você venceu o adversário mais difícil: a si mesmo.",
+      "Fim do treino. Hoje você escolheu o difícil, e isso é virtude.",
+      "Treino concluído. Marco Aurélio aprovaria. Finalize para salvar."
+    ]
+  },
+  "maromba": {
+    "preparar": [
+      "Próximo exercício, monstro! Se posiciona que hoje é dia de crescer.",
+      "Troca de aparelho, frango vira monstro aqui!",
+      "Novo exercício! Bora fritar esse músculo."
+    ],
+    "retomar": [
+      "Acabou o descanso, monstro! Volta pro ferro!",
+      "Bora, que o shape não vem pelo correio!",
+      "Levanta, campeão! O ferro tá te chamando!",
+      "Chega de papo! Hora de esmagar!"
+    ],
+    "ultima": ["Última série! Deixa tudo aí, até a alma!", "Última! Agora é pump ou nada!", "Última série, monstro! Quero ver falhar!"],
+    "iniciar": [
+      "Bora lá, iniciar série! Sai da jaula, monstro!",
+      "É hora do show, monstro! Vai!",
+      "Vai, vai, vai! Construindo o shape!",
+      "Bora! Ninguém quer levantar esse peso, mas você vai!",
+      "Valendo! Hoje tem pump!"
+    ],
+    "serie-feita": [
+      "Série concluída! Que pump, monstro!",
+      "Boa, campeão! Sente a fibra rasgando!",
+      "Feito! Descansa que o próximo é mais pesado!",
+      "Isso aí! Shape sendo construído!"
+    ],
+    "exercicio-feito": [
+      "Exercício concluído! Músculo destruído com sucesso!",
+      "Acabou esse! Tá saindo fumaça, monstro!",
+      "Exercício finalizado! Amanhã tá maior!"
+    ],
+    "faltam-10": [
+      "Faltam dez segundos! Prepara a mente, monstro!",
+      "Dez segundos! Vai se aquecendo pro esmague!",
+      "Dez segundos! Respira fundo que vem bomba!"
+    ],
+    "treino-feito": [
+      "Treino concluído! Agora é frango, batata doce e cama, monstro!",
+      "Acabou! Shape cresceu um centímetro, confia!",
+      "Fim do treino! Monstro saindo da jaula de volta pra casa!"
+    ]
   }
 }

@@ -1,12 +1,15 @@
 import LINES from "@/data/voice-lines.json";
 
 /** Falas do timer guiado. "zoeira" é o técnico ácido: provoca, mas sem ofender. */
-export type VoiceStyle = "neutro" | "zoeira";
+export type VoiceStyle = keyof typeof LINES;
 export type VoiceEvent = keyof (typeof LINES)["neutro"];
 
 export const VOICE_STYLES: Record<VoiceStyle, string> = {
   neutro: "Neutro",
-  zoeira: "Zoeira ácida"
+  zoeira: "Zoeira ácida",
+  comico: "Cômico",
+  estoico: "Filósofo estoico",
+  maromba: "Zoeira maromba"
 };
 
 /** Vozes neurais gravadas (public/voz) ou a voz do próprio aparelho. */

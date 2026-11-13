@@ -35,7 +35,9 @@ describe("timer guiado", () => {
   });
 
   it("toda fala tem o MP3 gravado para cada voz", () => {
-    const urls = (["dora", "alex", "santa"] as const).flatMap((p) => (["neutro", "zoeira"] as const).flatMap((s) => voiceUrls(s, p)));
+    const urls = (["dora", "alex", "santa"] as const).flatMap((p) =>
+      (["neutro", "zoeira", "comico", "estoico", "maromba"] as const).flatMap((s) => voiceUrls(s, p))
+    );
     expect(urls.length).toBeGreaterThan(100);
     const missing = urls.filter((u) => !existsSync(join(process.cwd(), "public", u)));
     expect(missing).toEqual([]);
