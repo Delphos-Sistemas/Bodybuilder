@@ -11,7 +11,9 @@ export const workoutExerciseSchema = z.object({
   repsMax: z.number().int().min(1).max(300),
   loadKg: z.number().min(0).max(1000),
   rir: z.number().int().min(0).max(10),
-  restSec: z.number().int().min(0).max(1800)
+  restSec: z.number().int().min(0).max(1800),
+  workSec: z.number().int().min(5).max(900).optional(),
+  prepSec: z.number().int().min(0).max(300).optional()
 });
 
 export const workoutSchema = z.object({

@@ -10,7 +10,9 @@ export function createSession(workout: Workout, now: number): Session {
       repsMax: we.repsMax,
       loadKg: we.loadKg,
       rir: we.rir,
-      restSec: we.restSec
+      restSec: we.restSec,
+      ...(we.workSec ? { workSec: we.workSec } : {}),
+      ...(we.prepSec !== undefined ? { prepSec: we.prepSec } : {})
     },
     sets: [],
     skipped: false
@@ -135,4 +137,25 @@ export function sessionSetCount(session: Session): number {
 export function estimateMinutes(w: Workout): number {
   const sec = w.exercises.reduce((acc, e) => acc + e.sets * (45 + e.restSec), 0);
   return Math.max(5, Math.round(sec / 60));
+}
+
+export const DEFAULT_WORK_SEC = 40;
+export const DEFAULT_PREP_SEC = 10;
+
+/** Tempos do timer guiado: execução, preparação e descanso (s). Isométrico usa o tempo máximo planejado. */
+export function guidedTimes(planned: SessionItem["planned"], isometric?: boolean): { workSec: number; prepSec: number; restSec: number } {
+  return {
+    workSec: planned.workSec ?? (isometric ? planned.repsMax : DEFAULT_WORK_SEC),
+    prepSec: planned.prepSec ?? DEFAULT_PREP_SEC,
+    restSec: planned.restSec
+  };
+}
+
+/** Altera os tempos do exercício atual só nesta sessão. */
+export function setItemTimes(session: Session, patch: Partial<Pick<SessionItem["planned"], "workSec" | "prepSec" | "restSec">>): Session {
+  const item = currentItem(session);
+  if (!item) return session;
+  const items = session.items.slice();
+  items[session.currentIndex] = { ...item, planned: { ...item.planned, ...patch } };
+  return { ...session, items };
 }

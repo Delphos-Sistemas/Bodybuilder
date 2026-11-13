@@ -10,6 +10,7 @@ import { Card, EmptyState, Stepper } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
 import { ExerciseThumb } from "@/components/ExerciseThumb";
 import { uid } from "@/lib/id";
+import { DEFAULT_PREP_SEC, DEFAULT_WORK_SEC } from "@/lib/session";
 import { useData, useStore } from "@/lib/store";
 import type { Workout, WorkoutExercise } from "@/lib/types";
 
@@ -232,6 +233,26 @@ function EditorForm({ initial }: { initial?: Workout }) {
                       max={1800}
                       onChange={(v) => patch(it.uid, { restSec: v })}
                     />
+                    <Stepper
+                      id={`exec-${it.uid}`}
+                      label="Execução (timer)"
+                      suffix="s"
+                      step={5}
+                      value={it.workSec ?? (iso ? it.repsMax : DEFAULT_WORK_SEC)}
+                      min={5}
+                      max={900}
+                      onChange={(v) => patch(it.uid, { workSec: v })}
+                    />
+                    <Stepper
+                      id={`prep-${it.uid}`}
+                      label="Preparo (timer)"
+                      suffix="s"
+                      step={5}
+                      value={it.prepSec ?? DEFAULT_PREP_SEC}
+                      min={0}
+                      max={300}
+                      onChange={(v) => patch(it.uid, { prepSec: v })}
+                    />
                   </div>
                 </Card>
               </li>
@@ -239,6 +260,7 @@ function EditorForm({ initial }: { initial?: Workout }) {
           })}
         </ol>
         <p className="text-xs text-muted">RIR: repetições em reserva, quantas repetições você ainda conseguiria fazer ao fim da série.</p>
+        <p className="text-xs text-muted">Execução e preparo são usados pelo timer guiado no treino: tempo da série, descanso e o aviso para voltar.</p>
       </section>
 
       <div className="sticky bottom-[88px] z-10 flex gap-2 rounded-2xl border border-line bg-iron/95 p-2 backdrop-blur lg:bottom-4">

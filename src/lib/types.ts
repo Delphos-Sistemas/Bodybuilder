@@ -52,6 +52,10 @@ export type WorkoutExercise = {
   loadKg: number;
   rir: number;
   restSec: number;
+  /** timer guiado: tempo de execução da série (s). Sem valor = padrão */
+  workSec?: number;
+  /** timer guiado: tempo para se posicionar antes da série (s). Sem valor = padrão */
+  prepSec?: number;
 };
 
 export type Workout = {
@@ -219,6 +223,16 @@ export type Settings = {
   /** versão do servidor na última sincronização */
   syncVersion?: number;
   lastSyncAt?: number;
+  /** timer guiado de séries (exercício → descanso → preparação) */
+  guidedTimer?: boolean;
+  /** voz falada no timer guiado ("Bora lá, iniciar série"). Padrão: ligada */
+  voiceCues?: boolean;
+  /** estilo das falas: neutro ou zoeira ácida */
+  voiceStyle?: "neutro" | "zoeira";
+  /** gênero preferido da voz */
+  voiceGender?: "feminina" | "masculina";
+  /** nome da voz escolhida (do aparelho) */
+  voiceName?: string;
 };
 
 export type Mode = "usuario" | "demo";

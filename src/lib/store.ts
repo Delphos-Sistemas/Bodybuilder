@@ -9,7 +9,7 @@ import { syncCustomExercises } from "@/data/exercises";
 import { uid } from "./id";
 import { buildDemoDataset } from "@/data/demo";
 import { exportSchema, type ExportFile } from "./schemas";
-import { adjustRest, clearRest, completeSet, createSession, finishSession, goToExercise, skipExercise } from "./session";
+import { adjustRest, clearRest, completeSet, createSession, finishSession, goToExercise, setItemTimes, skipExercise } from "./session";
 
 export const STORAGE_KEY = "bodybuilder:v2";
 
@@ -59,6 +59,7 @@ type Actions = {
   logSet: (log: Omit<SetLog, "completedAt">) => void;
   changeRest: (deltaSec: number) => void;
   endRest: () => void;
+  setItemTimes: (patch: { workSec?: number; prepSec?: number; restSec?: number }) => void;
   skipCurrent: () => void;
   goTo: (index: number) => void;
   finish: (manual: boolean) => string | null;
@@ -192,6 +193,7 @@ export const useStore = create<Store>()(
               : d
           ),
         endRest: () => update((d) => (d.activeSession ? { ...d, activeSession: clearRest(d.activeSession) } : d)),
+        setItemTimes: (patch) => update((d) => (d.activeSession ? { ...d, activeSession: setItemTimes(d.activeSession, patch) } : d)),
         skipCurrent: () =>
           update((d) =>
             d.activeSession

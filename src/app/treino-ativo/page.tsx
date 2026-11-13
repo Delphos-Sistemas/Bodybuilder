@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ExerciseMedia } from "@/components/ExerciseMedia";
 import { ExerciseSheet } from "@/components/ExerciseSheet";
+import { GuidedTimer } from "@/components/GuidedTimer";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { EmptyState, ProgressBar, Stepper } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
@@ -141,13 +142,13 @@ export default function TreinoAtivoPage() {
     router.push(id ? `/historico?sessao=${id}` : "/historico");
   };
 
-  const logSet = () => {
+  const logSet = (repsOverride?: number) => {
     if (item && !form.kind) {
       // recorde em relação ao histórico e às séries anteriores desta sessão
       const history = exerciseRecords(data.sessions, item.exerciseId);
       if (history.maxLoad) {
         const before = exerciseRecords([...data.sessions, { ...session, endedAt: now }], item.exerciseId);
-        const hits = setRecordHits({ loadKg: form.loadKg, reps: form.reps }, before, item.exerciseId);
+        const hits = setRecordHits({ loadKg: form.loadKg, reps: repsOverride ?? form.reps }, before, item.exerciseId);
         if (hits.length) {
           const h = hits.find((x) => x.type === "carga") ?? hits[0];
           setRecord(
@@ -160,7 +161,7 @@ export default function TreinoAtivoPage() {
     }
     store.logSet({
       loadKg: form.loadKg,
-      reps: form.reps,
+      reps: repsOverride ?? form.reps,
       rir: form.rir,
       ...(form.kind ? { kind: form.kind } : {}),
       ...(form.pain.trim() ? { pain: form.pain.trim() } : {})
@@ -225,6 +226,10 @@ export default function TreinoAtivoPage() {
           })}
         </ol>
       </nav>
+
+      {exercise && item && (
+        <GuidedTimer item={item} exercise={exercise} rest={rest} restLeft={remaining} now={now} complete={complete} onLogSet={(r) => logSet(r)} />
+      )}
 
       {complete ? (
         <section className="card anim-fade space-y-3 border-ok/50 text-center" aria-live="polite">
@@ -422,7 +427,7 @@ export default function TreinoAtivoPage() {
                 )}
               </div>
 
-              <button key={flash} type="button" className={clsx("btn-primary w-full text-lg", flash > 0 && "anim-set-done")} onClick={logSet}>
+              <button key={flash} type="button" className={clsx("btn-primary w-full text-lg", flash > 0 && "anim-set-done")} onClick={() => logSet()}>
                 <Check size={20} aria-hidden />{" "}
                 {form.kind === "aquecimento" ? "Registrar aquecimento" : form.kind === "drop" ? "Registrar drop set" : "Concluir série"}
               </button>
