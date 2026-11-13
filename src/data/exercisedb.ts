@@ -1,7 +1,7 @@
 /**
  * GIFs da API gratuita do ExerciseDB (https://exercisedb.dev), carregados direto do servidor deles.
  * TESTE: ainda falta confirmar os termos de uso antes de publicar.
- * Exercícios fora desta lista continuam com a animação própria.
+ * Exercícios fora desta lista continuam com a animação própria (a prancha: a versão grátis não tem a prancha sem peso).
  */
 export const EXERCISEDB_GIF: Record<string, string> = {
   "supino-reto": "EIeI8Vf",
@@ -44,10 +44,14 @@ export const EXERCISEDB_GIF: Record<string, string> = {
   "crucifixo-inverso": "EAs3xL9",
   "rosca-direta": "25GPyDY",
   "rosca-martelo": "2NpxjC1",
+  "rosca-alternada": "BU15nH4",
   "rosca-scott": "qOgPVf6",
   "triceps-polia": "3ZflifB",
   "triceps-corda": "dU605di",
   "triceps-testa": "h8LFzo9",
+  "triceps-frances": "kont8Ut",
+  "abdominal-supra": "TFqbd8t",
+  "abdominal-polia": "WW95auq",
   "elevacao-de-pernas": "WhuFnR7"
 };
 
