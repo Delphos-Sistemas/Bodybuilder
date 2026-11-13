@@ -113,8 +113,11 @@ test("sem o GIF (offline), volta para a animação própria, que pode ser pausad
   await page.getByLabel("Filtrar por equipamento").selectOption("maquina");
   await page.getByRole("article").filter({ hasText: "Leg press 45°" }).scrollIntoViewIfNeeded();
   await expect(page.getByRole("img", { name: "Animação: Leg press 45°" })).toBeVisible();
-  await page.getByRole("button", { name: "Pausar demonstração de Leg press 45°" }).click();
-  await expect(page.getByRole("button", { name: "Reproduzir demonstração de Leg press 45°" })).toBeVisible();
+  // a animação redesenha o quadro 30 vezes por segundo; no WebKit o Playwright não considera o botão "parado", então o clique é forçado
+  await expect(async () => {
+    await page.getByRole("button", { name: "Pausar demonstração de Leg press 45°" }).click({ force: true, timeout: 3000 });
+    await expect(page.getByRole("button", { name: "Reproduzir demonstração de Leg press 45°" })).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 30000 });
 
   await page.getByRole("article").filter({ hasText: "Leg press 45°" }).getByRole("button", { name: "Ver ficha" }).click();
   const ficha = page.getByRole("dialog");
