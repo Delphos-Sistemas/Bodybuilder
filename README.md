@@ -183,13 +183,14 @@ permite escolher arquivos do próprio aparelho. Para incluir faixas licenciadas,
 
 ### Animações próprias
 
-Cada exercício tem uma **animação própria, desenhada em código** (`src/lib/anim/`): um boneco articulado em vista
-lateral ou de frente, com o equipamento, que faz o movimento completo em loop. O músculo principal acende em laranja
-forte e os secundários em laranja claro. Não há arquivo de imagem ou vídeo de terceiros, então não há licença externa a
+Cada exercício tem uma **animação própria, desenhada em código** (`src/lib/anim/`): figura anatômica em vista
+lateral ou de frente (estilo atlas: corpo cinza sombreado com contorno dos músculos, fundo claro), com o equipamento,
+fazendo o movimento completo em loop. O músculo principal fica em vermelho forte e os auxiliares em vermelho claro. Não há arquivo de imagem ou vídeo de terceiros, então não há licença externa a
 cumprir, e tudo funciona offline (o desenho vai junto com o JavaScript, poucos kB).
 
 - `rig.ts`: esqueleto (comprimentos, ângulos, cinemática direta e inversa para mãos/pés presos ao aparelho).
-- `render.ts`: desenho em SVG (corpo, aparelhos, músculos em destaque, enquadramento automático, tempo do ciclo).
+- `atlas.ts`: desenho do corpo no estilo atlas (contorno dos membros com os músculos, sombreado e realce em vermelho).
+- `render.ts`: aparelhos e cenário, tempo do ciclo, enquadramento; também o desenho antigo (boneco simples) (corpo, aparelhos, músculos em destaque, enquadramento automático, tempo do ciclo).
 - `library.ts`: as posições-chave de cada um dos 50 exercícios (ângulos ou alvos de mão/pé) e o cenário.
 
 Conferência visual: `npx vite-node scripts/anim-sheet.ts saida.html [ids...]` gera uma folha com as posições-chave;

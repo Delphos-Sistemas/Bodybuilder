@@ -4,7 +4,8 @@ import clsx from "clsx";
 import { Pause, Play, Images, Film } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { getAnim } from "@/data/media";
-import { MUSCLE_COLORS, SVG_DEFS, fitTransform, renderFrame, sample, type AnimSpec } from "@/lib/anim/render";
+import { ATLAS_BG, ATLAS_COLORS, renderAtlas } from "@/lib/anim/atlas";
+import { fitTransform, sample, type AnimSpec } from "@/lib/anim/render";
 import { MUSCLES, type Exercise } from "@/lib/types";
 
 type Props = {
@@ -20,19 +21,13 @@ function prefersReducedMotion() {
   return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
 
-let stillCount = 0;
-
-/** dá ids próprios aos filtros/gradientes de cada SVG (vários na mesma página) */
-function scopeIds(html: string, suffix: string): string {
-  return html.replace(/bbglow|bbbg/g, (m) => m + suffix);
-}
-
-export function stillSvg(spec: AnimSpec, exercise: Pick<Exercise, "primary" | "secondary">, pose: "inicio" | "fim" = "inicio"): string {
-  const suffix = `s${++stillCount}`;
+/** Quadro estático da animação em SVG; ids dos gradientes fixos por exercício e posição (iguais no servidor e no aparelho). */
+export function stillSvg(spec: AnimSpec, exercise: Pick<Exercise, "id" | "primary" | "secondary">, pose: "inicio" | "fim" = "inicio"): string {
+  const suffix = `s${exercise.id.replace(/[^a-z0-9]/gi, "")}${pose}`;
   const fit = fitTransform(spec);
   const key = pose === "fim" && spec.keys.length > 1 ? spec.keys[1] : spec.keys[0];
-  const inner = renderFrame(spec, key.pose, key.at ?? spec.at, { primary: exercise.primary, secondary: exercise.secondary });
-  return scopeIds(`${SVG_DEFS}<g transform="translate(${fit.tx} ${fit.ty}) scale(${fit.s})">${inner}</g>`, suffix);
+  const inner = renderAtlas(spec, key.pose, key.at ?? spec.at, { primary: exercise.primary, secondary: exercise.secondary }, suffix);
+  return `${ATLAS_BG(suffix)}<g transform="translate(${fit.tx} ${fit.ty}) scale(${fit.s})">${inner}</g>`;
 }
 
 /** Quadro estático em SVG (posição inicial, final ou um instante t) */
@@ -80,7 +75,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
     const opts = { primary: exercise.primary, secondary: exercise.secondary };
     const draw = (t: number) => {
       const ph = sample(spec, t);
-      g.innerHTML = scopeIds(renderFrame(spec, ph.pose, ph.at, opts), suffix);
+      g.innerHTML = renderAtlas(spec, ph.pose, ph.at, opts, suffix);
     };
     draw(0);
     const run = (moving || exercise.isometric) && playing && visible;
@@ -111,9 +106,9 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
   return (
     <div className={clsx("relative", className)}>
       {view === "anim" ? (
-        <div ref={boxRef} className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#121010]">
+        <div ref={boxRef} className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#E8E7E3]">
           <svg viewBox="0 0 320 240" className="h-full w-full" role="img" aria-label={`Animação: ${exercise.name}`}>
-            <g dangerouslySetInnerHTML={{ __html: scopeIds(SVG_DEFS, suffix) }} />
+            <g dangerouslySetInnerHTML={{ __html: ATLAS_BG(suffix) }} />
             <g transform={`translate(${fit.tx} ${fit.ty}) scale(${fit.s})`} ref={gRef} />
           </svg>
           {!moving && <span className="absolute bottom-2 left-2 rounded-md bg-iron/75 px-2 py-1 text-xs font-medium text-sand">Posição sustentada</span>}
@@ -176,7 +171,7 @@ export function MuscleLegend({ exercise, compact = false }: { exercise: Exercise
           <span
             aria-hidden
             className={clsx("inline-block rounded-full", i === 0 ? "h-3 w-3" : "h-2.5 w-2.5 opacity-80")}
-            style={{ background: MUSCLE_COLORS[m], boxShadow: i === 0 ? `0 0 8px ${MUSCLE_COLORS[m]}` : undefined }}
+            style={{ background: i === 0 ? ATLAS_COLORS.primary : ATLAS_COLORS.secondary }}
           />
           {MUSCLES[m]}
           {i === 0 && !compact && <span className="font-normal text-muted">(principal)</span>}
@@ -192,7 +187,7 @@ function StaticFrames({ exercise, spec, large, moving }: { exercise: Exercise; s
   return (
     <div className={clsx("grid gap-2", frames.length > 1 && "grid-cols-2")}>
       {frames.map((f, i) => (
-        <figure key={f} className="overflow-hidden rounded-xl bg-[#121010]">
+        <figure key={f} className="overflow-hidden rounded-xl bg-[#E8E7E3]">
           <AnimStill spec={spec} exercise={exercise} pose={f} className="aspect-[4/3] w-full" />
           <figcaption className={clsx("bg-steel px-2 py-1.5 text-center font-medium text-sand", large ? "text-sm" : "text-xs")}>{labels[i]}</figcaption>
         </figure>

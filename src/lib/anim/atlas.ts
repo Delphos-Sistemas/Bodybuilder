@@ -206,15 +206,139 @@ function torsoSeg(j: Joints): Seg {
   };
 }
 
+/** cores da legenda: músculo principal e auxiliares */
+export const ATLAS_COLORS = { primary: K.red, secondary: K.sec };
+
 export const ATLAS_BG = (id = "") =>
   `<defs><radialGradient id="abg${id}" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="${K.bg1}"/><stop offset="1" stop-color="${K.bg2}"/></radialGradient></defs><rect width="320" height="240" fill="url(#abg${id})"/>`;
 
-/** Desenha um quadro no estilo atlas (somente vista lateral por enquanto). */
+/** membros na vista de frente: N = lado direito da tela; "fora" = longe do corpo */
+function frontSegs(j: Joints, side: "N" | "F") {
+  const out: 1 | -1 = side === "N" ? -1 : 1;
+  const inn = (out * -1) as 1 | -1;
+  return {
+    upper: {
+      a: j[`shoulder${side}`],
+      b: j[`elbow${side}`],
+      r1: 5.6,
+      r2: 4.0,
+      bellies: [
+        { side: out, t0: -0.15, t1: 0.42, amp: 3.0, m: "ombros" },
+        { side: inn, t0: -0.1, t1: 0.3, amp: 1.2, m: "ombros" },
+        { side: out, t0: 0.38, t1: 0.9, amp: 1.2, m: "biceps" },
+        { side: inn, t0: 0.3, t1: 0.9, amp: 1.6, m: "biceps" }
+      ]
+    } as Seg,
+    fore: {
+      a: j[`elbow${side}`],
+      b: j[`wrist${side}`],
+      r1: 4.4,
+      r2: 2.6,
+      bellies: [
+        { side: out, t0: 0, t1: 0.6, amp: 1.6, m: "antebraco" },
+        { side: inn, t0: 0, t1: 0.5, amp: 0.8, m: "antebraco" }
+      ]
+    } as Seg,
+    thigh: {
+      a: j[`hip${side}`],
+      b: j[`knee${side}`],
+      r1: 8.0,
+      r2: 5.0,
+      bellies: [
+        { side: out, t0: 0.05, t1: 0.85, amp: 2.4, m: "quadriceps" },
+        { side: inn, t0: 0.05, t1: 0.6, amp: 2.0, m: "adutores" },
+        { side: out, t0: -0.2, t1: 0.22, amp: 2.4, m: "gluteos" },
+        { side: inn, t0: 0.55, t1: 0.95, amp: 1.4, m: "quadriceps" }
+      ]
+    } as Seg,
+    shin: {
+      a: j[`knee${side}`],
+      b: j[`ankle${side}`],
+      r1: 4.8,
+      r2: 2.8,
+      bellies: [
+        { side: inn, t0: 0.05, t1: 0.5, amp: 1.8, m: "panturrilhas" },
+        { side: out, t0: 0.05, t1: 0.55, amp: 1.4, m: "panturrilhas" }
+      ]
+    } as Seg,
+    foot: { a: j[`ankle${side}`], b: j[`toe${side}`], r1: 3.0, r2: 2.4, bellies: [] } as Seg
+  };
+}
+
+function frontTorso(j: Joints, ctx: Ctx): string {
+  const tA = ang(j.hip, j.shoulder);
+  const L = dist(j.hip, j.shoulder);
+  const at = (t: number, off: number): Pt => step(step(j.hip, tA, L * t), tA + 90, off);
+  // contorno: quadril → cintura → dorsal → axila → ombro → pescoço (dos dois lados)
+  const half = [
+    [-0.06, 11],
+    [0.3, 10.5],
+    [0.62, 14],
+    [0.86, 16.5],
+    [1.0, 15],
+    [1.06, 7]
+  ] as const;
+  const right = half.map(([t, w]) => at(t, w));
+  const left = half.map(([t, w]) => at(t, -w)).reverse();
+  const g = grad(at(0.5, -16), at(0.5, 16), 1, [K.skinLo, K.skin, K.skinHi]);
+  ctx.defs.push(g.def);
+  let s = `<path d="${smooth([...right, ...left])}" fill="${g.url}" stroke="${K.line}" stroke-width=".7"/>`;
+  const ell = (c: Pt, rx: number, ry: number, m: Muscle) => {
+    const worked = ctx.worked.includes(m);
+    let fill = "none";
+    if (worked) {
+      const main = m === ctx.primary;
+      const rg = grad(step(c, tA, ry), step(c, tA + 180, ry), 1, main ? [K.redHi, K.red, K.redLo] : [K.secHi, K.sec, K.sec]);
+      ctx.defs.push(rg.def);
+      fill = rg.url;
+    }
+    return `<ellipse cx="${f(c[0])}" cy="${f(c[1])}" rx="${f(rx)}" ry="${f(ry)}" transform="rotate(${f(tA + 90)} ${f(c[0])} ${f(c[1])})" fill="${fill}" stroke="${K.line}" stroke-width=".5" stroke-opacity=".6"/>`;
+  };
+  if (L > 20) {
+    s += ell(at(0.8, 7.2), 7, 6.2, "peito") + ell(at(0.8, -7.2), 7, 6.2, "peito");
+    s += ell(at(0.4, 0), 6, 12, "abdomen");
+    s += ell(at(0.62, 13), 2.6, 9, "costas") + ell(at(0.62, -13), 2.6, 9, "costas");
+    if (!ctx.worked.includes("abdomen"))
+      for (const t of [0.3, 0.42, 0.53])
+        s += `<line x1="${f(at(t, -5)[0])}" y1="${f(at(t, -5)[1])}" x2="${f(at(t, 5)[0])}" y2="${f(at(t, 5)[1])}" stroke="${K.line}" stroke-width=".4" opacity=".5"/>`;
+  } else {
+    // deitado visto pelos pés: só a faixa do peito
+    s += ell(at(0.6, 7), 7, 4, "peito") + ell(at(0.6, -7), 7, 4, "peito");
+  }
+  // trapézio entre pescoço e ombros
+  s += ell(at(1.04, 9), 5.5, 2.6, "trapezio") + ell(at(1.04, -9), 5.5, 2.6, "trapezio");
+  return s;
+}
+
+function renderAtlasFront(spec: AnimSpec, j: Joints, ctx: Ctx): string {
+  const floor = spec.floor === undefined ? 222 : spec.floor;
+  let s = "";
+  if (floor !== null) {
+    s += `<ellipse cx="${f(j.hip[0])}" cy="${floor + 1}" rx="48" ry="5" fill="#000" opacity=".12"/>`;
+    s += `<line x1="-200" y1="${floor}" x2="520" y2="${floor}" stroke="${K.floor}" stroke-width="1.2"/>`;
+  }
+  s += (spec.back ?? []).map((p) => drawProp(p, j)).join("");
+  const N = frontSegs(j, "N");
+  const F = frontSegs(j, "F");
+  if (!spec.hideLegs) s += [N.thigh, F.thigh, N.shin, F.shin, N.foot, F.foot].map((x) => drawSeg(x, ctx, false)).join("");
+  s += drawSeg({ a: j.shoulder, b: j.neck, r1: 6, r2: 5, bellies: [] }, ctx, false);
+  const hg = grad(step(j.head, 180, 6), step(j.head, 0, 6), 1, [K.skinLo, K.skin, K.skinHi]);
+  ctx.defs.push(hg.def);
+  s += `<circle cx="${f(j.head[0])}" cy="${f(j.head[1])}" r="9.6" fill="${hg.url}" stroke="${K.line}" stroke-width=".7"/>`;
+  s += frontTorso(j, ctx);
+  s += [N.upper, F.upper, N.fore, F.fore].map((x) => drawSeg(x, ctx, false)).join("");
+  for (const h of [j.handN, j.handF]) s += `<circle cx="${f(h[0])}" cy="${f(h[1])}" r="3.4" fill="${K.skin}" stroke="${K.line}" stroke-width=".7"/>`;
+  s += (spec.front ?? []).map((p) => drawProp(p, j)).join("");
+  return `<defs>${ctx.defs.join("")}</defs>${s}`;
+}
+
+/** Desenha um quadro no estilo atlas. */
 export function renderAtlas(spec: AnimSpec, pose: Pose, at: Pt, opts: RenderOpts, idPrefix = ""): string {
   gid = 0;
   gpre = idPrefix;
   const j = solve(pose, { joint: spec.anchor, at }, spec);
   const ctx: Ctx = { defs: [], worked: [opts.primary, ...opts.secondary], primary: opts.primary };
+  if (spec.view === "front") return renderAtlasFront(spec, j, ctx);
   const floor = spec.floor === undefined ? 222 : spec.floor;
   let s = "";
   if (floor !== null) {

@@ -69,16 +69,16 @@ export const LEN = {
 
 /** raios (espessura) de cada parte, na base e na ponta */
 export const RAD = {
-  torso: [13, 16.5] as const,
-  ua: [7.8, 5.6] as const,
-  fa: [6.0, 3.8] as const,
-  th: [11.2, 7.0] as const,
-  sh: [7.0, 4.0] as const,
-  foot: [3.8, 2.9] as const
+  torso: [12.5, 14] as const,
+  ua: [6.6, 5.2] as const,
+  fa: [5.0, 3.6] as const,
+  th: [9.6, 6.6] as const,
+  sh: [6.2, 4.0] as const,
+  foot: [3.6, 2.8] as const
 };
 
 /** meia largura dos ombros e do quadril na vista de frente */
-export const HALF = { shoulder: 20, hip: 9.5 };
+export const HALF = { shoulder: 18, hip: 9 };
 
 export type View = "side" | "front";
 
