@@ -77,9 +77,12 @@ painel (Workers Builds) usando `npm run build` como comando de build e `npx wran
 
 Cabeçalhos de cache ficam em `public/_headers` (o `sw.js` nunca é guardado em cache pelo navegador).
 
-**Hoje os previews da PR estão saindo pela Vercel**, que não faz parte do plano. Para ficar só na Cloudflare: ligue o
-repositório em Workers & Pages → Create → Import a repository (build `npm run build`, deploy `npx wrangler deploy`) e
-desinstale o app da Vercel no GitHub (Settings → Integrations → GitHub Apps → Vercel) ou remova os projetos no painel da Vercel.
+**Publicado:** https://bodybuilder.delphoserp.workers.dev (Worker `bodybuilder`, ligado a este repositório pelo Workers
+Builds). Cada push na branch de produção publica sozinho; as outras branches ganham um link de preview. Branch de produção
+hoje: `nova-versao` (trocar para `main` em Settings → Builds depois do merge da PR #1).
+
+A Vercel não faz parte do plano: desinstale o app da Vercel no GitHub (Settings → Integrations → GitHub Apps → Vercel) ou
+remova os projetos no painel da Vercel.
 
 ### Sincronização entre aparelhos (opcional)
 
