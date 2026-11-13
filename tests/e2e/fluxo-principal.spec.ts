@@ -98,10 +98,11 @@ test("biblioteca: busca sem acento, ficha e demonstração", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Leg press 45°" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Supino reto com barra" })).toHaveCount(0);
 
-  // nenhum vídeo é carregado antes do toque
+  // animação própria em SVG: toca sozinha e pode ser pausada
   await expect(page.locator("video")).toHaveCount(0);
-  await page.getByRole("button", { name: "Reproduzir demonstração de Leg press 45°" }).click();
-  await expect(page.locator("video")).toHaveCount(1);
+  await expect(page.getByRole("img", { name: "Animação: Leg press 45°" })).toBeVisible();
+  await page.getByRole("button", { name: "Pausar demonstração de Leg press 45°" }).click();
+  await expect(page.getByRole("button", { name: "Reproduzir demonstração de Leg press 45°" })).toBeVisible();
 
   await page.getByRole("article").filter({ hasText: "Leg press 45°" }).getByRole("button", { name: "Ver ficha" }).click();
   const ficha = page.getByRole("dialog");

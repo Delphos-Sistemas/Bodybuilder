@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import { ExerciseMedia } from "./ExerciseMedia";
 import { MuscleMap } from "./MuscleMap";
 import { EXERCISE_MAP } from "@/data/exercises";
-import { MACHINE_IMAGES, getMedia } from "@/data/media";
+import { MACHINE_IMAGES } from "@/data/media";
 import { EQUIPMENT, MUSCLES } from "@/lib/types";
 
 /** Ficha completa do exercício, em um diálogo modal. Usada na Biblioteca e no Treino ativo. */
@@ -26,7 +26,6 @@ export function ExerciseSheet({ exerciseId, onClose, onSelect }: { exerciseId: s
     if (!exercise && d.open) d.close();
   }, [exercise]);
 
-  const media = exercise ? getMedia(exercise.id) : undefined;
   const machineImg = exercise ? MACHINE_IMAGES[exercise.id] : undefined;
 
   return (
@@ -156,20 +155,6 @@ export function ExerciseSheet({ exerciseId, onClose, onSelect }: { exerciseId: s
             <p className="rounded-xl border border-line p-3 text-xs text-muted">
               Orientação geral de execução, sem caráter de diagnóstico ou prescrição. Em caso de dor ou condição de saúde, procure um profissional.
             </p>
-
-            {media && (
-              <p className="text-xs text-muted">
-                Ilustração: {media.credit.author},{" "}
-                <a className="underline" href={media.credit.sourceUrl} target="_blank" rel="noreferrer">
-                  {media.credit.source}
-                </a>
-                , licença{" "}
-                <a className="underline" href={media.credit.licenseUrl} target="_blank" rel="noreferrer">
-                  {media.credit.license}
-                </a>
-                . Modificações: {media.credit.changes}
-              </p>
-            )}
           </div>
         </div>
       )}

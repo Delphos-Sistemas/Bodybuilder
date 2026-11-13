@@ -1,8 +1,8 @@
 import { EXERCISES, EXERCISE_MAP } from "@/data/exercises";
-import { MEDIA } from "@/data/media";
+import { ANIMS } from "@/lib/anim/library";
+import { renderSvg } from "@/lib/anim/render";
+import { solve } from "@/lib/anim/rig";
 import { TEMPLATES } from "@/data/templates";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
 
 describe("biblioteca de exercícios", () => {
   it("tem 50 exercícios com ids únicos", () => {
@@ -21,14 +21,18 @@ describe("biblioteca de exercícios", () => {
     }
   });
 
-  it("cada exercício tem mídia com arquivos existentes e crédito de licença", () => {
+  it("cada exercício tem animação com posições válidas", () => {
     for (const e of EXERCISES) {
-      const m = MEDIA[e.id];
-      expect(m, e.id).toBeDefined();
-      const files = [m.poster, ...m.frames, ...(m.video ? [m.video.webm, m.video.mp4] : [])];
-      for (const f of files) expect(existsSync(join(process.cwd(), "public", f)), f).toBe(true);
-      expect(m.credit.license).toBe("CC BY-SA 4.0");
-      expect(m.credit.originalFiles.length).toBeGreaterThan(0);
+      const spec = ANIMS[e.id];
+      expect(spec, e.id).toBeDefined();
+      expect(spec.keys.length, e.id).toBeGreaterThanOrEqual(e.isometric ? 1 : 2);
+      for (const k of spec.keys) {
+        const j = solve(k.pose, { joint: spec.anchor, at: k.at ?? spec.at }, spec);
+        for (const [n, p] of Object.entries(j)) expect(Number.isFinite(p[0]) && Number.isFinite(p[1]), `${e.id} ${n}`).toBe(true);
+      }
+      const svg = renderSvg(spec, 0.7, { primary: e.primary, secondary: e.secondary });
+      expect(svg).toContain("<svg");
+      expect(svg).not.toContain("NaN");
     }
   });
 

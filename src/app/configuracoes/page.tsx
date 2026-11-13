@@ -6,8 +6,6 @@ import { AudioControls } from "@/components/AudioControls";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { SyncPanel } from "@/components/SyncPanel";
 import { Card, PageHeader } from "@/components/ui";
-import { EXERCISES } from "@/data/exercises";
-import { getMedia } from "@/data/media";
 import { downloadBackup, isStoragePersisted, requestPersistentStorage } from "@/lib/backup";
 import { useStore } from "@/lib/store";
 
@@ -174,23 +172,8 @@ export default function ConfiguracoesPage() {
       <Card className="space-y-2">
         <h2 className="font-display text-xl font-bold">Créditos de mídia</h2>
         <p className="text-sm text-muted">
-          Ilustrações dos exercícios: Everkinetic (everkinetic.com), licença CC BY-SA 4.0, adaptadas (recorte, cores e vídeo curto). As adaptações seguem a
-          mesma licença.
+          As animações dos exercícios são próprias do BODYBUILDER, desenhadas em código: não usam imagens nem vídeos de terceiros e funcionam sem internet.
         </p>
-        <details>
-          <summary className="cursor-pointer text-sm text-sand">Fonte por exercício ({EXERCISES.length})</summary>
-          <ul className="mt-2 space-y-1 text-xs text-muted">
-            {EXERCISES.map((e) => {
-              const m = getMedia(e.id);
-              return (
-                <li key={e.id}>
-                  <span className="text-sand">{e.name}</span>:{" "}
-                  {m ? `${m.credit.author}, ${m.credit.license}, arquivos ${m.credit.originalFiles.join(", ")}` : "sem mídia"}
-                </li>
-              );
-            })}
-          </ul>
-        </details>
       </Card>
     </div>
   );

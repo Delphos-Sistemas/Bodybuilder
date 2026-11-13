@@ -1,11 +1,14 @@
 import clsx from "clsx";
 import { Dumbbell } from "lucide-react";
-import { getMedia } from "@/data/media";
+import { getAnim } from "@/data/media";
+import { getExercise } from "@/data/exercises";
+import { stillSvg } from "./ExerciseMedia";
 
-/** Miniatura do exercício; exercícios sem mídia (criados pelo usuário) mostram um ícone. */
+/** Miniatura do exercício (quadro da animação); exercícios criados pelo usuário mostram um ícone. */
 export function ExerciseThumb({ id, className, width, height }: { id: string; className?: string; width: number; height: number }) {
-  const poster = getMedia(id)?.poster;
-  if (!poster) {
+  const spec = getAnim(id);
+  const ex = getExercise(id);
+  if (!spec || !ex) {
     return (
       <span className={clsx("flex shrink-0 items-center justify-center rounded-lg bg-steel text-muted", className)} style={{ width, height }} aria-hidden>
         <Dumbbell size={22} />
@@ -13,7 +16,13 @@ export function ExerciseThumb({ id, className, width, height }: { id: string; cl
     );
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={poster} alt="" className={clsx("shrink-0 rounded-lg bg-[#ECEBE7] object-contain", className)} loading="lazy" width={width} height={height} />
+    <svg
+      viewBox="0 0 320 240"
+      width={width}
+      height={height}
+      className={clsx("shrink-0 rounded-lg", className)}
+      aria-hidden
+      dangerouslySetInnerHTML={{ __html: stillSvg(spec, ex, spec.keys.length > 1 && !ex.isometric ? "fim" : "inicio") }}
+    />
   );
 }
