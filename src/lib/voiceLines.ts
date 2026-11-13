@@ -40,3 +40,25 @@ export function voiceUrls(style: VoiceStyle, pack: VoicePack): string[] {
   if (pack === "aparelho") return [];
   return Object.entries(LINES[style]).flatMap(([event, pool]) => pool.map((_, i) => `/voz/${pack}/${style}/${event}-${i}.mp3`));
 }
+
+const EQUIPMENT_HINT: Record<string, string> = {
+  barra: "Pegue a barra.",
+  halteres: "Pegue os halteres.",
+  maquina: "Vá para a máquina.",
+  polia: "Vá para a polia.",
+  smith: "Vá para o Smith.",
+  "peso-corporal": "Só o peso do corpo."
+};
+
+/** Texto falado para anunciar um exercício (o mesmo usado para gravar public/voz/<voz>/exercicios). */
+export function exerciseAnnouncement(e: { name: string; equipment: string }): string {
+  const name = e.name
+    .replace(/(\d+)\s*°/g, "$1 graus")
+    .replace(/\s*\(([^)]+)\)/g, ", ou $1,")
+    .replace(/,\s*$/, "");
+  return `Próximo: ${name}. ${EQUIPMENT_HINT[e.equipment] ?? ""}`.trim();
+}
+
+export function exerciseClipUrl(pack: VoicePack, id: string): string {
+  return `/voz/${pack === "aparelho" ? "dora" : pack}/exercicios/${id}.mp3`;
+}

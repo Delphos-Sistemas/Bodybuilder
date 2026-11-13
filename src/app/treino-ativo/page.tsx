@@ -236,6 +236,7 @@ export default function TreinoAtivoPage() {
           restLeft={remaining}
           now={now}
           complete={complete}
+          upcoming={session.items.map((it) => EXERCISE_MAP[it.exerciseId]).filter(Boolean)}
           onLogSet={(r) => logSet(r)}
         />
       )}

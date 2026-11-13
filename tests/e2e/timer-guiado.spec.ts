@@ -48,6 +48,8 @@ test("timer guiado: preparo → execução → descanso → volta, registrando a
 
   // a voz gravada é baixada (o navegador de teste pode não liberar o áudio; aí cai na voz do aparelho)
   expect(vozes.some((u) => u.includes("/voz/dora/neutro/iniciar-"))).toBe(true);
+  // anuncia o nome e o aparelho do exercício
+  expect(vozes.some((u) => u.endsWith("/voz/dora/exercicios/supino-reto.mp3"))).toBe(true);
   const falas = await page.evaluate(() => (window as unknown as { __falas: string[] }).__falas);
   if (falas.length) expect(falas).toContain("Treino concluído! Finalize para salvar.");
 });

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_PREP_SEC, DEFAULT_WORK_SEC, guidedTimes, setItemTimes } from "@/lib/session";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { voiceLine, voiceUrls } from "@/lib/voiceLines";
+import { exerciseAnnouncement, exerciseClipUrl, voiceLine, voiceUrls } from "@/lib/voiceLines";
+import { EXERCISES } from "@/data/exercises";
+import VOICE_EXERCISES from "@/data/voice-exercises.json";
 import type { Session } from "@/lib/types";
 
 const planned = { sets: 3, repsMin: 8, repsMax: 12, loadKg: 40, rir: 2, restSec: 90 };
@@ -41,5 +43,23 @@ describe("timer guiado", () => {
     expect(urls.length).toBeGreaterThan(100);
     const missing = urls.filter((u) => !existsSync(join(process.cwd(), "public", u)));
     expect(missing).toEqual([]);
+  });
+});
+
+describe("anúncio do próximo exercício", () => {
+  it("todo exercício da biblioteca tem o anúncio gravado em cada voz", () => {
+    const missing = EXERCISES.flatMap((e) => (["dora", "alex", "santa"] as const).map((p) => exerciseClipUrl(p, e.id))).filter(
+      (u) => !existsSync(join(process.cwd(), "public", u))
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it("fala nome e aparelho, sem símbolos", () => {
+    expect(exerciseAnnouncement({ name: "Leg press 45°", equipment: "maquina" })).toBe("Próximo: Leg press 45 graus. Vá para a máquina.");
+    expect(exerciseAnnouncement({ name: "Voador (peck deck)", equipment: "maquina" })).toBe("Próximo: Voador, ou peck deck. Vá para a máquina.");
+  });
+
+  it("o texto gravado bate com o da biblioteca", () => {
+    for (const e of EXERCISES) expect((VOICE_EXERCISES as Record<string, string>)[e.id]).toBe(exerciseAnnouncement(e));
   });
 });

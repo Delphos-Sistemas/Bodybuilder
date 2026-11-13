@@ -17,7 +17,7 @@ type Running = "preparar" | "exercicio";
 type Phase =
   | { kind: Running; endsAt: number; total: number }
   | { kind: "pausado"; was: Running; leftMs: number; total: number }
-  | { kind: "descanso"; from: number }
+  | { kind: "descanso"; from: number; announced: boolean }
   | { kind: "aguardando" }
   | null;
 
@@ -39,6 +39,7 @@ export function GuidedTimer({
   restLeft,
   now,
   complete,
+  upcoming,
   onLogSet
 }: {
   item: SessionItem;
@@ -49,6 +50,8 @@ export function GuidedTimer({
   restLeft: number;
   now: number;
   complete: boolean;
+  /** exercícios da sessão, para baixar os anúncios antes */
+  upcoming: Exercise[];
   onLogSet: (repsOverride?: number) => void;
 }) {
   const store = useStore();
@@ -69,7 +72,7 @@ export function GuidedTimer({
     });
 
   const voiceOn = settings.voiceCues !== false;
-  const say = (event: VoiceEvent) => void coachSay(settings, event);
+  const say = (event: VoiceEvent, next?: Exercise) => void coachSay(settings, event, next);
 
   const startPrep = (at: number, afterRest: boolean) => {
     if (times.prepSec <= 0) {
@@ -77,7 +80,8 @@ export function GuidedTimer({
       say("iniciar");
       setPhase({ kind: "exercicio", endsAt: at + times.workSec * 1000, total: times.workSec });
     } else {
-      say(afterRest && setsDone > 0 ? (setsDone + 1 >= item.planned.sets ? "ultima" : "retomar") : "preparar");
+      if (afterRest && setsDone > 0) say(setsDone + 1 >= item.planned.sets ? "ultima" : "retomar");
+      else say("preparar", exercise);
       setPhase({ kind: "preparar", endsAt: at + times.prepSec * 1000, total: times.prepSec });
     }
   };
@@ -90,9 +94,9 @@ export function GuidedTimer({
 
   const start = async () => {
     // o toque do usuário libera o áudio (Safari exige)
-    prepareCoach(settings);
+    prepareCoach(settings, upcoming);
     const ok = await unlockAudio();
-    prepareCoach(settings);
+    prepareCoach(settings, upcoming);
     if (ok && !settings.audioEnabled) store.updateSettings({ audioEnabled: true });
     beeped.current = "";
     setTune(false);
@@ -102,8 +106,9 @@ export function GuidedTimer({
   const finishExercise = () => {
     alert("fim-serie");
     const lastOfExercise = setsDone + 1 >= item.planned.sets;
-    say(lastOfExercise ? "exercicio-feito" : "serie-feita");
-    setPhase({ kind: "descanso", from: index });
+    // fim do exercício: a fala espera o app escolher o próximo, para anunciar o nome e o aparelho
+    if (!lastOfExercise) say("serie-feita");
+    setPhase({ kind: "descanso", from: index, announced: !lastOfExercise });
     onLogSet(exercise.isometric ? times.workSec : undefined);
   };
 
@@ -117,12 +122,17 @@ export function GuidedTimer({
     }
     // descanso iniciado pelo botão "Concluir série" durante a preparação/execução
     if (rest && (phase.kind === "preparar" || phase.kind === "exercicio")) {
-      setPhase({ kind: "descanso", from: lastIndex.current });
+      setPhase({ kind: "descanso", from: lastIndex.current, announced: true });
       return;
     }
     if (phase.kind === "preparar" || phase.kind === "exercicio") lastIndex.current = index;
     if (phase.kind === "aguardando") return;
     if (phase.kind === "descanso") {
+      if (!phase.announced) {
+        say("exercicio-feito", phase.from !== index ? exercise : undefined);
+        setPhase({ ...phase, announced: true });
+        return;
+      }
       if (!rest) {
         // trocou de exercício: no modo manual espera o usuário escolher e confirmar
         if (phase.from !== index && !autoNext) setPhase({ kind: "aguardando" });

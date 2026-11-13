@@ -158,7 +158,7 @@ let currentClip: AudioBufferSourceNode | null = null;
 /** motivo da última falha ao tocar uma fala gravada (aparece no "Testar voz") */
 export let lastClipError = "";
 
-async function playViaContext(url: string, volume: number): Promise<boolean> {
+async function playViaContext(url: string, volume: number): Promise<number | false> {
   const buf = await loadClip(url);
   if (!buf || !ctx) {
     lastClipError = ctx ? "não decodificou o arquivo" : "áudio não liberado";
@@ -181,7 +181,7 @@ async function playViaContext(url: string, volume: number): Promise<boolean> {
   src.connect(gain).connect(ctx.destination);
   src.start(ctx.currentTime + 0.05);
   currentClip = src;
-  return true;
+  return buf.duration + 0.05;
 }
 
 /** Elemento <audio> liberado num toque: reserva para quando o Web Audio falhar (comum no iPhone). */
@@ -209,7 +209,7 @@ export function unlockClipElement(sampleUrl: string): void {
   }
 }
 
-async function playViaElement(url: string, volume: number): Promise<boolean> {
+async function playViaElement(url: string, volume: number): Promise<number | false> {
   if (!el) return false;
   currentClip?.stop();
   try {
@@ -218,18 +218,19 @@ async function playViaElement(url: string, volume: number): Promise<boolean> {
     el.src = url;
     el.volume = Math.max(0, Math.min(1, volume));
     await el.play();
-    return true;
+    return Number.isFinite(el.duration) && el.duration > 0 ? el.duration : 2.5;
   } catch (e) {
     lastClipError += ` / audio: ${(e as Error)?.name ?? "erro"}`;
     return false;
   }
 }
 
-/** Toca uma fala gravada. Devolve false se não deu (aí quem chamou usa a voz do aparelho). */
-export async function playClip(url: string, volume = 1): Promise<boolean> {
+/** Toca uma fala gravada e devolve a duração (s), ou false se não deu (aí quem chamou usa a voz do aparelho). */
+export async function playClip(url: string, volume = 1): Promise<number | false> {
   lastClipError = "";
   try {
-    if (await playViaContext(url, volume)) return true;
+    const d = await playViaContext(url, volume);
+    if (d !== false) return d;
   } catch (e) {
     lastClipError = String(e);
   }
