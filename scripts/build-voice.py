@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory() as tmp:
                     dest = out / f"{event}-{i}.mp3"
                     # volume normalizado e MP3 mono leve (toca em iPhone e Android)
                     subprocess.run(
-                        ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav), "-af", "loudnorm=I=-14:TP=-1", "-ac", "1", "-ar", "24000", "-b:a", "48k", str(dest)],
+                        ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav), "-af", "loudnorm=I=-14:TP=-1", "-ac", "1", "-ar", "44100", "-b:a", "64k", "-map_metadata", "-1", str(dest)],
                         check=True,
                     )
                     print(dest.relative_to(ROOT), text)

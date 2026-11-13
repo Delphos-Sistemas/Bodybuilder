@@ -1,6 +1,6 @@
 "use client";
 
-import { playClip, preloadClips, setMixMode, speak, unlockSpeech } from "./audio";
+import { playClip, preloadClips, setMixMode, speak, unlockClipElement, unlockSpeech } from "./audio";
 import type { Settings } from "./types";
 import { voiceLine, voiceUrls, type VoiceEvent, type VoicePack, type VoiceStyle } from "./voiceLines";
 
@@ -12,20 +12,22 @@ export function coachPrefs(s: Settings): { style: VoiceStyle; pack: VoicePack } 
 export function prepareCoach(s: Settings): void {
   const { style, pack } = coachPrefs(s);
   setMixMode(Boolean(s.duckMusic));
-  if (pack === "aparelho") unlockSpeech();
-  else preloadClips(voiceUrls(style, pack));
+  unlockSpeech();
+  if (pack !== "aparelho") {
+    const urls = voiceUrls(style, pack);
+    unlockClipElement(urls[0]);
+    preloadClips(urls);
+  }
 }
 
 /** Fala um evento: voz gravada; se não der, a voz do aparelho. */
-export function coachSay(s: Settings, event: VoiceEvent): void {
-  if (s.voiceCues === false) return;
+export async function coachSay(s: Settings, event: VoiceEvent): Promise<"gravada" | "aparelho" | "nenhuma"> {
+  if (s.voiceCues === false) return "nenhuma";
   const { style, pack } = coachPrefs(s);
   const line = voiceLine(style, event, pack);
   if (pack === "aparelho") {
-    speak(line.text, s.voiceName);
-    return;
+    return speak(line.text, s.voiceName) ? "aparelho" : "nenhuma";
   }
-  void playClip(line.url, s.alertVolume).then((ok) => {
-    if (!ok) speak(line.text, s.voiceName);
-  });
+  if (await playClip(line.url, s.alertVolume)) return "gravada";
+  return speak(line.text, s.voiceName) ? "aparelho" : "nenhuma";
 }

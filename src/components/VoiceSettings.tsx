@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { portugueseVoices, speechAvailable, unlockAudio } from "@/lib/audio";
+import { lastClipError, portugueseVoices, speechAvailable, unlockAudio } from "@/lib/audio";
 import { coachPrefs, coachSay, prepareCoach } from "@/lib/coachVoice";
 import { useStore } from "@/lib/store";
 import { VOICE_PACKS, VOICE_STYLES, type VoicePack, type VoiceStyle } from "@/lib/voiceLines";
@@ -14,6 +14,7 @@ export function VoiceSettings() {
   const { settings } = store;
   const { style, pack } = coachPrefs(settings);
   const [deviceVoices, setDeviceVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [status, setStatus] = useState("");
 
   // as vozes do aparelho chegam de forma assíncrona em vários navegadores
   useEffect(() => {
@@ -29,7 +30,16 @@ export function VoiceSettings() {
     prepareCoach(s);
     await unlockAudio();
     prepareCoach(s);
-    coachSay({ ...s, voiceCues: true }, "iniciar");
+    setStatus("Carregando…");
+    const r = await coachSay({ ...s, voiceCues: true }, "iniciar");
+    const p = coachPrefs(s).pack;
+    setStatus(
+      p === "aparelho"
+        ? ""
+        : r === "gravada"
+          ? `Tocando a voz ${VOICE_PACKS[p]}.`
+          : `A voz gravada não tocou neste aparelho (${lastClipError || "erro desconhecido"}). ${r === "aparelho" ? "Usando a voz do aparelho." : ""}`
+    );
   };
 
   const packs = (Object.keys(VOICE_PACKS) as VoicePack[]).filter((p) => p !== "aparelho" || speechAvailable());
@@ -105,6 +115,11 @@ export function VoiceSettings() {
       <button type="button" className="btn-secondary min-h-11 w-full" onClick={() => void test()}>
         <Volume2 size={16} aria-hidden /> Testar voz
       </button>
+      {status && (
+        <p className="text-xs text-muted" aria-live="polite" data-testid="voz-status">
+          {status}
+        </p>
+      )}
     </div>
   );
 }

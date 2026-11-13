@@ -69,7 +69,7 @@ export function GuidedTimer({
     });
 
   const voiceOn = settings.voiceCues !== false;
-  const say = (event: VoiceEvent) => coachSay(settings, event);
+  const say = (event: VoiceEvent) => void coachSay(settings, event);
 
   const startPrep = (at: number, afterRest: boolean) => {
     if (times.prepSec <= 0) {

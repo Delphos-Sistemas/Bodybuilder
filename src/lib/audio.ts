@@ -148,25 +148,83 @@ export function preloadClips(urls: string[]): void {
 }
 
 let currentClip: AudioBufferSourceNode | null = null;
+/** motivo da última falha ao tocar uma fala gravada (aparece no "Testar voz") */
+export let lastClipError = "";
 
-/** Toca uma fala gravada. Devolve false se não deu (sem áudio liberado ou arquivo indisponível). */
-export async function playClip(url: string, volume = 1): Promise<boolean> {
+async function playViaContext(url: string, volume: number): Promise<boolean> {
   const buf = await loadClip(url);
-  if (!buf || !ctx) return false;
-  try {
-    if (ctx.state === "suspended") void ctx.resume();
-    currentClip?.stop();
-    const src = ctx.createBufferSource();
-    const gain = ctx.createGain();
-    gain.gain.value = Math.max(0, Math.min(1.5, volume * 1.3));
-    src.buffer = buf;
-    src.connect(gain).connect(ctx.destination);
-    src.start(ctx.currentTime + 0.05);
-    currentClip = src;
-    return true;
-  } catch {
+  if (!buf || !ctx) {
+    lastClipError = ctx ? "não decodificou o arquivo" : "áudio não liberado";
     return false;
   }
+  if (ctx.state !== "running") {
+    // iPhone: contexto "interrupted"/"suspended" toca mudo; melhor usar o elemento <audio>
+    await Promise.race([ctx.resume().catch(() => undefined), new Promise((r) => setTimeout(r, 300))]);
+    if ((ctx.state as string) !== "running") {
+      lastClipError = `contexto ${ctx.state}`;
+      return false;
+    }
+  }
+  currentClip?.stop();
+  const src = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  gain.gain.value = Math.max(0, Math.min(1.5, volume * 1.3));
+  src.buffer = buf;
+  src.connect(gain).connect(ctx.destination);
+  src.start(ctx.currentTime + 0.05);
+  currentClip = src;
+  return true;
+}
+
+/** Elemento <audio> liberado num toque: reserva para quando o Web Audio falhar (comum no iPhone). */
+let el: HTMLAudioElement | null = null;
+
+/** Chamar dentro de um toque do usuário. */
+export function unlockClipElement(sampleUrl: string): void {
+  if (typeof Audio === "undefined") return;
+  try {
+    el = el ?? new Audio();
+    el.preload = "auto";
+    el.muted = true;
+    el.src = sampleUrl;
+    void el
+      .play()
+      .then(() => {
+        el?.pause();
+        if (el) el.muted = false;
+      })
+      .catch(() => {
+        if (el) el.muted = false;
+      });
+  } catch {
+    /* sem <audio> */
+  }
+}
+
+async function playViaElement(url: string, volume: number): Promise<boolean> {
+  if (!el) return false;
+  try {
+    el.pause();
+    el.muted = false;
+    el.src = url;
+    el.volume = Math.max(0, Math.min(1, volume));
+    await el.play();
+    return true;
+  } catch (e) {
+    lastClipError += ` / audio: ${(e as Error)?.name ?? "erro"}`;
+    return false;
+  }
+}
+
+/** Toca uma fala gravada. Devolve false se não deu (aí quem chamou usa a voz do aparelho). */
+export async function playClip(url: string, volume = 1): Promise<boolean> {
+  lastClipError = "";
+  try {
+    if (await playViaContext(url, volume)) return true;
+  } catch (e) {
+    lastClipError = String(e);
+  }
+  return playViaElement(url, volume);
 }
 
 /** Voz do aparelho (Web Speech API): reserva para quando a fala gravada não estiver disponível. */
