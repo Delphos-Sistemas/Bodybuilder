@@ -2,6 +2,13 @@
 const VERSION = "__VERSION__";
 const CACHE = `bb-app-${VERSION}`;
 const MEDIA_CACHE = "bb-media-v1";
+// Modo academia offline: falas gravadas e GIFs baixados pelo botão nas Configurações. Sobrevive às atualizações.
+const OFFLINE_CACHE = "bb-offline-v1";
+const GIF_HOST = "static.exercisedb.dev";
+// Os GIFs só passam pelo service worker depois que a pessoa baixou o modo offline (existe o cache bb-gifs-v1).
+const GIF_CACHE = "bb-gifs-v1";
+let gifsOffline = false;
+caches.has(GIF_CACHE).then((v) => (gifsOffline = v));
 const PRECACHE = __PRECACHE__;
 
 self.addEventListener("install", (event) => {
@@ -11,6 +18,7 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+  if (event.data && event.data.type === "GIFS_OFFLINE") gifsOffline = true;
 });
 
 self.addEventListener("activate", (event) => {
@@ -39,7 +47,49 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  // GIFs dos exercícios (outro site): depois de carregados uma vez, ficam guardados para treinar sem internet.
+  if (url.hostname === GIF_HOST && gifsOffline) {
+    event.respondWith(
+      (async () => {
+        const hit = (await caches.match(req.url, { ignoreVary: true })) || null;
+        if (hit) return hit;
+        const res = await fetch(req);
+        if (res.ok || res.type === "opaque") {
+          const copy = res.clone();
+          event.waitUntil(
+            caches
+              .open(MEDIA_CACHE)
+              .then((c) => c.put(req.url, copy))
+              .catch(() => undefined)
+          );
+        }
+        return res;
+      })()
+    );
+    return;
+  }
   if (url.origin !== self.location.origin) return;
+  // Falas gravadas: guardadas fora do cache da versão, para não baixar de novo a cada atualização.
+  if (url.pathname.startsWith("/voz/")) {
+    event.respondWith(
+      (async () => {
+        const hit = await caches.match(url.pathname, { ignoreVary: true });
+        if (hit) return hit;
+        const res = await fetch(req);
+        if (res.ok && res.status === 200) {
+          const copy = res.clone();
+          event.waitUntil(
+            caches
+              .open(OFFLINE_CACHE)
+              .then((c) => c.put(url.pathname, copy))
+              .catch(() => undefined)
+          );
+        }
+        return res;
+      })()
+    );
+    return;
+  }
   // API de sincronização: sempre na rede, nunca em cache.
   if (url.pathname.startsWith("/api/")) return;
 

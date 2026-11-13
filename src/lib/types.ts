@@ -58,6 +58,10 @@ export type WorkoutExercise = {
   workSec?: number;
   /** timer guiado: tempo para se posicionar antes da série (s). Sem valor = padrão */
   prepSec?: number;
+  /** supersérie: este exercício é feito em sequência com o próximo, sem descanso entre eles */
+  superset?: boolean;
+  /** drop sets depois da última série (0 a 3) */
+  drops?: number;
 };
 
 export type Workout = {
@@ -90,6 +94,8 @@ export type SessionItem = {
   planned: Omit<WorkoutExercise, "uid" | "exerciseId">;
   sets: SetLog[];
   skipped: boolean;
+  /** exercício trocado durante o treino (aparelho ocupado): id do exercício original */
+  swappedFrom?: string;
   startedAt?: number;
   finishedAt?: number;
 };
@@ -108,7 +114,27 @@ export type ProgressionChange = {
 export type RestState = {
   startedAt: number;
   endsAt: number;
+  /** por que o descanso inteligente mudou o tempo planejado */
+  reason?: string;
 };
+
+/** Diário rápido do treino, notas de 1 a 5. Dor: 1 = nenhuma, 5 = muita. */
+export type Diary = {
+  /** como foi o treino */
+  nota?: number;
+  energia?: number;
+  sono?: number;
+  dor?: number;
+};
+
+export const PHASES = {
+  base: "Base",
+  volume: "Volume",
+  pesada: "Pesada",
+  alivio: "Alívio"
+} as const;
+/** Semana do ciclo de periodização (4 semanas). */
+export type Phase = keyof typeof PHASES;
 
 export type Session = {
   id: string;
@@ -124,6 +150,10 @@ export type Session = {
   items: SessionItem[];
   /** cargas da ficha alteradas pela progressão automática ao finalizar */
   progression?: ProgressionChange[];
+  /** diário do treino: nota, energia, sono e dor */
+  diary?: Diary;
+  /** semana do ciclo de periodização em que o treino foi feito */
+  phase?: Phase;
   currentIndex: number;
   rest: RestState | null;
 };
@@ -258,6 +288,38 @@ export type Settings = {
   remindersOn?: boolean;
   /** ao finalizar o treino, atualiza as cargas da ficha com a sugestão de progressão. Padrão: ligado */
   autoProgress?: boolean;
+  /** descanso ajustado pelo tipo de exercício, repetições e esforço. Padrão: ligado */
+  smartRest?: boolean;
+  /** sugere séries de aquecimento antes do primeiro exercício pesado de cada músculo. Padrão: ligado */
+  autoWarmup?: boolean;
+  /** ciclo de 4 semanas (base, volume, pesada, alívio) começando na semana de `start` (AAAA-MM-DD) */
+  periodization?: { on: boolean; start: string };
+  /** desafio entre amigos por link */
+  challenge?: ChallengeBoard;
+  /** quando os arquivos do modo academia offline foram baixados (ms) */
+  offlineAt?: number;
+};
+
+/** Participante do desafio do mês: números enviados por ele mesmo no link. */
+export type ChallengeEntry = {
+  id: string;
+  nome: string;
+  /** mês AAAA-MM dos números */
+  mes: string;
+  treinos: number;
+  volume: number;
+  series: number;
+  recordes: number;
+  /** atualizado em (ms) */
+  em: number;
+};
+
+export type ChallengeBoard = {
+  /** meu id no desafio */
+  me: string;
+  /** critério do ranking */
+  kind: "treinos" | "volume" | "series" | "recordes";
+  entries: ChallengeEntry[];
 };
 
 export type Mode = "usuario" | "demo";

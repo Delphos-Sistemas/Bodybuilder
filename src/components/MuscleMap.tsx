@@ -1,7 +1,7 @@
 import type { Muscle } from "@/lib/types";
 import { MUSCLES } from "@/lib/types";
 
-type Shape = {
+export type Shape = {
   m: Muscle | null;
   d?: string;
   ellipse?: [number, number, number, number];
@@ -13,7 +13,10 @@ const PRIMARY = "#C0392B";
 const SECONDARY = "#E59A8C";
 
 // Figura simplificada (vista frontal e posterior). Coordenadas em viewBox 0 0 120 250.
-const FRONT: Shape[] = [
+export const SILHOUETTE =
+  "M48 44 L72 44 L96 50 L102 124 L90 124 L84 76 L76 116 L78 176 L72 240 L62 240 L60 150 L58 240 L48 240 L42 176 L44 116 L36 76 L30 124 L18 124 L24 50 Z";
+
+export const FRONT: Shape[] = [
   { key: "cabeca", m: null, ellipse: [60, 20, 12, 15] },
   { key: "pescoco", m: "trapezio", d: "M52 33 L68 33 L72 44 L48 44 Z" },
   { key: "delt-e", m: "ombros", ellipse: [36, 52, 10, 9] },
@@ -49,7 +52,7 @@ const FRONT: Shape[] = [
   { key: "canela-d", m: null, d: "M74 178 L64 178 L66 230 L72 230 Z" }
 ];
 
-const BACK: Shape[] = [
+export const BACK: Shape[] = [
   { key: "cabeca", m: null, ellipse: [60, 20, 12, 15] },
   { key: "trap", m: "trapezio", d: "M60 32 L76 46 L60 70 L44 46 Z" },
   { key: "delt-e", m: "ombros", ellipse: [36, 52, 10, 9] },
@@ -89,10 +92,7 @@ function Figure({ shapes, primary, secondary, title }: { shapes: Shape[]; primar
     <figure className="flex flex-col items-center">
       <svg viewBox="0 0 120 250" className="h-48 w-auto" aria-hidden="true">
         {/* silhueta base */}
-        <path
-          d="M48 44 L72 44 L96 50 L102 124 L90 124 L84 76 L76 116 L78 176 L72 240 L62 240 L60 150 L58 240 L48 240 L42 176 L44 116 L36 76 L30 124 L18 124 L24 50 Z"
-          fill="#D4D1CB"
-        />
+        <path d={SILHOUETTE} fill="#D4D1CB" />
         {shapes.map((s) =>
           s.ellipse ? (
             <ellipse

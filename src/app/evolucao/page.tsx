@@ -1,6 +1,12 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Award, Calculator, NotebookPen, Share2, Trash2, Users } from "lucide-react";
+import Link from "next/link";
+import { ShareCanvas } from "@/components/ShareCanvas";
+import { WeekMuscleMap } from "@/components/WeekMuscleMap";
+import { DIARY_FIELDS, diaryAverages, diaryInsights } from "@/lib/diary";
+import { drawWeekCard } from "@/lib/shareCard";
+import { weekSummary } from "@/lib/weekly";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { BodyProgress } from "@/components/BodyProgress";
@@ -54,9 +60,38 @@ export default function EvolucaoPage() {
     <div className="space-y-6">
       <PageHeader eyebrow="Acompanhamento" title="Evolução" />
 
-      <Card>
-        <WeeklyVolume sessions={data.sessions} now={now} />
-      </Card>
+      <nav aria-label="Atalhos" className="-mx-4 overflow-x-auto px-4">
+        <div className="flex gap-2 pb-1">
+          <Link href="/conquistas" className="btn-secondary min-h-10 shrink-0 px-3 text-sm">
+            <Award size={16} aria-hidden /> Conquistas
+          </Link>
+          <Link href="/desafio" className="btn-secondary min-h-10 shrink-0 px-3 text-sm">
+            <Users size={16} aria-hidden /> Desafio com amigos
+          </Link>
+          <Link href="/calculadora" className="btn-secondary min-h-10 shrink-0 px-3 text-sm">
+            <Calculator size={16} aria-hidden /> 1RM e anilhas
+          </Link>
+          <ShareCanvas
+            title="Resumo da semana"
+            className="shrink-0"
+            fileName={`semana-${new Date(now).toISOString().slice(0, 10)}.png`}
+            draw={(c, logo) => drawWeekCard(c, weekSummary(data.sessions, data.profile.weeklyGoal, Date.now()), logo)}
+          >
+            <Share2 size={16} aria-hidden /> Resumo da semana
+          </ShareCanvas>
+        </div>
+      </nav>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <WeekMuscleMap sessions={data.sessions} now={now} />
+        </Card>
+        <Card>
+          <WeeklyVolume sessions={data.sessions} now={now} />
+        </Card>
+      </div>
+
+      <DiaryCard />
 
       {data.sessions.some((s) => s.endedAt) && (
         <Card>
@@ -247,5 +282,46 @@ export default function EvolucaoPage() {
         <BodyProgress />
       </Card>
     </div>
+  );
+}
+
+function DiaryCard() {
+  const data = useData();
+  const avg = useMemo(() => diaryAverages(data.sessions), [data.sessions]);
+  const insights = useMemo(() => diaryInsights(data.sessions), [data.sessions]);
+  return (
+    <Card className="space-y-3" data-testid="diario-evolucao">
+      <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+        <NotebookPen size={20} className="text-bronze-light" aria-hidden /> Diário de treino
+      </h2>
+      {avg.count === 0 ? (
+        <p className="text-sm text-muted">
+          Ao terminar um treino, dê notas de 1 a 5 para energia, sono e dor (no histórico). Com alguns treinos, o app mostra se isso muda o seu desempenho.
+        </p>
+      ) : (
+        <>
+          <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {DIARY_FIELDS.map((f) => (
+              <div key={f.key} className="rounded-xl border border-line bg-iron p-2 text-center">
+                <dt className="text-xs text-muted">{f.label}</dt>
+                <dd className="font-display text-2xl font-bold">{avg[f.key]?.toLocaleString("pt-BR") ?? "—"}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-xs text-muted">Média dos últimos {avg.count} treinos com diário (de 1 a 5).</p>
+          {insights.length ? (
+            <ul className="space-y-1 text-sm text-sand" data-testid="insights-diario">
+              {insights.map((i) => (
+                <li key={i.key}>• {i.text}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">
+              Preencha o diário em mais treinos (alguns bons e alguns ruins) para ver como sono, energia e dor afetam seu volume.
+            </p>
+          )}
+        </>
+      )}
+    </Card>
   );
 }

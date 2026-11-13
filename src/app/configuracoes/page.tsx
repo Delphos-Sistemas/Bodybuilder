@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { AudioControls } from "@/components/AudioControls";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { RemindersPanel } from "@/components/RemindersPanel";
+import { OfflinePanel } from "@/components/OfflinePanel";
+import { CYCLE, cycleWeek } from "@/lib/periodization";
+import { PHASES } from "@/lib/types";
+import { todayISO } from "@/lib/time";
 import { SyncPanel } from "@/components/SyncPanel";
 import { Card, PageHeader, Toggle } from "@/components/ui";
 import { downloadBackup, isStoragePersisted, requestPersistentStorage } from "@/lib/backup";
@@ -22,6 +26,9 @@ export default function ConfiguracoesPage() {
   const [confirmClear, setConfirmClear] = useState(false);
 
   const autoProgress = useStore((s) => s.settings.autoProgress !== false);
+  const smartRest = useStore((s) => s.settings.smartRest !== false);
+  const autoWarmup = useStore((s) => s.settings.autoWarmup !== false);
+  const periodization = useStore((s) => s.settings.periodization);
   const updateSettings = useStore((s) => s.updateSettings);
   const markBackupDone = useStore((s) => s.markBackupDone);
   const lastBackupAt = useStore((s) => s.settings.lastBackupAt);
@@ -78,6 +85,58 @@ export default function ConfiguracoesPage() {
           checked={autoProgress}
           onChange={(v) => updateSettings({ autoProgress: v })}
         />
+      </Card>
+
+      <Card className="space-y-1">
+        <h2 className="font-display text-xl font-bold">Durante o treino</h2>
+        <Toggle
+          id="descanso-inteligente"
+          label="Descanso inteligente"
+          description="Ajusta o descanso de cada série: mais tempo em exercícios pesados e multiarticulares ou quando você vai até a falha, menos em isolados e séries longas. O motivo aparece no cronômetro."
+          checked={smartRest}
+          onChange={(v) => updateSettings({ smartRest: v })}
+        />
+        <Toggle
+          id="aquecimento-automatico"
+          label="Aquecimento automático"
+          description="Antes do primeiro exercício pesado de cada músculo, o app monta 2 ou 3 séries de aquecimento com cargas menores."
+          checked={autoWarmup}
+          onChange={(v) => updateSettings({ autoWarmup: v })}
+        />
+      </Card>
+
+      <Card className="space-y-2" data-testid="periodizacao">
+        <h2 className="font-display text-xl font-bold">Plano de periodização</h2>
+        <Toggle
+          id="periodizacao"
+          label="Ciclo de 4 semanas"
+          description="Base, volume, pesada e alívio, repetindo. A ficha salva não muda: o app ajusta séries e cargas na hora de começar o treino."
+          checked={!!periodization?.on}
+          onChange={(v) => updateSettings({ periodization: { on: v, start: periodization?.start ?? todayISO() } })}
+        />
+        {periodization?.on && (
+          <>
+            <ol className="space-y-1 text-sm">
+              {CYCLE.map((c, i) => {
+                const cur = cycleWeek(periodization.start, Date.now()) === i;
+                return (
+                  <li key={c.phase} className={cur ? "font-semibold text-bronze-light" : "text-sand"}>
+                    Semana {i + 1} · {PHASES[c.phase]}: {c.text}
+                    {cur && " (esta semana)"}
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="text-xs text-muted">Nas semanas pesada e de alívio a progressão automática não mexe na ficha.</p>
+            <button
+              type="button"
+              className="btn-ghost min-h-10 px-2 text-sm"
+              onClick={() => updateSettings({ periodization: { on: true, start: todayISO() } })}
+            >
+              Recomeçar o ciclo nesta semana
+            </button>
+          </>
+        )}
       </Card>
 
       <Card className="space-y-3">
@@ -177,15 +236,8 @@ export default function ConfiguracoesPage() {
       </Card>
 
       <Card className="space-y-2">
-        <h2 className="font-display text-xl font-bold">Uso sem internet</h2>
-        <p className="text-sm text-sand">
-          Depois da primeira visita, o app pode ser instalado na tela inicial e abre sem internet: telas, treinos, treino ativo, histórico, gráficos e imagens
-          dos exercícios.
-        </p>
-        <p className="text-sm text-muted">
-          Os vídeos das demonstrações são baixados quando você toca em reproduzir; os que já foram vistos ficam disponíveis offline. Músicas adicionadas do
-          aparelho ficam salvas neste navegador.
-        </p>
+        <h2 className="font-display text-xl font-bold">Modo academia offline</h2>
+        <OfflinePanel />
       </Card>
 
       <Card className="space-y-2">

@@ -13,7 +13,9 @@ export const workoutExerciseSchema = z.object({
   rir: z.number().int().min(0).max(10),
   restSec: z.number().int().min(0).max(1800),
   workSec: z.number().int().min(5).max(900).optional(),
-  prepSec: z.number().int().min(0).max(300).optional()
+  prepSec: z.number().int().min(0).max(300).optional(),
+  superset: z.boolean().optional(),
+  drops: z.number().int().min(0).max(3).optional()
 });
 
 export const workoutSchema = z.object({
@@ -34,6 +36,8 @@ const setLogSchema = z.object({
   completedAt: z.number()
 });
 
+const score = z.number().int().min(1).max(5);
+
 const sessionSchema = z.object({
   id: z.string(),
   workoutId: z.string(),
@@ -49,6 +53,7 @@ const sessionSchema = z.object({
       planned: workoutExerciseSchema.omit({ uid: true, exerciseId: true }),
       sets: z.array(setLogSchema),
       skipped: z.boolean(),
+      swappedFrom: z.string().optional(),
       startedAt: z.number().optional(),
       finishedAt: z.number().optional()
     })
@@ -66,8 +71,17 @@ const sessionSchema = z.object({
     )
     .max(60)
     .optional(),
+  diary: z
+    .object({
+      nota: score.optional(),
+      energia: score.optional(),
+      sono: score.optional(),
+      dor: score.optional()
+    })
+    .optional(),
+  phase: z.enum(["base", "volume", "pesada", "alivio"]).optional(),
   currentIndex: z.number().int().min(0),
-  rest: z.object({ startedAt: z.number(), endsAt: z.number() }).nullable()
+  rest: z.object({ startedAt: z.number(), endsAt: z.number(), reason: z.string().max(200).optional() }).nullable()
 });
 
 const muscle = z.enum(Object.keys(MUSCLES) as [keyof typeof MUSCLES, ...(keyof typeof MUSCLES)[]]);

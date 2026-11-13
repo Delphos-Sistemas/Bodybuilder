@@ -11,6 +11,7 @@ import { useHydrated } from "@/lib/useHydrated";
 import { UpdateBanner } from "./UpdateBanner";
 import { AudioUnlocker } from "./AudioUnlocker";
 import { SyncAgent } from "./SyncAgent";
+import { OfflineBadge } from "./OfflinePanel";
 
 const NAV = [
   { href: "/", label: "Início", icon: House },
@@ -74,6 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       <UpdateBanner />
+      {hydrated && <OfflineBadge />}
       {hydrated && <AudioUnlocker />}
       {hydrated && <SyncAgent />}
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Link2, Plus, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { ExerciseSheet } from "@/components/ExerciseSheet";
-import { Card, EmptyState, Stepper } from "@/components/ui";
+import { Card, EmptyState, Stepper, Toggle } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
 import { ExerciseThumb } from "@/components/ExerciseThumb";
 import { uid } from "@/lib/id";
@@ -75,9 +75,11 @@ function EditorForm({ initial }: { initial?: Workout }) {
       document.getElementById("nome-treino")?.focus();
       return;
     }
-    const fixed = items.map((x) => ({
+    const fixed = items.map((x, i) => ({
       ...x,
-      repsMax: Math.max(x.repsMin, x.repsMax)
+      repsMax: Math.max(x.repsMin, x.repsMax),
+      // o último exercício não tem com quem fazer supersérie
+      superset: x.superset && i < items.length - 1 ? true : undefined
     }));
     saveWorkout({
       id: initial?.id ?? "",
@@ -253,8 +255,32 @@ function EditorForm({ initial }: { initial?: Workout }) {
                       max={300}
                       onChange={(v) => patch(it.uid, { prepSec: v })}
                     />
+                    <Stepper
+                      id={`drops-${it.uid}`}
+                      label="Drop sets no fim"
+                      value={it.drops ?? 0}
+                      min={0}
+                      max={3}
+                      onChange={(v) => patch(it.uid, { drops: v || undefined })}
+                    />
                   </div>
+                  {i < items.length - 1 && (
+                    <div className="border-t border-line pt-1">
+                      <Toggle
+                        id={`super-${it.uid}`}
+                        label="Supersérie com o próximo"
+                        description={`Faz ${ex?.name ?? "este"} e ${EXERCISE_MAP[items[i + 1].exerciseId]?.name ?? "o próximo"} em sequência, sem descanso entre eles.`}
+                        checked={!!it.superset}
+                        onChange={(v) => patch(it.uid, { superset: v || undefined })}
+                      />
+                    </div>
+                  )}
                 </Card>
+                {it.superset && i < items.length - 1 && (
+                  <p className="flex items-center justify-center gap-1 py-1 text-xs font-semibold text-bronze-light" aria-hidden>
+                    <Link2 size={14} /> supersérie
+                  </p>
+                )}
               </li>
             );
           })}

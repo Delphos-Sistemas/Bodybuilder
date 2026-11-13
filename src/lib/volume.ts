@@ -25,3 +25,17 @@ export function weeklySetsByMuscle(sessions: Session[], now: number): Partial<Re
   }
   return out;
 }
+
+/** Último dia em que cada músculo foi treinado como principal (ms). */
+export function lastTrainedByMuscle(sessions: Session[]): Partial<Record<Muscle, number>> {
+  const out: Partial<Record<Muscle, number>> = {};
+  for (const s of sessions) {
+    if (!s.endedAt) continue;
+    for (const it of s.items) {
+      const ex = EXERCISE_MAP[it.exerciseId];
+      if (!ex || !workingSets(it.sets).length) continue;
+      if ((out[ex.primary] ?? 0) < s.startedAt) out[ex.primary] = s.startedAt;
+    }
+  }
+  return out;
+}

@@ -8,7 +8,7 @@ import { playAlert, unlockAudio, type AlertKind } from "@/lib/audio";
 import { VoiceSettings } from "@/components/VoiceSettings";
 import { coachSay, prepareCoach } from "@/lib/coachVoice";
 import type { VoiceEvent } from "@/lib/voiceLines";
-import { guidedTimes, workingSets } from "@/lib/session";
+import { dropsPending, guidedTimes, workingSets, type NextStep } from "@/lib/session";
 import { useStore } from "@/lib/store";
 import { formatClock } from "@/lib/time";
 import type { Exercise, RestState, SessionItem } from "@/lib/types";
@@ -17,7 +17,7 @@ type Running = "preparar" | "exercicio";
 type Phase =
   | { kind: Running; endsAt: number; total: number }
   | { kind: "pausado"; was: Running; leftMs: number; total: number }
-  | { kind: "descanso"; from: number; announced: boolean }
+  | { kind: "descanso"; from: number; announced: boolean; troca?: boolean }
   | { kind: "aguardando" }
   | null;
 
@@ -40,6 +40,7 @@ export function GuidedTimer({
   now,
   complete,
   upcoming,
+  step,
   onLogSet
 }: {
   item: SessionItem;
@@ -52,6 +53,8 @@ export function GuidedTimer({
   complete: boolean;
   /** exercícios da sessão, para baixar os anúncios antes */
   upcoming: Exercise[];
+  /** o que vem depois da série atual (supersérie, drop set, descanso…) */
+  step: NextStep;
   onLogSet: (repsOverride?: number) => void;
 }) {
   const store = useStore();
@@ -61,7 +64,10 @@ export function GuidedTimer({
   const beeped = useRef<string>("");
   const lastIndex = useRef(index);
   const autoNext = settings.guidedAutoNext !== false;
-  const times = guidedTimes(item.planned, exercise.isometric);
+  const base = guidedTimes(item.planned, exercise.isometric);
+  const inDrop = dropsPending(item) > 0;
+  // drop set: troca a carga rápido, sem preparo longo
+  const times = inDrop ? { ...base, prepSec: Math.min(5, base.prepSec) } : base;
   const setsDone = workingSets(item.sets).length;
 
   const alert = (kind: AlertKind) =>
@@ -105,7 +111,13 @@ export function GuidedTimer({
 
   const finishExercise = () => {
     alert("fim-serie");
-    const lastOfExercise = setsDone + 1 >= item.planned.sets;
+    if (step === "troca") {
+      // supersérie: vai direto ao parceiro, que é anunciado no preparo
+      setPhase({ kind: "descanso", from: index, announced: true, troca: true });
+      onLogSet(exercise.isometric ? times.workSec : undefined);
+      return;
+    }
+    const lastOfExercise = step === "proximo" || step === "fim";
     // fim do exercício: a fala espera o app escolher o próximo, para anunciar o nome e o aparelho
     if (!lastOfExercise) say("serie-feita");
     setPhase({ kind: "descanso", from: index, announced: !lastOfExercise });
@@ -135,7 +147,7 @@ export function GuidedTimer({
       }
       if (!rest) {
         // trocou de exercício: no modo manual espera o usuário escolher e confirmar
-        if (phase.from !== index && !autoNext) setPhase({ kind: "aguardando" });
+        if (phase.from !== index && !autoNext && !phase.troca) setPhase({ kind: "aguardando" });
         else startPrep(now, phase.from === index);
       } else if (restLeft === 10 && rest.endsAt - rest.startedAt >= 25_000 && beeped.current !== `v${rest.endsAt}`) {
         beeped.current = `v${rest.endsAt}`;

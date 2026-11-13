@@ -2,7 +2,21 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { BodyWeight, Dataset, Exercise, Measurement, Mode, Nutrition, NutritionDay, Profile, SetLog, Settings, Workout, WorkoutExercise } from "./types";
+import type {
+  BodyWeight,
+  Dataset,
+  Diary,
+  Exercise,
+  Measurement,
+  Mode,
+  Nutrition,
+  NutritionDay,
+  Profile,
+  SetLog,
+  Settings,
+  Workout,
+  WorkoutExercise
+} from "./types";
 import type { Recipe } from "@/data/recipes";
 import { addRecipeToList, bumpDay, dayOf, EMPTY_DAY } from "./nutrition";
 import { syncCustomExercises } from "@/data/exercises";
@@ -14,7 +28,20 @@ import { markReminderDone } from "./reminders";
 import { dailyGoals } from "./nutrition";
 import { todayISO } from "./time";
 import { EXERCISE_MAP } from "@/data/exercises";
-import { adjustRest, clearRest, completeSet, createSession, finishSession, goToExercise, setItemTimes, skipExercise } from "./session";
+import {
+  adjustRest,
+  clearRest,
+  completeSet,
+  createSession,
+  currentItem,
+  finishSession,
+  goToExercise,
+  setItemTimes,
+  skipExercise,
+  swapCurrent
+} from "./session";
+import { smartRest } from "./smartRest";
+import { applyPhase, currentPhase } from "./periodization";
 
 export const STORAGE_KEY = "bodybuilder:v2";
 
@@ -67,6 +94,9 @@ type Actions = {
   setItemTimes: (patch: { workSec?: number; prepSec?: number; restSec?: number }) => void;
   skipCurrent: () => void;
   goTo: (index: number) => void;
+  /** troca o exercício atual (aparelho ocupado); com `inWorkout`, troca também na ficha */
+  swapExercise: (exerciseId: string, inWorkout: boolean) => void;
+  setSessionDiary: (id: string, diary: Diary) => void;
   finish: (manual: boolean) => string | null;
   /** desfaz (ou refaz) a atualização de cargas da ficha feita ao finalizar uma sessão */
   toggleProgression: (sessionId: string) => void;
@@ -174,22 +204,29 @@ export const useStore = create<Store>()(
         startSession: (workoutId) => {
           const w = current().workouts.find((x) => x.id === workoutId);
           if (!w || !w.exercises.length) return false;
+          const now = Date.now();
+          const phase = currentPhase(get().settings, now);
           update((d) => ({
             ...d,
-            activeSession: createSession(w, Date.now())
+            activeSession: createSession(applyPhase(w, phase), now, phase)
           }));
           return true;
         },
         discardActive: () => update((d) => ({ ...d, activeSession: null })),
-        logSet: (log) =>
+        logSet: (log) => {
+          const active = current().activeSession;
+          const item = active ? currentItem(active) : undefined;
+          const ex = item ? EXERCISE_MAP[item.exerciseId] : undefined;
+          const rest = item && ex && !log.kind && get().settings.smartRest !== false ? smartRest(item.planned, ex, log) : undefined;
           update((d) =>
             d.activeSession
               ? {
                   ...d,
-                  activeSession: completeSet(d.activeSession, log, Date.now())
+                  activeSession: completeSet(d.activeSession, log, Date.now(), rest)
                 }
               : d
-          ),
+          );
+        },
         changeRest: (delta) =>
           update((d) =>
             d.activeSession
@@ -219,12 +256,38 @@ export const useStore = create<Store>()(
                 }
               : d
           ),
+        swapExercise: (exerciseId, inWorkout) => {
+          const active = current().activeSession;
+          const item = active ? currentItem(active) : undefined;
+          if (!active || !item) return;
+          const from = item.exerciseId;
+          const now = Date.now();
+          update((d) => ({
+            ...d,
+            activeSession: d.activeSession ? swapCurrent(d.activeSession, exerciseId) : null,
+            workouts: inWorkout
+              ? d.workouts.map((w) => {
+                  if (w.id !== active.workoutId) return w;
+                  // a sessão segue a ordem da ficha: mesma posição, se a ficha não mudou nesse ponto
+                  const i = active.currentIndex;
+                  if (w.exercises[i]?.exerciseId !== from) return w;
+                  return { ...w, exercises: w.exercises.map((we, k) => (k === i ? { ...we, exerciseId } : we)), updatedAt: now };
+                })
+              : d.workouts
+          }));
+        },
+        setSessionDiary: (id, diary) =>
+          update((d) => ({
+            ...d,
+            sessions: d.sessions.map((s) => (s.id === id ? { ...s, diary: Object.keys(diary).length ? diary : undefined, updatedAt: Date.now() } : s))
+          })),
         finish: (manual) => {
           const active = current().activeSession;
           if (!active) return null;
           const now = Date.now();
           let done = finishSession(active, now, manual);
-          const auto = get().settings.autoProgress !== false;
+          // semana pesada ou de alívio: a carga da ficha não muda (só a sugestão fica registrada)
+          const auto = get().settings.autoProgress !== false && done.phase !== "pesada" && done.phase !== "alivio";
           const changes = planProgression(done, (id) => EXERCISE_MAP[id]?.equipment);
           const workout = current().workouts.find((w) => w.id === done.workoutId);
           const progression = changes.map((c) => ({ ...c, applied: auto && !!workout && c.toKg !== c.fromKg }));

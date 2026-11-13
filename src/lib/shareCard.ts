@@ -295,3 +295,182 @@ export function drawRecordCard(canvas: HTMLCanvasElement, info: RecordCardInfo, 
   ctx.fillText("Desenvolvido por Delphos Sistemas", W / 2, H - 90);
   ctx.textAlign = "left";
 }
+
+function header(ctx: CanvasRenderingContext2D, logo?: HTMLImageElement) {
+  ctx.textBaseline = "middle";
+  const hasLogo = !!(logo?.complete && logo.naturalWidth);
+  if (hasLogo) ctx.drawImage(logo!, 75, 95, 160, 160);
+  ctx.textAlign = "left";
+  ctx.fillStyle = C.text;
+  ctx.font = `bold 60px ${DISPLAY}`;
+  ctx.fillText("BODYBUILDER", hasLogo ? 250 : 90, 178);
+  ctx.textBaseline = "alphabetic";
+}
+
+function footer(ctx: CanvasRenderingContext2D, W: number, H: number) {
+  ctx.fillStyle = C.muted;
+  ctx.font = `500 28px ${SANS}`;
+  ctx.textAlign = "center";
+  ctx.fillText("Desenvolvido por Delphos Sistemas", W / 2, H - 90);
+  ctx.textAlign = "left";
+}
+
+function statBox(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, label: string, value: string, accent = false) {
+  ctx.fillStyle = accent ? "rgba(176,125,69,0.18)" : C.panel;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 28);
+  ctx.fill();
+  ctx.strokeStyle = accent ? C.bronze : C.line;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = C.muted;
+  ctx.font = `500 30px ${SANS}`;
+  ctx.fillText(label, x + 30, y + 60);
+  ctx.fillStyle = accent ? C.bronzeLight : C.text;
+  fitFont(ctx, value, w - 60, "bold", 70, DISPLAY);
+  ctx.fillText(value, x + 30, y + h - 45);
+}
+
+export type WeekCardInfo = {
+  start: number;
+  end: number;
+  treinos: number;
+  meta: number;
+  volume: number;
+  series: number;
+  minutos: number;
+  recordes: number;
+  dias: boolean[];
+  topMusculos: { nome: string; series: number }[];
+  sequencia: number;
+  vsAnterior: number | null;
+};
+
+/** Resumo da semana em formato de story (1080 × 1920). */
+export function drawWeekCard(canvas: HTMLCanvasElement, w: WeekCardInfo, logo?: HTMLImageElement): void {
+  const W = 1080;
+  const H = 1920;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, "#1E1712");
+  grad.addColorStop(1, C.bg);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  header(ctx, logo);
+
+  const d = (ts: number) => new Date(ts).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  ctx.fillStyle = C.bronzeLight;
+  ctx.font = `600 34px ${SANS}`;
+  ctx.fillText(`SEMANA DE ${d(w.start)} A ${d(w.end)}`, 90, 380);
+  ctx.fillStyle = C.text;
+  fitFont(ctx, "RESUMO DA SEMANA", W - 180, "bold", 110, DISPLAY, 60);
+  ctx.fillText("RESUMO DA SEMANA", 90, 500);
+
+  // dias da semana
+  const labels = ["S", "T", "Q", "Q", "S", "S", "D"];
+  const gap = (W - 180) / 7;
+  labels.forEach((l, i) => {
+    const cx = 90 + gap * i + gap / 2;
+    ctx.beginPath();
+    ctx.arc(cx, 620, 50, 0, Math.PI * 2);
+    ctx.fillStyle = w.dias[i] ? C.bronze : C.panel;
+    ctx.fill();
+    ctx.strokeStyle = w.dias[i] ? C.bronzeLight : C.line;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.fillStyle = w.dias[i] ? C.bg : C.muted;
+    ctx.font = `bold 40px ${DISPLAY}`;
+    ctx.textAlign = "center";
+    ctx.fillText(l, cx, 635);
+    ctx.textAlign = "left";
+  });
+
+  const bw = (W - 180 - 30) / 2;
+  const meta = w.treinos >= w.meta;
+  statBox(ctx, 90, 720, bw, 210, "Treinos", `${w.treinos} de ${w.meta}`, meta);
+  statBox(ctx, 90 + bw + 30, 720, bw, 210, "Volume", `${(w.volume / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} t`);
+  statBox(ctx, 90, 960, bw, 210, "Séries", String(w.series));
+  statBox(
+    ctx,
+    90 + bw + 30,
+    960,
+    bw,
+    210,
+    "Tempo treinando",
+    w.minutos >= 60 ? `${Math.floor(w.minutos / 60)}h${String(w.minutos % 60).padStart(2, "0")}` : `${w.minutos} min`
+  );
+  statBox(ctx, 90, 1200, bw, 210, "Recordes", String(w.recordes), w.recordes > 0);
+  statBox(ctx, 90 + bw + 30, 1200, bw, 210, "Sequência", `${w.sequencia} ${w.sequencia === 1 ? "semana" : "semanas"}`, w.sequencia >= 2);
+
+  let y = 1490;
+  if (w.vsAnterior !== null) {
+    ctx.fillStyle = w.vsAnterior >= 0 ? "#7FB77E" : C.sand;
+    ctx.font = `600 38px ${SANS}`;
+    ctx.fillText(`${w.vsAnterior >= 0 ? "▲" : "▼"} ${Math.abs(w.vsAnterior)}% de volume em relação à semana passada`, 90, y);
+    y += 80;
+  }
+  if (w.topMusculos.length) {
+    ctx.fillStyle = C.muted;
+    ctx.font = `600 30px ${SANS}`;
+    ctx.fillText("MAIS TREINADOS", 90, y);
+    ctx.fillStyle = C.text;
+    ctx.font = `600 40px ${SANS}`;
+    ctx.fillText(fitText(ctx, w.topMusculos.map((m) => `${m.nome} (${m.series})`).join(" · "), W - 180), 90, y + 60);
+  }
+  if (meta) {
+    ctx.fillStyle = C.bronzeLight;
+    ctx.font = `bold 48px ${DISPLAY}`;
+    ctx.textAlign = "center";
+    ctx.fillText("META DA SEMANA CUMPRIDA", W / 2, H - 190);
+    ctx.textAlign = "left";
+  }
+  footer(ctx, W, H);
+}
+
+export type ChallengeCardRow = { nome: string; valor: string; eu: boolean };
+
+/** Ranking do desafio entre amigos em formato de story. */
+export function drawChallengeCard(canvas: HTMLCanvasElement, title: string, month: string, rows: ChallengeCardRow[], logo?: HTMLImageElement): void {
+  const W = 1080;
+  const H = 1920;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, "#221A12");
+  grad.addColorStop(1, C.bg);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  header(ctx, logo);
+  ctx.fillStyle = C.bronzeLight;
+  ctx.font = `600 34px ${SANS}`;
+  ctx.fillText(`DESAFIO DE ${month.toUpperCase()}`, 90, 380);
+  ctx.fillStyle = C.text;
+  fitFont(ctx, title.toUpperCase(), W - 180, "bold", 110, DISPLAY, 60);
+  ctx.fillText(title.toUpperCase(), 90, 500);
+  const medal = [C.bronzeLight, "#C9C3BA", "#A0714A"];
+  rows.slice(0, 10).forEach((r, i) => {
+    const y = 600 + i * 120;
+    ctx.fillStyle = r.eu ? "rgba(176,125,69,0.2)" : C.panel;
+    ctx.beginPath();
+    ctx.roundRect(90, y, W - 180, 100, 24);
+    ctx.fill();
+    ctx.strokeStyle = r.eu ? C.bronze : C.line;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = medal[i] ?? C.muted;
+    ctx.font = `bold 52px ${DISPLAY}`;
+    ctx.fillText(`${i + 1}º`, 120, y + 70);
+    ctx.fillStyle = C.text;
+    ctx.font = `600 42px ${SANS}`;
+    ctx.fillText(fitText(ctx, r.nome, 560), 240, y + 66);
+    ctx.textAlign = "right";
+    ctx.fillStyle = C.bronzeLight;
+    ctx.font = `bold 48px ${DISPLAY}`;
+    ctx.fillText(r.valor, W - 120, y + 68);
+    ctx.textAlign = "left";
+  });
+  footer(ctx, W, H);
+}

@@ -1,7 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import { Trash2, Trophy } from "lucide-react";
+import { Award, Trash2, Trophy } from "lucide-react";
+import { DiaryForm } from "@/components/DiaryForm";
+import { medals, medalsFromSession } from "@/lib/achievements";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
@@ -41,6 +43,11 @@ function Historico() {
   const sessions = useMemo(() => all.filter((s) => s.endedAt), [all]);
   const records = useMemo(() => new Map(sessions.map((s) => [s.id, sessionRecordHits(s, sessions)])), [sessions]);
   const remove = useStore((s) => s.deleteSession);
+  const goal = data.profile.weeklyGoal;
+  const newMedals = useMemo(() => {
+    const s = sessions.find((x) => x.id === highlight);
+    return s ? medalsFromSession(medals(sessions, goal, Date.now()), s) : [];
+  }, [sessions, highlight, goal]);
   const [confirm, setConfirm] = useState<string | null>(null);
 
   return (
@@ -50,6 +57,21 @@ function Historico() {
         <p role="status" className="anim-fade mb-4 rounded-xl border border-ok/40 bg-ok/10 px-4 py-3 text-sm">
           Treino salvo no histórico.
         </p>
+      )}
+      {newMedals.length > 0 && (
+        <Link
+          href="/conquistas"
+          className="anim-fade mb-4 flex items-center gap-3 rounded-xl border border-bronze bg-bronze/15 px-4 py-3"
+          data-testid="nova-medalha"
+        >
+          <Award size={28} className="shrink-0 text-bronze-light" aria-hidden />
+          <span>
+            <span className="block text-xs font-semibold uppercase tracking-wide text-bronze-light">
+              {newMedals.length === 1 ? "Medalha desbloqueada" : `${newMedals.length} medalhas desbloqueadas`}
+            </span>
+            <span className="font-semibold">{newMedals.map((m) => m.title).join(", ")}</span>
+          </span>
+        </Link>
       )}
       {sessions.length === 0 ? (
         <EmptyState
@@ -152,6 +174,7 @@ function Historico() {
                             </div>
                           );
                         })}
+                        <DiaryForm id={s.id} diary={s.diary} highlight={open && !s.diary} />
                         <SessionNotes id={s.id} notes={s.notes} />
                         <ShareSession session={s} records={records.get(s.id) ?? []} />
                         {confirm === s.id ? (

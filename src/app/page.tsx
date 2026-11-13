@@ -1,7 +1,15 @@
 "use client";
 
-import { ArrowRight, Dumbbell, Sparkles } from "lucide-react";
+import { ArrowRight, Award, Calculator, Dumbbell, Flame, Share2, Sparkles, Users } from "lucide-react";
+import { ShareCanvas } from "@/components/ShareCanvas";
+import { WeekMuscleMap } from "@/components/WeekMuscleMap";
+import { medals, weekStreak } from "@/lib/achievements";
+import { CYCLE, currentPhase, cycleWeek } from "@/lib/periodization";
+import { drawWeekCard } from "@/lib/shareCard";
+import { weekSummary } from "@/lib/weekly";
+import { PHASES } from "@/lib/types";
 import Link from "next/link";
+import { useMemo } from "react";
 import { BackupReminder } from "@/components/BackupReminder";
 import { NutritionCard } from "@/components/NutritionCard";
 import { StartWorkoutButton } from "@/components/StartWorkout";
@@ -33,6 +41,12 @@ export default function InicioPage() {
   const week = sessionsThisWeek(data.sessions, now);
   const goal = data.profile.weeklyGoal;
   const recent = data.sessions.filter((s) => s.endedAt).slice(0, 3);
+  const settings = useStore((s) => s.settings);
+  const phase = currentPhase(settings, now);
+  const streak = weekStreak(data.sessions, goal, now);
+  const medalList = useMemo(() => medals(data.sessions, goal, Date.now()), [data.sessions, goal]);
+  const gotMedals = medalList.filter((m) => m.achievedAt).length;
+  const nextMedal = medalList.filter((m) => !m.achievedAt).sort((a, b) => b.progress - a.progress)[0];
   const greeting = data.profile.name ? `Olá, ${data.profile.name.split(" ")[0]}` : "Bom treino";
 
   return (
@@ -91,6 +105,12 @@ export default function InicioPage() {
           {today ? (
             <>
               <h2 className="font-display text-2xl font-bold">{today.name}</h2>
+              {phase && settings.periodization && (
+                <p className="text-sm text-bronze-light" data-testid="fase-semana">
+                  Semana {cycleWeek(settings.periodization.start, now) + 1} de 4 do ciclo · <strong>{PHASES[phase]}</strong>:{" "}
+                  {CYCLE.find((c) => c.phase === phase)!.text}
+                </p>
+              )}
               <p className="text-sm text-muted">
                 {today.exercises.length} exercícios · cerca de {formatDuration(estimateMinutes(today) * 60)}
               </p>
@@ -138,9 +158,59 @@ export default function InicioPage() {
           </p>
           <ProgressBar value={goal ? week / goal : 0} label="Meta semanal de treinos" />
           <p className="text-sm text-muted">{week >= goal ? "Meta da semana cumprida." : `Faltam ${goal - week} para cumprir a meta desta semana.`}</p>
-          <Link href="/perfil" className="text-sm text-bronze-light underline">
-            Ajustar meta
-          </Link>
+          {streak.current > 0 && (
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-bronze-light" data-testid="sequencia">
+              <Flame size={16} aria-hidden /> {streak.current} {streak.current === 1 ? "semana" : "semanas"} seguidas batendo a meta
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <ShareCanvas
+              title="Resumo da semana"
+              fileName={`semana-${new Date(now).toISOString().slice(0, 10)}.png`}
+              draw={(c, logo) => drawWeekCard(c, weekSummary(data.sessions, goal, Date.now()), logo)}
+            >
+              <Share2 size={16} aria-hidden /> Resumo da semana
+            </ShareCanvas>
+            <Link href="/perfil" className="text-sm text-bronze-light underline">
+              Ajustar meta
+            </Link>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <WeekMuscleMap sessions={data.sessions} now={now} compact />
+        </Card>
+        <Card className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <p className="eyebrow">Conquistas</p>
+            <Link href="/conquistas" className="flex items-center gap-1 text-sm text-bronze-light">
+              Ver todas <ArrowRight size={14} aria-hidden />
+            </Link>
+          </div>
+          <p className="flex items-center gap-2">
+            <Award size={28} className="text-bronze-light" aria-hidden />
+            <span className="font-display text-3xl font-bold">{gotMedals}</span>
+            <span className="text-muted">de {medalList.length} medalhas</span>
+          </p>
+          {nextMedal && (
+            <div>
+              <p className="text-sm">
+                Próxima: <strong>{nextMedal.title}</strong> <span className="text-muted">· {nextMedal.text.toLowerCase()}</span>
+              </p>
+              <ProgressBar value={nextMedal.progress} label={`Progresso de ${nextMedal.title}`} />
+              <p className="mt-1 text-xs text-muted">{nextMedal.progressText}</p>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Link href="/desafio" className="btn-secondary min-h-10 px-3 text-sm">
+              <Users size={16} aria-hidden /> Desafio com amigos
+            </Link>
+            <Link href="/calculadora" className="btn-ghost min-h-10 px-3 text-sm">
+              <Calculator size={16} aria-hidden /> 1RM e anilhas
+            </Link>
+          </div>
         </Card>
       </div>
 

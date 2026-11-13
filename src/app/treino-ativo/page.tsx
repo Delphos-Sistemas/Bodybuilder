@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, ChevronDown, Flag, SkipForward, Square, Timer, BookOpen, Trophy } from "lucide-react";
+import { Check, ChevronDown, Flag, SkipForward, Square, Timer, BookOpen, Trophy, Link2, Brain } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -12,7 +12,11 @@ import { MusicPlayer } from "@/components/MusicPlayer";
 import { EmptyState, ProgressBar, Stepper } from "@/components/ui";
 import { EXERCISE_MAP } from "@/data/exercises";
 import { playAlert } from "@/lib/audio";
-import { currentItem, isItemDone, isSessionComplete, sessionSetCount, workingSets } from "@/lib/session";
+import { currentItem, dropCount, dropsPending, isItemDone, isSessionComplete, nextStep, sessionSetCount, supersetRange, workingSets } from "@/lib/session";
+import { SwapExercise } from "@/components/SwapExercise";
+import { WarmupCard } from "@/components/WarmupCard";
+import { needsWarmup, warmupPlan } from "@/lib/warmup";
+import { loadIncrement } from "@/lib/progression";
 import { estimate1RM, exerciseRecords, recordCardInfo, setRecordHits } from "@/lib/records";
 import { ShareRecord } from "@/components/ShareRecord";
 import type { RecordCardInfo } from "@/lib/shareCard";
@@ -20,7 +24,7 @@ import { useData, useStore } from "@/lib/store";
 import { fmt, lastPerformance, platesPerSide, suggestNext } from "@/lib/progression";
 import { formatClock, formatDateShort, restRemaining, secondsBetween, workoutElapsed } from "@/lib/time";
 import { useNow } from "@/lib/useHydrated";
-import { EQUIPMENT, MUSCLES, SET_KINDS, type SetKind } from "@/lib/types";
+import { EQUIPMENT, MUSCLES, PHASES, SET_KINDS, type SetKind } from "@/lib/types";
 
 export default function TreinoAtivoPage() {
   const router = useRouter();
@@ -49,13 +53,25 @@ export default function TreinoAtivoPage() {
   const extras = item ? item.sets.filter((s) => s.kind) : [];
   const formKey = `${session?.id}:${session?.currentIndex}:${item?.sets.length ?? 0}`;
   const last = item ? lastPerformance(data.sessions, item.exerciseId) : null;
-  const suggestion = item && exercise ? suggestNext(item.planned, last, exercise.equipment) : null;
+  // semana pesada ou de alívio da periodização: vale a carga planejada da semana, não a sugestão
+  const phaseLoad = session?.phase === "pesada" || session?.phase === "alivio";
+  const suggestion = item && exercise && !phaseLoad ? suggestNext(item.planned, last, exercise.equipment) : null;
   const [barKg, setBarKg] = useState(20);
+  const [skipWarm, setSkipWarm] = useState<string>("");
+  const pendingDrops = item ? dropsPending(item) : 0;
 
   // preenche o formulário com a última série registrada ou com o planejado
   useEffect(() => {
     if (!item) return;
     const prev = workingSets(item.sets).at(-1);
+    if (dropsPending(item) > 0 && exercise) {
+      // drop set: tira uns 20% da última carga e vai até a falha
+      const last = item.sets.at(-1)?.loadKg ?? prev?.loadKg ?? item.planned.loadKg;
+      const step = loadIncrement(exercise.equipment) || 2.5;
+      setForm({ loadKg: Math.max(0, Math.round((last * 0.8) / step) * step), reps: prev?.reps ?? item.planned.repsMin, rir: 0, pain: "", kind: "drop" });
+      setShowPain(false);
+      return;
+    }
     setForm({
       loadKg: prev?.loadKg ?? suggestion?.loadKg ?? item.planned.loadKg,
       reps: prev?.reps ?? suggestion?.repsTarget ?? item.planned.repsMax,
@@ -127,6 +143,22 @@ export default function TreinoAtivoPage() {
   const complete = isSessionComplete(session);
   const totalSets = session.items.reduce((a, it) => a + (it.skipped ? workingSets(it.sets).length : it.planned.sets), 0);
   const iso = exercise?.isometric;
+  const [gA, gB] = item ? supersetRange(session.items, session.currentIndex) : [0, 0];
+  const partners =
+    gB > gA
+      ? session.items
+          .slice(gA, gB + 1)
+          .map((it, k) => ({ it, k: gA + k }))
+          .filter(({ k }) => k !== session.currentIndex)
+      : [];
+  const workKg = item ? (suggestion?.loadKg ?? item.planned.loadKg) : 0;
+  const warmKey = `${session.id}:${session.currentIndex}`;
+  const warmups = item ? item.sets.filter((x) => x.kind === "aquecimento").length : 0;
+  const warmPlan =
+    item && exercise && settings.autoWarmup !== false && skipWarm !== warmKey && setsDone === 0 && (warmups > 0 || needsWarmup(session, exercise, EXERCISE_MAP))
+      ? warmupPlan(workKg, exercise.equipment, barKg)
+      : [];
+  const step = nextStep(session);
 
   const finish = (manual: boolean) => {
     const id = store.finish(manual);
@@ -194,9 +226,16 @@ export default function TreinoAtivoPage() {
       </section>
 
       <div>
-        <div className="mb-1 flex justify-between text-xs text-muted">
-          <span>{session.workoutName}</span>
-          <span>
+        <div className="mb-1 flex justify-between gap-2 text-xs text-muted">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {session.workoutName}
+            {session.phase && session.phase !== "base" && (
+              <span className="whitespace-nowrap rounded-full border border-bronze/60 px-2 py-0.5 text-bronze-light" data-testid="fase-ciclo">
+                Semana {PHASES[session.phase].toLowerCase()}
+              </span>
+            )}
+          </span>
+          <span className="shrink-0">
             {sessionSetCount(session)} de {totalSets} séries
           </span>
         </div>
@@ -222,6 +261,9 @@ export default function TreinoAtivoPage() {
                 >
                   {isItemDone(it) && !it.skipped && <Check size={14} aria-hidden />}
                   {i + 1}. {ex?.name ?? it.exerciseId}
+                  {it.planned.superset && i + 1 < session.items.length && (
+                    <Link2 size={14} className="text-bronze-light" aria-label="em supersérie com o próximo" />
+                  )}
                 </button>
               </li>
             );
@@ -239,6 +281,7 @@ export default function TreinoAtivoPage() {
           now={now}
           complete={complete}
           upcoming={session.items.map((it) => EXERCISE_MAP[it.exerciseId]).filter(Boolean)}
+          step={step}
           onLogSet={(r) => logSet(r)}
         />
       )}
@@ -268,14 +311,38 @@ export default function TreinoAtivoPage() {
                     {exercise.name}
                   </h1>
                 </div>
-                <button type="button" className="btn-secondary min-h-11 shrink-0 px-3 text-sm" onClick={() => setSheet(exercise.id)}>
-                  <BookOpen size={16} aria-hidden /> Ficha
-                </button>
+                <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
+                  <button type="button" className="btn-secondary min-h-11 shrink-0 px-3 text-sm" onClick={() => setSheet(exercise.id)}>
+                    <BookOpen size={16} aria-hidden /> Ficha
+                  </button>
+                  <SwapExercise
+                    exercise={exercise}
+                    equipment={data.profile.equipment}
+                    exclude={session.items.map((it) => it.exerciseId)}
+                    canSwap={setsDone === 0}
+                    onSwap={(id, inWorkout) => store.swapExercise(id, inWorkout)}
+                  />
+                </div>
               </div>
+              {item.swappedFrom && (
+                <p className="text-xs text-muted" data-testid="trocado">
+                  Trocado de {EXERCISE_MAP[item.swappedFrom]?.name ?? item.swappedFrom}.
+                </p>
+              )}
+              {partners.length > 0 && (
+                <p className="flex items-center gap-1.5 rounded-xl border border-bronze/50 bg-bronze/10 px-3 py-2 text-sm" data-testid="superserie">
+                  <Link2 size={16} className="shrink-0 text-bronze-light" aria-hidden />
+                  <span>
+                    <strong>Supersérie</strong> com {partners.map(({ it }) => EXERCISE_MAP[it.exerciseId]?.name ?? it.exerciseId).join(" e ")}. Faça uma série
+                    de cada, sem descanso entre eles; o descanso vem no fim da rodada.
+                  </span>
+                </p>
+              )}
               <ExerciseMedia exercise={exercise} variant="large" />
               <p className="text-sm text-sand">
-                Meta: {item.planned.sets} séries · {item.planned.repsMin}–{item.planned.repsMax} {iso ? "segundos" : "repetições"}
-                {item.planned.loadKg ? ` · ${item.planned.loadKg} kg` : ""} · RIR {item.planned.rir} · descanso {item.planned.restSec} s
+                Meta: {item.planned.sets} séries{item.planned.drops ? ` + ${item.planned.drops} drop${item.planned.drops > 1 ? "s" : ""}` : ""} ·{" "}
+                {item.planned.repsMin}–{item.planned.repsMax} {iso ? "segundos" : "repetições"}
+                {item.planned.loadKg ? ` · ${fmt(item.planned.loadKg)} kg` : ""} · RIR {item.planned.rir} · descanso {item.planned.restSec} s
               </p>
               {last && (
                 <div className="rounded-xl border border-line bg-iron p-3 text-sm" data-testid="ultima-vez">
@@ -299,6 +366,16 @@ export default function TreinoAtivoPage() {
               )}
             </section>
 
+            {warmPlan.length > 0 && (
+              <WarmupCard
+                plan={warmPlan}
+                workKg={workKg}
+                done={warmups}
+                onSkip={() => setSkipWarm(warmKey)}
+                onLog={(w) => store.logSet({ loadKg: w.kg, reps: w.reps, rir: 4, kind: "aquecimento" })}
+              />
+            )}
+
             <div aria-live="polite">
               {record && (
                 <div
@@ -315,8 +392,15 @@ export default function TreinoAtivoPage() {
             <section aria-labelledby="serie-atual" className="card space-y-4">
               <div>
                 <h2 id="serie-atual" className="text-lg font-semibold">
-                  Série {Math.min(setsDone + 1, item.planned.sets)} de {item.planned.sets}
+                  {pendingDrops > 0
+                    ? `Drop set ${dropCount(item.sets) + 1} de ${item.planned.drops}`
+                    : `Série ${Math.min(setsDone + 1, item.planned.sets)} de ${item.planned.sets}`}
                 </h2>
+                {pendingDrops > 0 && (
+                  <p className="text-sm text-bronze-light" data-testid="aviso-drop">
+                    Sem descanso: tire uns 20% da carga e vá até a falha.
+                  </p>
+                )}
                 <ol className="mt-1 flex gap-1.5" aria-label="Séries concluídas">
                   {Array.from({ length: item.planned.sets }, (_, i) => (
                     <li
@@ -338,10 +422,13 @@ export default function TreinoAtivoPage() {
                 )}
               </div>
 
-              <div className={clsx("flex h-[72px] items-center gap-2 rounded-xl px-3", rest ? "bg-bronze/10" : "bg-iron")} aria-live="polite">
+              <div
+                className={clsx("flex min-h-[72px] flex-wrap items-center gap-x-2 rounded-xl px-3", rest ? "bg-bronze/10" : "bg-iron", rest?.reason && "py-2")}
+                aria-live="polite"
+              >
                 {rest ? (
                   <>
-                    <span className="mr-auto">
+                    <span className="mr-auto min-w-0">
                       <span className="block text-xs text-bronze-light">Descanso</span>
                       <span className="font-display text-2xl font-bold tabular-nums">{formatClock(remaining)}</span>
                     </span>
@@ -364,10 +451,16 @@ export default function TreinoAtivoPage() {
                     <button type="button" className="btn-ghost min-h-11 px-3 text-sm" aria-label="Pular descanso" onClick={() => store.endRest()}>
                       Pular
                     </button>
+                    {rest.reason && (
+                      <span className="flex basis-full items-center gap-1 text-xs text-muted" data-testid="descanso-motivo">
+                        <Brain size={13} className="shrink-0 text-bronze-light" aria-hidden /> Descanso inteligente {rest.reason}
+                      </span>
+                    )}
                   </>
                 ) : (
                   <span className="flex items-center gap-1.5 text-sm text-muted">
-                    <Timer size={16} aria-hidden /> Faça a série e toque em concluir.
+                    <Timer size={16} aria-hidden />{" "}
+                    {step === "troca" ? "Faça a série; depois vai direto ao próximo da supersérie." : "Faça a série e toque em concluir."}
                   </span>
                 )}
               </div>
