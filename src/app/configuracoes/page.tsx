@@ -172,7 +172,7 @@ export default function ConfiguracoesPage() {
       <Card className="space-y-2">
         <h2 className="font-display text-xl font-bold">Créditos de mídia</h2>
         <p className="text-sm text-muted">
-          As animações dos exercícios são próprias do BODYBUILDER, desenhadas em código: não usam imagens nem vídeos de terceiros e funcionam sem internet.
+          Os GIFs dos exercícios vêm do ExerciseDB (exercisedb.dev) e precisam de internet. Sem internet, ou nos exercícios sem GIF, o app mostra a animação própria do BODYBUILDER, desenhada em código.
         </p>
       </Card>
     </div>

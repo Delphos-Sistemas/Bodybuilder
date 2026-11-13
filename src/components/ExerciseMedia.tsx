@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { Pause, Play, Images, Film } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { getAnim } from "@/data/media";
+import { exercisedbGif } from "@/data/exercisedb";
 import { ATLAS_BG, ATLAS_COLORS, renderAtlas } from "@/lib/anim/atlas";
 import { fitTransform, sample, type AnimSpec } from "@/lib/anim/render";
 import { MUSCLES, type Exercise } from "@/lib/types";
@@ -44,6 +45,9 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
   const spec = getAnim(exercise.id);
   const large = variant === "large";
   const moving = !!spec && spec.keys.length > 1 && !exercise.isometric;
+  const gif = exercisedbGif(exercise.id);
+  const [gifFailed, setGifFailed] = useState(false);
+  const showGif = !!gif && !gifFailed;
   const [view, setView] = useState<"anim" | "posicoes">("anim");
   const [playing, setPlaying] = useState(() => !prefersReducedMotion());
   const boxRef = useRef<HTMLDivElement>(null);
@@ -55,6 +59,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
 
   useEffect(() => {
     setView("anim");
+    setGifFailed(false);
   }, [exercise.id]);
 
   useEffect(() => {
@@ -71,7 +76,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
   // desenha o quadro; anima só quando faz sentido
   useEffect(() => {
     const g = gRef.current;
-    if (!spec || !g || view !== "anim") return;
+    if (!spec || !g || view !== "anim" || showGif) return;
     const opts = { primary: exercise.primary, secondary: exercise.secondary };
     const draw = (t: number) => {
       const ph = sample(spec, t);
@@ -91,7 +96,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [spec, exercise, view, playing, visible, moving, suffix]);
+  }, [spec, exercise, view, playing, visible, moving, suffix, showGif]);
 
   if (!spec || !fit) {
     return (
@@ -105,7 +110,19 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
 
   return (
     <div className={clsx("relative", className)}>
-      {view === "anim" ? (
+      {view === "anim" && showGif ? (
+        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-white">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={gif}
+            alt={`Demonstração: ${exercise.name}`}
+            loading="lazy"
+            decoding="async"
+            onError={() => setGifFailed(true)}
+            className="h-full w-full object-contain"
+          />
+        </div>
+      ) : view === "anim" ? (
         <div ref={boxRef} className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#E8E7E3]">
           <svg viewBox="0 0 320 240" className="h-full w-full" role="img" aria-label={`Animação: ${exercise.name}`}>
             <g dangerouslySetInnerHTML={{ __html: ATLAS_BG(suffix) }} />
@@ -129,7 +146,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
 
       {large && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          {moving && view === "anim" && (
+          {moving && view === "anim" && !showGif && (
             <button type="button" onClick={() => setPlaying((p) => !p)} aria-label={label} className="btn-secondary min-h-11 px-3 text-sm">
               {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
               {playing ? "Pausar" : "Reproduzir"}
