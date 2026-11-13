@@ -83,6 +83,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
     let alive = true;
     im.onload = () => alive && setGifReady(true);
     im.onerror = () => alive && setGifFailed(true);
+    im.referrerPolicy = "no-referrer";
     im.src = gif;
     return () => {
       alive = false;
@@ -131,6 +132,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={gif}
+            referrerPolicy="no-referrer"
             alt={`Demonstração: ${exercise.name}`}
             decoding="async"
             onError={() => setGifFailed(true)}
