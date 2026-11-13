@@ -14,7 +14,7 @@ function walk(dir) {
   });
 }
 
-const EXCLUDE = [/^\/_headers$/, /\.(webm|mp4)$/, /^\/sw\.js$/, /\.map$/, /^\/media\/exercicios\/[^/]+\/(inicio|fim)\.webp$/];
+const EXCLUDE = [/^\/_headers$/, /\.(webm|mp4)$/, /^\/sw\.js$/, /\.map$/, /^\/media\/exercicios\/[^/]+\/(inicio|fim)\.webp$/, /^\/voz\//];
 const files = walk(out)
   .map((p) => "/" + relative(out, p).split("\\").join("/"))
   .filter((p) => !EXCLUDE.some((re) => re.test(p)))

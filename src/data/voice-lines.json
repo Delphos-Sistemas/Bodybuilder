@@ -1,0 +1,57 @@
+{
+  "neutro": {
+    "preparar": ["Próximo exercício. Prepare-se.", "Novo exercício. Se posicione."],
+    "retomar": ["Fim do descanso. Retomar série.", "Retomar série. Prepare-se."],
+    "ultima": ["Última série. Prepare-se.", "Retomar. É a última série."],
+    "iniciar": ["Bora lá, iniciar série!", "Valendo! Iniciar série."],
+    "serie-feita": ["Série concluída. Descansar.", "Boa! Descansar."],
+    "exercicio-feito": ["Exercício concluído. Descansar."],
+    "faltam-10": ["Faltam dez segundos."],
+    "treino-feito": ["Treino concluído! Finalize para salvar."]
+  },
+  "zoeira": {
+    "preparar": [
+      "Próxima vítima. Se posiciona aí.",
+      "Exercício novo. Larga o celular e vai pro aparelho, campeão.",
+      "Troca de aparelho. Respira fundo, que reclamar não queima caloria.",
+      "Novo exercício. O espelho tá olhando, faz bonito."
+    ],
+    "retomar": [
+      "Acabou a moleza. Volta pro ferro.",
+      "Fim do descanso. O sofá não vai te deixar grande.",
+      "Levanta daí, que descanso não é aposentadoria.",
+      "Músculo não cresce no papo. Bora.",
+      "Chega de olhar o celular. Hora de trabalhar."
+    ],
+    "ultima": [
+      "Última série! Depois você pode chorar à vontade.",
+      "Última! Guarda o drama pro final.",
+      "Última série. Faz valer, que ninguém vai fazer por você."
+    ],
+    "iniciar": [
+      "Bora lá, iniciar série! Sem chorar.",
+      "Vai! Mostra que o shape não é só filtro.",
+      "Valendo! Cada repetição conta, até a feia.",
+      "Começa! Dor de hoje é marra de amanhã.",
+      "Vai, vai, vai! Peso não se levanta sozinho."
+    ],
+    "serie-feita": [
+      "Série concluída. Pode descansar, mas não se acostuma.",
+      "Feito. Bebe uma água e para de se achar.",
+      "Boa. Descansa aí, que já já tem mais.",
+      "Sobreviveu. Descansar.",
+      "Mandou bem. Agora descansa, princesa do supino."
+    ],
+    "exercicio-feito": [
+      "Exercício finalizado. Um a menos pra você reclamar.",
+      "Acabou esse. Descansa, que o próximo é pior.",
+      "Exercício concluído. Até que você não é tão frango."
+    ],
+    "faltam-10": ["Faltam dez segundos. Vai se ajeitando.", "Dez segundos. Já pode parar de fingir que tá cansado.", "Dez segundos. Levanta a moral."],
+    "treino-feito": [
+      "Treino concluído! Agora sim pode postar a foto.",
+      "Acabou! Hoje você mereceu o frango com batata doce.",
+      "Fim do treino. Amanhã a escada vai lembrar de você."
+    ]
+  }
+}

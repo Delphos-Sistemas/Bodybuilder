@@ -4,16 +4,22 @@ import clsx from "clsx";
 import { Pause, Play, SkipForward, SlidersHorizontal, Square, TimerReset, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Stepper } from "@/components/ui";
-import { playAlert, speak, speechAvailable, unlockAudio, unlockSpeech, type AlertKind } from "@/lib/audio";
+import { playAlert, unlockAudio, type AlertKind } from "@/lib/audio";
 import { VoiceSettings } from "@/components/VoiceSettings";
-import { voiceLine, type VoiceEvent } from "@/lib/voiceLines";
+import { coachSay, prepareCoach } from "@/lib/coachVoice";
+import type { VoiceEvent } from "@/lib/voiceLines";
 import { guidedTimes, workingSets } from "@/lib/session";
 import { useStore } from "@/lib/store";
 import { formatClock } from "@/lib/time";
 import type { Exercise, RestState, SessionItem } from "@/lib/types";
 
 type Running = "preparar" | "exercicio";
-type Phase = { kind: Running; endsAt: number; total: number } | { kind: "pausado"; was: Running; leftMs: number; total: number } | { kind: "descanso" } | null;
+type Phase =
+  | { kind: Running; endsAt: number; total: number }
+  | { kind: "pausado"; was: Running; leftMs: number; total: number }
+  | { kind: "descanso"; from: number }
+  | { kind: "aguardando" }
+  | null;
 
 const LABEL: Record<Running | "descanso", string> = {
   preparar: "Prepare-se",
@@ -27,6 +33,7 @@ const LABEL: Record<Running | "descanso", string> = {
  */
 export function GuidedTimer({
   item,
+  index,
   exercise,
   rest,
   restLeft,
@@ -35,6 +42,8 @@ export function GuidedTimer({
   onLogSet
 }: {
   item: SessionItem;
+  /** posição do exercício atual na sessão */
+  index: number;
   exercise: Exercise;
   rest: RestState | null;
   restLeft: number;
@@ -47,6 +56,8 @@ export function GuidedTimer({
   const [phase, setPhase] = useState<Phase>(null);
   const [tune, setTune] = useState(false);
   const beeped = useRef<string>("");
+  const lastIndex = useRef(index);
+  const autoNext = settings.guidedAutoNext !== false;
   const times = guidedTimes(item.planned, exercise.isometric);
   const setsDone = workingSets(item.sets).length;
 
@@ -58,11 +69,7 @@ export function GuidedTimer({
     });
 
   const voiceOn = settings.voiceCues !== false;
-  const say = (event: VoiceEvent, serie = Math.min(setsDone + 1, item.planned.sets)) => {
-    if (!voiceOn) return;
-    const text = voiceLine(settings.voiceStyle ?? "neutro", event, { exercicio: exercise.name, serie, total: item.planned.sets });
-    speak(text, { gender: settings.voiceGender, voiceName: settings.voiceName });
-  };
+  const say = (event: VoiceEvent) => coachSay(settings, event);
 
   const startPrep = (at: number, afterRest: boolean) => {
     if (times.prepSec <= 0) {
@@ -70,7 +77,7 @@ export function GuidedTimer({
       say("iniciar");
       setPhase({ kind: "exercicio", endsAt: at + times.workSec * 1000, total: times.workSec });
     } else {
-      say(afterRest && setsDone > 0 ? "retomar" : "preparar");
+      say(afterRest && setsDone > 0 ? (setsDone + 1 >= item.planned.sets ? "ultima" : "retomar") : "preparar");
       setPhase({ kind: "preparar", endsAt: at + times.prepSec * 1000, total: times.prepSec });
     }
   };
@@ -83,8 +90,9 @@ export function GuidedTimer({
 
   const start = async () => {
     // o toque do usuário libera o áudio (Safari exige)
-    unlockSpeech();
+    prepareCoach(settings);
     const ok = await unlockAudio();
+    prepareCoach(settings);
     if (ok && !settings.audioEnabled) store.updateSettings({ audioEnabled: true });
     beeped.current = "";
     setTune(false);
@@ -95,7 +103,7 @@ export function GuidedTimer({
     alert("fim-serie");
     const lastOfExercise = setsDone + 1 >= item.planned.sets;
     say(lastOfExercise ? "exercicio-feito" : "serie-feita");
-    setPhase({ kind: "descanso" });
+    setPhase({ kind: "descanso", from: index });
     onLogSet(exercise.isometric ? times.workSec : undefined);
   };
 
@@ -109,12 +117,17 @@ export function GuidedTimer({
     }
     // descanso iniciado pelo botão "Concluir série" durante a preparação/execução
     if (rest && (phase.kind === "preparar" || phase.kind === "exercicio")) {
-      setPhase({ kind: "descanso" });
+      setPhase({ kind: "descanso", from: lastIndex.current });
       return;
     }
+    if (phase.kind === "preparar" || phase.kind === "exercicio") lastIndex.current = index;
+    if (phase.kind === "aguardando") return;
     if (phase.kind === "descanso") {
-      if (!rest) startPrep(now, true);
-      else if (restLeft === 10 && rest.endsAt - rest.startedAt >= 25_000 && beeped.current !== `v${rest.endsAt}`) {
+      if (!rest) {
+        // trocou de exercício: no modo manual espera o usuário escolher e confirmar
+        if (phase.from !== index && !autoNext) setPhase({ kind: "aguardando" });
+        else startPrep(now, phase.from === index);
+      } else if (restLeft === 10 && rest.endsAt - rest.startedAt >= 25_000 && beeped.current !== `v${rest.endsAt}`) {
         beeped.current = `v${rest.endsAt}`;
         say("faltam-10");
       } else if (restLeft > 0 && restLeft <= 3 && beeped.current !== `d${rest.endsAt}:${restLeft}`) {
@@ -136,9 +149,54 @@ export function GuidedTimer({
       alert("tique");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [now, phase, rest, complete]);
+  }, [now, phase, rest, complete, index]);
 
   if (complete) return null;
+
+  const nextMode = (
+    <div>
+      <p className="label">Ao terminar um exercício</p>
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Ao terminar um exercício">
+        {(
+          [
+            [true, "Seguir automático"],
+            [false, "Esperar eu escolher"]
+          ] as const
+        ).map(([v, text]) => (
+          <button
+            key={text}
+            type="button"
+            role="radio"
+            aria-checked={autoNext === v}
+            className={clsx("chip", autoNext === v && "chip-on")}
+            onClick={() => store.updateSettings({ guidedAutoNext: v })}
+          >
+            {text}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (phase?.kind === "aguardando") {
+    return (
+      <section className="card space-y-3 border-2 border-sand text-center" aria-label="Timer guiado" data-testid="timer-guiado" data-fase="aguardando">
+        <p className="font-display text-xl font-bold uppercase tracking-wide" data-testid="timer-fase">
+          Exercício concluído
+        </p>
+        <p className="text-sand">
+          Próximo: <strong>{exercise.name}</strong>
+        </p>
+        <button type="button" className="btn-primary w-full" onClick={() => startPrep(Date.now(), false)}>
+          <Play size={18} aria-hidden /> Começar {exercise.name}
+        </button>
+        <p className="text-xs text-muted">Quer outro? Toque no exercício na lista acima e depois em Começar.</p>
+        <button type="button" className="btn-ghost min-h-11 w-full" onClick={() => setPhase(null)}>
+          <Square size={14} aria-hidden /> Parar timer
+        </button>
+      </section>
+    );
+  }
 
   const showKind = phase?.kind === "pausado" ? phase.was : phase?.kind;
   const left = !phase
@@ -166,26 +224,21 @@ export function GuidedTimer({
       />
       <Stepper id="g-prep" label="Preparo" suffix="s" step={5} min={0} max={300} value={times.prepSec} onChange={(v) => store.setItemTimes({ prepSec: v })} />
       <p className="text-xs text-muted sm:col-span-3">Vale para este exercício neste treino. Para salvar de vez, ajuste em Treinos → editar.</p>
+      <div className="text-left sm:col-span-3">{nextMode}</div>
       <div className="text-left sm:col-span-3">
         <VoiceSettings />
       </div>
     </div>
   );
 
-  const voiceToggle = speechAvailable() && (
+  const voiceToggle = (
     <button
       type="button"
       className="btn-ghost min-h-11 px-3"
       aria-pressed={voiceOn}
       aria-label={voiceOn ? "Desligar voz" : "Ligar voz"}
       title={voiceOn ? "Voz ligada" : "Voz desligada"}
-      onClick={() => {
-        if (!voiceOn) {
-          unlockSpeech();
-          speak("Voz ligada.", { gender: settings.voiceGender, voiceName: settings.voiceName });
-        }
-        store.updateSettings({ voiceCues: !voiceOn });
-      }}
+      onClick={() => store.updateSettings({ voiceCues: !voiceOn })}
     >
       {voiceOn ? <Volume2 size={18} aria-hidden /> : <VolumeX size={18} aria-hidden />}
     </button>
@@ -200,7 +253,7 @@ export function GuidedTimer({
               <TimerReset size={18} aria-hidden /> Timer guiado
             </h2>
             <p className="text-sm text-muted">
-              Execução {times.workSec}s · Descanso {times.restSec}s · Preparo {times.prepSec}s
+              Execução {times.workSec}s · Descanso {times.restSec}s · Preparo {times.prepSec}s · {autoNext ? "segue sozinho" : "você escolhe o próximo"}
             </p>
           </div>
           <div className="flex shrink-0">

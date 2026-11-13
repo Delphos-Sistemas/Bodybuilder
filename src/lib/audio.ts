@@ -57,6 +57,8 @@ export async function unlockAudio(): Promise<boolean> {
     if (typeof window === "undefined") return false;
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return false;
+    // não pausar o Spotify/música de outros apps no iPhone
+    setMixMode(duckOthers);
     ctx = ctx ?? new AC();
     // alguns navegadores (WebKit sem saída de áudio) nunca resolvem o resume(): não travar a tela
     if (ctx.state === "suspended") await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 1500))]);
@@ -104,23 +106,70 @@ export function playAlert(kind: AlertKind, opts: { sound: boolean; vibrate: bool
   return played;
 }
 
-/** Voz falada (Web Speech API), com voz em português quando o aparelho tiver. Sem suporte, não faz nada. */
-export type VoiceGender = "feminina" | "masculina";
-export type VoicePrefs = { gender?: VoiceGender; voiceName?: string; volume?: number };
+/**
+ * Mistura com a música de outros apps (Spotify) em vez de pausá-la.
+ * Safari 16.4+: "ambient" toca junto; "transient" abaixa a música enquanto fala. Outros navegadores ignoram.
+ */
+let duckOthers = false;
 
-// nomes de vozes conhecidas (iOS, macOS, Android, Windows, Chrome)
-const MALE =
-  /felipe|daniel|antonio|ant[oô]nio|duarte|jo[aã]o|ricardo|paulo|fabio|f[aá]bio|humberto|julio|j[uú]lio|donato|nicolau|valerio|male|mascul|\bm[1-9]\b|ptd/i;
-const FEMALE =
-  /luciana|fernanda|joana|catarina|maria|francisca|thalita|helo[ií]sa|leila|leticia|let[ií]cia|manuela|yara|brenda|elza|giovanna|raquel|vit[oó]ria|camila|female|femin|google|\bf[1-9]\b/i;
-
-export function voiceGender(v: Pick<SpeechSynthesisVoice, "name" | "voiceURI">): VoiceGender | null {
-  const id = `${v.name} ${v.voiceURI}`;
-  if (MALE.test(id)) return "masculina";
-  if (FEMALE.test(id)) return "feminina";
-  return null;
+export function setMixMode(duck: boolean): void {
+  duckOthers = duck;
+  const nav = typeof navigator !== "undefined" ? (navigator as Navigator & { audioSession?: { type: string } }) : undefined;
+  try {
+    if (nav?.audioSession) nav.audioSession.type = duck ? "transient" : "ambient";
+  } catch {
+    /* sem Audio Session API */
+  }
 }
 
+/** Falas gravadas (MP3 curtos), tocadas pelo mesmo AudioContext dos bipes. */
+const clips = new Map<string, Promise<AudioBuffer | null>>();
+
+function loadClip(url: string): Promise<AudioBuffer | null> {
+  const c = ctx;
+  if (!c) return Promise.resolve(null);
+  let p = clips.get(url);
+  if (!p) {
+    p = fetch(url)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      // forma com callbacks: Safari antigo não devolve Promise
+      .then((buf) => new Promise<AudioBuffer>((res, rej) => void c.decodeAudioData(buf, res, rej)))
+      .catch(() => {
+        clips.delete(url);
+        return null;
+      });
+    clips.set(url, p);
+  }
+  return p;
+}
+
+export function preloadClips(urls: string[]): void {
+  for (const u of urls) void loadClip(u);
+}
+
+let currentClip: AudioBufferSourceNode | null = null;
+
+/** Toca uma fala gravada. Devolve false se não deu (sem áudio liberado ou arquivo indisponível). */
+export async function playClip(url: string, volume = 1): Promise<boolean> {
+  const buf = await loadClip(url);
+  if (!buf || !ctx) return false;
+  try {
+    if (ctx.state === "suspended") void ctx.resume();
+    currentClip?.stop();
+    const src = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    gain.gain.value = Math.max(0, Math.min(1.5, volume * 1.3));
+    src.buffer = buf;
+    src.connect(gain).connect(ctx.destination);
+    src.start(ctx.currentTime + 0.05);
+    currentClip = src;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Voz do aparelho (Web Speech API): reserva para quando a fala gravada não estiver disponível. */
 export function speechAvailable(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
 }
@@ -131,20 +180,6 @@ export function portugueseVoices(): SpeechSynthesisVoice[] {
   const all = window.speechSynthesis.getVoices().filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith("pt"));
   const br = (v: SpeechSynthesisVoice) => (v.lang.replace("_", "-").toLowerCase() === "pt-br" ? 0 : 1);
   return all.sort((a, b) => br(a) - br(b));
-}
-
-/** Escolhe a voz: a nomeada pelo usuário, senão a primeira do gênero pedido, senão a primeira em português. */
-export function chooseVoice(prefs: VoicePrefs): { voice: SpeechSynthesisVoice | null; simulated: boolean } {
-  const list = portugueseVoices();
-  const named = prefs.voiceName ? list.find((v) => v.name === prefs.voiceName) : undefined;
-  if (named) return { voice: named, simulated: false };
-  if (prefs.gender) {
-    const g = list.find((v) => voiceGender(v) === prefs.gender);
-    if (g) return { voice: g, simulated: false };
-    // sem voz do gênero pedido: usa a disponível e ajusta o tom
-    return { voice: list[0] ?? null, simulated: true };
-  }
-  return { voice: list[0] ?? null, simulated: false };
 }
 
 /** Chamar dentro de um toque do usuário: o iPhone só libera a fala depois de uma fala iniciada por toque. */
@@ -160,22 +195,20 @@ export function unlockSpeech(): void {
   }
 }
 
-export function speak(text: string, prefs: VoicePrefs = {}): boolean {
+export function speak(text: string, voiceName?: string): boolean {
   if (!speechAvailable()) return false;
   try {
     const synth = window.speechSynthesis;
     synth.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "pt-BR";
-    const { voice, simulated } = chooseVoice(prefs);
-    if (voice) {
-      u.voice = voice;
-      u.lang = voice.lang;
+    const list = portugueseVoices();
+    const v = list.find((x) => x.name === voiceName) ?? list[0];
+    if (v) {
+      u.voice = v;
+      u.lang = v.lang;
     }
     u.rate = 1.05;
-    // voz única no aparelho: simula o gênero pelo tom
-    u.pitch = simulated ? (prefs.gender === "masculina" ? 0.7 : 1.35) : 1;
-    u.volume = Math.max(0, Math.min(1, prefs.volume ?? 1));
     synth.speak(u);
     return true;
   } catch {

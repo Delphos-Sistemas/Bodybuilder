@@ -228,7 +228,16 @@ export default function TreinoAtivoPage() {
       </nav>
 
       {exercise && item && (
-        <GuidedTimer item={item} exercise={exercise} rest={rest} restLeft={remaining} now={now} complete={complete} onLogSet={(r) => logSet(r)} />
+        <GuidedTimer
+          item={item}
+          index={session.currentIndex}
+          exercise={exercise}
+          rest={rest}
+          restLeft={remaining}
+          now={now}
+          complete={complete}
+          onLogSet={(r) => logSet(r)}
+        />
       )}
 
       {complete ? (

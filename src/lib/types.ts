@@ -225,13 +225,17 @@ export type Settings = {
   lastSyncAt?: number;
   /** timer guiado de séries (exercício → descanso → preparação) */
   guidedTimer?: boolean;
+  /** timer guiado: ao terminar um exercício, segue sozinho para o próximo (padrão) ou espera o usuário */
+  guidedAutoNext?: boolean;
   /** voz falada no timer guiado ("Bora lá, iniciar série"). Padrão: ligada */
   voiceCues?: boolean;
   /** estilo das falas: neutro ou zoeira ácida */
   voiceStyle?: "neutro" | "zoeira";
-  /** gênero preferido da voz */
-  voiceGender?: "feminina" | "masculina";
-  /** nome da voz escolhida (do aparelho) */
+  /** voz gravada (dora, alex, santa) ou "aparelho" (síntese do navegador). Padrão: dora */
+  voicePack?: "dora" | "alex" | "santa" | "aparelho";
+  /** abaixar a música de outros apps (Spotify) enquanto a voz fala. Padrão: não, só mistura */
+  duckMusic?: boolean;
+  /** nome da voz do aparelho escolhida */
   voiceName?: string;
 };
 

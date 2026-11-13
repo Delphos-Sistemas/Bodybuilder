@@ -15,6 +15,8 @@ test("timer guiado: preparo → execução → descanso → volta, registrando a
       }
     });
   });
+  const vozes: string[] = [];
+  page.on("request", (r) => r.url().includes("/voz/") && vozes.push(r.url()));
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.goto("/treinos");
@@ -44,8 +46,44 @@ test("timer guiado: preparo → execução → descanso → volta, registrando a
   await page.getByRole("button", { name: "Terminei" }).click();
   await expect(page.getByRole("heading", { name: "Todas as séries concluídas" })).toBeVisible();
 
+  // a voz gravada é baixada (o navegador de teste pode não liberar o áudio; aí cai na voz do aparelho)
+  expect(vozes.some((u) => u.includes("/voz/dora/neutro/iniciar-"))).toBe(true);
   const falas = await page.evaluate(() => (window as unknown as { __falas: string[] }).__falas);
-  expect(falas).toContain("Bora lá, iniciar série!");
-  expect(falas.some((f) => f.startsWith("Retomar série"))).toBe(true);
-  expect(falas).toContain("Treino concluído! Finalize para salvar.");
+  if (falas.length) expect(falas).toContain("Treino concluído! Finalize para salvar.");
+});
+
+test("timer guiado no modo manual espera escolher o próximo exercício", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  await page.goto("/treinos");
+  await page.getByRole("link", { name: "Criar do zero" }).click();
+  await page.getByLabel("Nome do treino").fill("Manual");
+  for (const nome of ["Supino reto com barra", "Agachamento livre com barra"]) {
+    await page.getByRole("button", { name: "Adicionar exercício" }).click();
+    await page.getByLabel("Buscar exercício").fill(nome);
+    await page.getByRole("button", { name: `Adicionar ${nome}` }).click();
+    await page.getByRole("button", { name: "Concluir" }).click();
+  }
+  for (const item of await page.getByTestId("item-exercicio").all()) {
+    await item.getByLabel("Séries", { exact: true }).fill("1");
+    await item.getByLabel("Descanso (s)").fill("2");
+    await item.getByLabel("Execução (timer) (s)").fill("5");
+    await item.getByLabel("Preparo (timer) (s)").fill("1");
+  }
+  await page.getByRole("button", { name: "Salvar treino" }).click();
+  await page.getByRole("listitem").filter({ hasText: "Manual" }).getByRole("button", { name: "Iniciar treino" }).click();
+
+  const timer = page.getByTestId("timer-guiado");
+  await timer.getByRole("button", { name: "Ajustar tempos" }).click();
+  await timer.getByRole("radio", { name: "Esperar eu escolher" }).click();
+  await timer.getByRole("button", { name: "Iniciar timer guiado" }).click();
+  await expect(page.getByTestId("timer-fase")).toHaveText("Execute", { timeout: 4000 });
+  await page.getByRole("button", { name: "Terminei" }).click();
+  await expect(page.getByTestId("timer-fase")).toHaveText("Exercício concluído", { timeout: 6000 });
+  await page.waitForTimeout(1500);
+  await expect(page.getByTestId("timer-fase")).toHaveText("Exercício concluído");
+  await page.getByRole("button", { name: "Começar Agachamento livre com barra" }).click();
+  await expect(page.getByTestId("timer-fase")).toHaveText("Execute", { timeout: 4000 });
+  await page.getByRole("button", { name: "Terminei" }).click();
+  await expect(page.getByRole("heading", { name: "Todas as séries concluídas" })).toBeVisible();
 });

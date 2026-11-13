@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PREP_SEC, DEFAULT_WORK_SEC, guidedTimes, setItemTimes } from "@/lib/session";
-import { voiceLine } from "@/lib/voiceLines";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { voiceLine, voiceUrls } from "@/lib/voiceLines";
 import type { Session } from "@/lib/types";
 
 const planned = { sets: 3, repsMin: 8, repsMax: 12, loadKg: 40, rir: 2, restSec: 90 };
@@ -25,11 +27,17 @@ describe("timer guiado", () => {
     expect(n.items[0].planned.workSec).toBeUndefined();
   });
 
-  it("não repete a mesma fala seguida", () => {
-    const ctx = { exercicio: "Supino", serie: 2, total: 4 };
-    const a = voiceLine("zoeira", "iniciar", ctx, () => 0);
-    const b = voiceLine("zoeira", "iniciar", ctx, () => 0);
-    expect(a).not.toBe(b);
-    expect(voiceLine("neutro", "retomar", ctx)).toContain("série 2 de 4");
+  it("não repete a mesma fala seguida e aponta para a gravação", () => {
+    const a = voiceLine("zoeira", "iniciar", "alex", () => 0);
+    const b = voiceLine("zoeira", "iniciar", "alex", () => 0);
+    expect(a.text).not.toBe(b.text);
+    expect(b.url).toBe("/voz/alex/zoeira/iniciar-1.mp3");
+  });
+
+  it("toda fala tem o MP3 gravado para cada voz", () => {
+    const urls = (["dora", "alex", "santa"] as const).flatMap((p) => (["neutro", "zoeira"] as const).flatMap((s) => voiceUrls(s, p)));
+    expect(urls.length).toBeGreaterThan(100);
+    const missing = urls.filter((u) => !existsSync(join(process.cwd(), "public", u)));
+    expect(missing).toEqual([]);
   });
 });
