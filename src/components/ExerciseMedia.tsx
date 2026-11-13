@@ -48,6 +48,12 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
   const gif = exercisedbGif(exercise.id);
   const [gifFailed, setGifFailed] = useState(false);
   const showGif = !!gif && !gifFailed;
+  const imgRef = useRef<HTMLImageElement>(null);
+  // o erro pode acontecer antes do React ligar o onError (página pré-renderizada): confere ao montar
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth === 0) setGifFailed(true);
+  }, [gif]);
   const [view, setView] = useState<"anim" | "posicoes">("anim");
   const [playing, setPlaying] = useState(() => !prefersReducedMotion());
   const boxRef = useRef<HTMLDivElement>(null);
@@ -114,6 +120,7 @@ export function ExerciseMedia({ exercise, variant = "card", className }: Props) 
         <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            ref={imgRef}
             src={gif}
             alt={`Demonstração: ${exercise.name}`}
             loading="lazy"
