@@ -16,16 +16,27 @@ const K = {
   skinHi: "#E6E6E3",
   skin: "#BDBDB9",
   skinLo: "#8F8F8B",
-  far: "#9E9E9A",
-  farLo: "#76766F",
-  line: "#6E6E69",
+  skinRef: "#A3A39F",
+  far: "#A3A39F",
+  farLo: "#7C7C76",
+  line: "#5E5E59",
+  farLine: "#7A7A74",
+  hair: "#7E7E79",
   redHi: "#F0604A",
   red: "#C9301F",
   redLo: "#8E1A10",
   secHi: "#F6A08E",
   sec: "#E06A55",
-  floor: "#C9C8C3"
+  floor: "#C9C8C3",
+  steel: "#585C62",
+  steelHi: "#8E939A",
+  steelLo: "#33363B",
+  pad: "#41454B",
+  padEdge: "#2A2D31"
 };
+
+/** luz fixa vindo de cima e da esquerda da tela: o lado iluminado de cada parte fica mais claro */
+const LIGHT: Pt = [-0.45, -0.89];
 
 /** barriga de um músculo num lado do segmento: lado +1 = frente/direita da direção, -1 = trás */
 type Belly = { side: 1 | -1; t0: number; t1: number; amp: number; m?: Muscle };
@@ -113,26 +124,65 @@ function grad(a: Pt, b: Pt, side: 1 | -1, stops: [string, string, string]): { de
   };
 }
 
+/** degradê de luz atravessando a parte: claro no lado virado para a luz, escuro do outro, com um leve reflexo na borda */
+function lit(a: Pt, b: Pt, span: number, stops: [string, string, string, string]): { def: string; url: string } {
+  const id = `ag${gpre}_${gid++}`;
+  const d = ang(a, b);
+  const c: Pt = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const n = (d - 90) * (Math.PI / 180);
+  const s = Math.cos(n) * LIGHT[0] + Math.sin(n) * LIGHT[1] >= 0 ? 1 : -1;
+  const p1 = step(c, d - 90 * s, span);
+  const p2 = step(c, d + 90 * s, span);
+  return {
+    def: `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${f(p1[0])}" y1="${f(p1[1])}" x2="${f(p2[0])}" y2="${f(p2[1])}"><stop offset=".12" stop-color="${stops[0]}"/><stop offset=".48" stop-color="${stops[1]}"/><stop offset=".86" stop-color="${stops[2]}"/><stop offset="1" stop-color="${stops[3]}"/></linearGradient>`,
+    url: `url(#${id})`
+  };
+}
+
+/** lado (1/-1) do segmento que está virado para a luz */
+function litSide(a: Pt, b: Pt): 1 | -1 {
+  const n = (ang(a, b) + 90) * (Math.PI / 180);
+  return Math.cos(n) * LIGHT[0] + Math.sin(n) * LIGHT[1] >= 0 ? 1 : -1;
+}
+
 type Ctx = { defs: string[]; worked: Muscle[]; primary: Muscle };
 
 /** desenha um segmento: corpo cinza sombreado, linhas de definição e músculos trabalhados */
-function drawSeg(seg: Seg, ctx: Ctx, far: boolean): string {
-  const g = grad(seg.a, seg.b, 1, far ? [K.far, K.far, K.farLo] : [K.skinHi, K.skin, K.skinLo]);
+function drawSeg(seg: Seg, ctx: Ctx, far: boolean, shadow = false): string {
+  const span = Math.max(seg.r1, seg.r2) + 3.5;
+  const g = lit(seg.a, seg.b, span, far ? [K.far, K.far, K.farLo, K.farLo] : [K.skinHi, K.skin, K.skinLo, K.skinRef]);
   ctx.defs.push(g.def);
-  let s = `<path d="${smooth(profile(seg))}" fill="${g.url}" stroke="${K.line}" stroke-width=".7"/>`;
+  const outline = smooth(profile(seg));
+  // sombra suave que a parte da frente joga no que está atrás
+  let s = shadow ? `<path d="${outline}" transform="translate(1.4 1.9)" fill="#2B2B28" opacity=".16"/>` : "";
+  s += `<path d="${outline}" fill="${g.url}" stroke="${far ? K.farLine : K.line}" stroke-width="${far ? 0.6 : 0.85}" stroke-linejoin="round"/>`;
   for (const bl of seg.bellies) {
     if (!bl.m) continue;
     const region = smooth(muscleRegion(seg, bl));
     if (ctx.worked.includes(bl.m)) {
       const main = bl.m === ctx.primary;
-      const rg = grad(seg.a, seg.b, bl.side, main ? [K.redLo, K.red, K.redHi] : [K.sec, K.sec, K.secHi]);
+      const rg = lit(seg.a, seg.b, span, main ? [K.redHi, "#E2492F", K.red, "#D9452D"] : [K.secHi, K.sec, K.sec, K.sec]);
       ctx.defs.push(rg.def);
-      s += `<path d="${region}" fill="${rg.url}" opacity="${far ? 0.7 : main ? 1 : 0.85}"/>`;
+      s += `<path d="${region}" fill="${rg.url}" opacity="${far ? 0.7 : main ? 1 : 0.88}" stroke="${main ? K.redLo : K.sec}" stroke-width=".5" stroke-opacity=".7"/>`;
       if (!far) s += fibers(seg, bl, main);
-    }
-    if (!far) s += `<path d="${region}" fill="none" stroke="${K.line}" stroke-width=".45" opacity=".55"/>`;
+    } else if (!far) s += `<path d="${region}" fill="none" stroke="${K.line}" stroke-width=".45" opacity=".5"/>`;
   }
+  if (!far && dist(seg.a, seg.b) > 9) s += sheen(seg);
   return s;
+}
+
+/** brilho fino ao longo do lado iluminado, dá volume de cilindro */
+function sheen(seg: Seg): string {
+  const d = ang(seg.a, seg.b);
+  const L = dist(seg.a, seg.b);
+  const sd = litSide(seg.a, seg.b);
+  const pts: Pt[] = [];
+  for (let i = 0; i <= 6; i++) {
+    const t = 0.14 + (0.66 * i) / 6;
+    const r = (seg.r1 + (seg.r2 - seg.r1) * t) * 0.58;
+    pts.push(step(step(seg.a, d, L * t), d + 90 * sd, r));
+  }
+  return `<path d="M${pts.map((p) => `${f(p[0])} ${f(p[1])}`).join("L")}" fill="none" stroke="#fff" stroke-width="1.3" opacity=".22" stroke-linecap="round"/>`;
 }
 
 /** fibras do músculo trabalhado (linhas ao longo do músculo) e um brilho na borda */
@@ -157,7 +207,7 @@ function fibers(seg: Seg, bl: Belly, main: boolean): string {
   const t1 = bl.t1 - span * 0.14;
   let out = "";
   for (const fr of [0.3, 0.55, 0.78])
-    out += `<path d="${line(fr, t0, t1)}" fill="none" stroke="${K.redLo}" stroke-width=".38" opacity="${main ? 0.55 : 0.35}" stroke-linecap="round"/>`;
+    out += `<path d="${line(fr, t0, t1)}" fill="none" stroke="${K.redLo}" stroke-width=".34" opacity="${main ? 0.4 : 0.28}" stroke-linecap="round"/>`;
   out += `<path d="${line(0.92, bl.t0 + span * 0.22, bl.t1 - span * 0.25)}" fill="none" stroke="#fff" stroke-width=".7" opacity=".35" stroke-linecap="round"/>`;
   return out;
 }
@@ -203,9 +253,33 @@ function headShape(j: Joints, ctx: Ctx, front: boolean): string {
           .map(([x, y]) => [-x, y] as [number, number])
       ]
     : side;
-  const hg = grad(P(-1, 0), P(1, 0), 1, front ? [K.skinLo, K.skin, K.skinHi] : [K.skinLo, K.skin, K.skinHi]);
+  const hg = lit(P(0, -1), P(0, 1), r + 3, [K.skinHi, K.skin, K.skinLo, K.skinRef]);
   ctx.defs.push(hg.def);
-  let s = `<path d="${smooth(pts.map(([x, y]) => P(x, y)))}" fill="${hg.url}" stroke="${K.line}" stroke-width=".7"/>`;
+  let s = `<path d="${smooth(pts.map(([x, y]) => P(x, y)))}" fill="${hg.url}" stroke="${K.line}" stroke-width=".85"/>`;
+  // cabelo curto
+  const hair: [number, number][] = front
+    ? [
+        [-0.9, 0.42],
+        [-0.62, 0.9],
+        [0, 1.05],
+        [0.62, 0.9],
+        [0.9, 0.42],
+        [0.55, 0.66],
+        [0, 0.72],
+        [-0.55, 0.66]
+      ]
+    : [
+        [-0.93, 0.05],
+        [-0.85, 0.62],
+        [-0.42, 0.98],
+        [0.2, 1.02],
+        [0.64, 0.77],
+        [0.42, 0.66],
+        [0.02, 0.62],
+        [-0.36, 0.4],
+        [-0.62, 0.02]
+      ];
+  s += `<path d="${smooth(hair.map(([x, y]) => P(x, y)))}" fill="${K.hair}" opacity=".55"/>`;
   if (front) {
     for (const sg of [-1, 1]) {
       const e = P(0.38 * sg, 0.12);
@@ -217,6 +291,10 @@ function headShape(j: Joints, ctx: Ctx, front: boolean): string {
     const e1 = P(0.62, 0.12);
     const e2 = P(0.8, 0.1);
     s += `<line x1="${f(e1[0])}" y1="${f(e1[1])}" x2="${f(e2[0])}" y2="${f(e2[1])}" stroke="${K.line}" stroke-width=".8" stroke-linecap="round" opacity=".7"/>`;
+    // linha do maxilar
+    const m1 = P(-0.05, -0.42);
+    const m2 = P(0.5, -0.82);
+    s += `<path d="M${f(m1[0])} ${f(m1[1])}Q${f(P(0.1, -0.78)[0])} ${f(P(0.1, -0.78)[1])} ${f(m2[0])} ${f(m2[1])}" fill="none" stroke="${K.line}" stroke-width=".45" opacity=".45"/>`;
   }
   return s;
 }
@@ -257,11 +335,11 @@ function sideSegs(j: Joints, side: "N" | "F") {
     upper: {
       a: sh,
       b: e,
-      r1: 5.4,
-      r2: 3.9,
+      r1: 5.8,
+      r2: 4.0,
       bellies: [
-        { side: -1, t0: 0.15, t1: 0.9, amp: 2.2, m: "biceps" },
-        { side: 1, t0: 0.08, t1: 0.85, amp: 2.4, m: "triceps" },
+        { side: -1, t0: 0.15, t1: 0.9, amp: 2.7, m: "biceps" },
+        { side: 1, t0: 0.08, t1: 0.85, amp: 2.8, m: "triceps" },
         { side: -1, t0: -0.12, t1: 0.32, amp: 2.6, m: "ombros" },
         { side: 1, t0: -0.12, t1: 0.3, amp: 2.4, m: "ombros" }
       ]
@@ -269,20 +347,20 @@ function sideSegs(j: Joints, side: "N" | "F") {
     fore: {
       a: e,
       b: w,
-      r1: 4.4,
-      r2: 2.6,
+      r1: 4.7,
+      r2: 2.7,
       bellies: [
-        { side: 1, t0: 0.0, t1: 0.6, amp: 1.6, m: "antebraco" },
+        { side: 1, t0: 0.0, t1: 0.6, amp: 1.9, m: "antebraco" },
         { side: -1, t0: 0.0, t1: 0.55, amp: 1.0, m: "antebraco" }
       ]
     } as Seg,
     thigh: {
       a: j.hip,
       b: k,
-      r1: 8.4,
-      r2: 5.2,
+      r1: 8.8,
+      r2: 5.3,
       bellies: [
-        { side: -1, t0: 0.1, t1: 0.95, amp: 2.8, m: "quadriceps" },
+        { side: -1, t0: 0.1, t1: 0.95, amp: 3.2, m: "quadriceps" },
         { side: 1, t0: 0.2, t1: 0.92, amp: 2.0, m: "posteriores" },
         { side: 1, t0: -0.18, t1: 0.3, amp: 3.6, m: "gluteos" }
       ]
@@ -293,7 +371,7 @@ function sideSegs(j: Joints, side: "N" | "F") {
       r1: 4.8,
       r2: 2.8,
       bellies: [
-        { side: 1, t0: 0.06, t1: 0.6, amp: 2.8, m: "panturrilhas" },
+        { side: 1, t0: 0.06, t1: 0.6, amp: 3.2, m: "panturrilhas" },
         { side: -1, t0: 0.05, t1: 0.7, amp: 0.6 }
       ]
     } as Seg,
@@ -301,20 +379,74 @@ function sideSegs(j: Joints, side: "N" | "F") {
   };
 }
 
+/** detalhes do tronco de lado: gomos do abdômen, serrátil e linha do peitoral */
+function torsoDetails(j: Joints, ctx: Ctx): string {
+  const d = ang(j.hip, j.shoulder);
+  const L = dist(j.hip, j.shoulder);
+  const at = (t: number, off: number): Pt => step(step(j.hip, d, L * t), d + 90, off);
+  const ln = (a: Pt, b: Pt, col: string, o: number) =>
+    `<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="${col}" stroke-width=".5" opacity="${o}" stroke-linecap="round"/>`;
+  const absCol = ctx.worked.includes("abdomen") ? K.redLo : K.line;
+  let s = "";
+  for (const t of [0.2, 0.32, 0.44]) s += ln(at(t, 6.2), at(t + 0.015, 10.2), absCol, 0.55);
+  const serCol = ctx.worked.includes("costas") ? K.redLo : K.line;
+  for (const t of [0.5, 0.58, 0.66]) s += ln(at(t, 2), at(t + 0.06, 6.5), serCol, 0.4);
+  return s;
+}
+
+/** rótula do joelho e ponta do cotovelo (lado de cá) */
+function jointMarks(j: Joints, hideLegs: boolean): string {
+  let s = "";
+  if (!hideLegs) {
+    const dth = ang(j.hip, j.kneeN);
+    const pc = step(j.kneeN, dth - 90, 3.4);
+    s += `<ellipse cx="${f(pc[0])}" cy="${f(pc[1])}" rx="2.4" ry="3.1" transform="rotate(${f(dth)} ${f(pc[0])} ${f(pc[1])})" fill="#fff" fill-opacity=".14" stroke="${K.line}" stroke-width=".4" stroke-opacity=".35"/>`;
+  }
+  return s;
+}
+
 function torsoSeg(j: Joints): Seg {
   return {
     a: j.hip,
     b: j.shoulder,
-    r1: 10,
-    r2: 11.5,
+    r1: 10.4,
+    r2: 12,
     bellies: [
-      { side: 1, t0: 0.6, t1: 1.02, amp: 3.6, m: "peito" },
+      { side: 1, t0: 0.6, t1: 1.02, amp: 4.0, m: "peito" },
       { side: 1, t0: 0.08, t1: 0.58, amp: 1.0, m: "abdomen" },
       { side: -1, t0: 0.42, t1: 0.95, amp: 3.2, m: "costas" },
       { side: -1, t0: 0.02, t1: 0.42, amp: 1.0, m: "lombar" },
       { side: -1, t0: 0.9, t1: 1.12, amp: 2.0, m: "trapezio" }
     ]
   };
+}
+
+/** equipamento no estilo atlas: metal cinza azulado com brilho, anilhas com degradê */
+function atlasProp(p: Parameters<typeof drawProp>[0], j: Joints, ctx: Ctx): string {
+  if (p.k === "plate") {
+    const r = p.r ?? 21;
+    const c: Pt = [p.fixX ?? j[p.at][0] + (p.dx ?? 0), j[p.at][1] + (p.dy ?? 0)];
+    const id = `ap${gpre}_${gid++}`;
+    ctx.defs.push(
+      `<radialGradient id="${id}" cx="${f(c[0] - r * 0.35)}" cy="${f(c[1] - r * 0.4)}" r="${f(r * 1.4)}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${K.steelHi}"/><stop offset=".5" stop-color="${K.steel}"/><stop offset="1" stop-color="${K.steelLo}"/></radialGradient>`
+    );
+    const ring = (rr: number, w: number, col: string, o: number) =>
+      `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${f(rr)}" fill="none" stroke="${col}" stroke-width="${w}" opacity="${o}"/>`;
+    return (
+      `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="${f(r)}" fill="url(#${id})" stroke="${K.steelLo}" stroke-width="1"/>` +
+      ring(r * 0.86, 0.6, "#fff", 0.25) +
+      ring(r * 0.55, 1.2, K.steelLo, 0.5) +
+      ring(r * 0.5, 0.5, "#fff", 0.25) +
+      `<circle cx="${f(c[0])}" cy="${f(c[1])}" r="3.4" fill="${K.steelHi}" stroke="${K.steelLo}" stroke-width=".7"/>`
+    );
+  }
+  return drawProp(p, j)
+    .replaceAll("#4B463F", K.steel)
+    .replaceAll("#3A3631", K.steelLo)
+    .replaceAll("#8E857A", K.steelHi)
+    .replaceAll("#2E2924", K.pad)
+    .replaceAll("#4A433B", K.padEdge)
+    .replaceAll("#6B5B47", "#8A7A63");
 }
 
 /** cores da legenda: músculo principal e auxiliares */
@@ -391,9 +523,9 @@ function frontTorso(j: Joints, ctx: Ctx): string {
   ] as const;
   const right = half.map(([t, w]) => at(t, w));
   const left = half.map(([t, w]) => at(t, -w)).reverse();
-  const g = grad(at(0.5, -16), at(0.5, 16), 1, [K.skinLo, K.skin, K.skinHi]);
+  const g = lit(j.hip, j.shoulder, 18, [K.skinHi, K.skin, K.skinLo, K.skinRef]);
   ctx.defs.push(g.def);
-  let s = `<path d="${smooth([...right, ...left])}" fill="${g.url}" stroke="${K.line}" stroke-width=".7"/>`;
+  let s = `<path d="${smooth([...right, ...left])}" fill="${g.url}" stroke="${K.line}" stroke-width=".85"/>`;
   const ell = (c: Pt, rx: number, ry: number, m: Muscle) => {
     const worked = ctx.worked.includes(m);
     let fill = "none";
@@ -428,16 +560,16 @@ function renderAtlasFront(spec: AnimSpec, j: Joints, ctx: Ctx): string {
     s += `<ellipse cx="${f(j.hip[0])}" cy="${floor + 1}" rx="48" ry="5" fill="#000" opacity=".12"/>`;
     s += `<line x1="-200" y1="${floor}" x2="520" y2="${floor}" stroke="${K.floor}" stroke-width="1.2"/>`;
   }
-  s += (spec.back ?? []).map((p) => drawProp(p, j)).join("");
+  s += (spec.back ?? []).map((p) => atlasProp(p, j, ctx)).join("");
   const N = frontSegs(j, "N");
   const F = frontSegs(j, "F");
   if (!spec.hideLegs) s += [N.thigh, F.thigh, N.shin, F.shin, N.foot, F.foot].map((x) => drawSeg(x, ctx, false)).join("");
   s += drawSeg({ a: j.shoulder, b: j.neck, r1: 6, r2: 5, bellies: [] }, ctx, false);
   s += headShape(j, ctx, true);
   s += frontTorso(j, ctx);
-  s += [N.upper, F.upper, N.fore, F.fore].map((x) => drawSeg(x, ctx, false)).join("");
+  s += [N.upper, F.upper, N.fore, F.fore].map((x) => drawSeg(x, ctx, false, true)).join("");
   s += handShape(j, "N", ctx, false) + handShape(j, "F", ctx, false);
-  s += (spec.front ?? []).map((p) => drawProp(p, j)).join("");
+  s += (spec.front ?? []).map((p) => atlasProp(p, j, ctx)).join("");
   return `<defs>${ctx.defs.join("")}</defs>${s}`;
 }
 
@@ -454,18 +586,19 @@ export function renderAtlas(spec: AnimSpec, pose: Pose, at: Pt, opts: RenderOpts
     s += `<ellipse cx="${f((j.ankleN[0] + j.hip[0]) / 2 + 6)}" cy="${floor + 1}" rx="64" ry="5" fill="#000" opacity=".12"/>`;
     s += `<line x1="-200" y1="${floor}" x2="520" y2="${floor}" stroke="${K.floor}" stroke-width="1.2"/>`;
   }
-  s += (spec.back ?? []).map((p) => drawProp(p, j)).join("");
+  s += (spec.back ?? []).map((p) => atlasProp(p, j, ctx)).join("");
   const F = sideSegs(j, "F");
   const N = sideSegs(j, "N");
   if (!spec.hideLegs && !spec.hideFarLeg) s += [F.thigh, F.shin, F.foot].map((x) => drawSeg(x, ctx, true)).join("");
   if (!spec.hideFarArm) s += [F.upper, F.fore].map((x) => drawSeg(x, ctx, true)).join("") + handShape(j, "F", ctx, true);
   // pescoço, tronco e cabeça
   s += drawSeg({ a: j.shoulder, b: j.neck, r1: 5.2, r2: 4.6, bellies: [] }, ctx, false);
-  s += drawSeg(torsoSeg(j), ctx, false);
+  s += drawSeg(torsoSeg(j), ctx, false) + torsoDetails(j, ctx);
   s += headShape(j, ctx, false);
-  if (!spec.hideLegs) s += [N.thigh, N.shin, N.foot].map((x) => drawSeg(x, ctx, false)).join("");
-  s += [N.upper, N.fore].map((x) => drawSeg(x, ctx, false)).join("");
+  if (!spec.hideLegs) s += [N.thigh, N.shin, N.foot].map((x) => drawSeg(x, ctx, false, true)).join("");
+  s += jointMarks(j, !!spec.hideLegs);
+  s += [N.upper, N.fore].map((x) => drawSeg(x, ctx, false, true)).join("");
   s += handShape(j, "N", ctx, false);
-  s += (spec.front ?? []).map((p) => drawProp(p, j)).join("");
+  s += (spec.front ?? []).map((p) => atlasProp(p, j, ctx)).join("");
   return `<defs>${ctx.defs.join("")}</defs>${s}`;
 }
