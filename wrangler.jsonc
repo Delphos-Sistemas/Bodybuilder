@@ -1,0 +1,28 @@
+{
+  // Publicação na Cloudflare Workers: app estático (./out) + API de sincronização (worker/index.ts).
+  // O app é exportado estaticamente para ./out por `npm run build`.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bodybuilder",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "durable_objects": {
+    // lembretes de treino e água (notificações push); criado sozinho no deploy, sem configurar nada na conta
+    "bindings": [{ "name": "LEMBRETES", "class_name": "Lembretes" }]
+  },
+  "migrations": [{ "tag": "v1-lembretes", "new_sqlite_classes": ["Lembretes"] }],
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash",
+    // só /api/* passa pelo Worker; o resto é servido direto como arquivo estático
+    "run_worker_first": ["/api/*"]
+  }
+  // Para ligar a sincronização entre aparelhos (ver README, seção "Sincronização"):
+  // 1. npx wrangler d1 create bodybuilder-sync
+  // 2. descomente o bloco abaixo com o database_id gerado
+  // 3. npx wrangler d1 migrations apply bodybuilder-sync --remote
+  // ,"d1_databases": [
+  //   { "binding": "DB", "database_name": "bodybuilder-sync", "database_id": "COLE-AQUI-O-ID", "migrations_dir": "migrations" }
+  // ]
+}

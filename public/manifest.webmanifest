@@ -1,13 +1,24 @@
 {
-  "name": "BODYBUILDER",
+  "id": "/",
+  "name": "BODYBUILDER — Treinos de musculação",
   "short_name": "BODYBUILDER",
-  "description": "Planeje seus treinos, acompanhe sua evolucao e transforme constancia em legado.",
-  "start_url": "/inicio",
+  "description": "Planeje, execute e acompanhe seus treinos de musculação.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#090909",
-  "theme_color": "#090909",
+  "orientation": "portrait",
+  "background_color": "#0B0A09",
+  "theme_color": "#0B0A09",
+  "categories": ["health", "fitness", "sports"],
   "icons": [
-    { "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" },
-    { "src": "/icons/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Treinos", "url": "/treinos", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Histórico", "url": "/historico", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Nutrição", "url": "/nutricao", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

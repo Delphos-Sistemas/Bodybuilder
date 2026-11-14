@@ -1,31 +1,252 @@
 "use client";
 
-import { Card } from "@/components/ui/Card";
-import { isSupabaseConfigured } from "@/lib/supabase";
-import { useAppStore } from "@/stores/appStore";
+import { Download, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AudioControls } from "@/components/AudioControls";
+import { MusicPlayer } from "@/components/MusicPlayer";
+import { RemindersPanel } from "@/components/RemindersPanel";
+import { OfflinePanel } from "@/components/OfflinePanel";
+import { CYCLE, cycleWeek } from "@/lib/periodization";
+import { PHASES } from "@/lib/types";
+import { todayISO } from "@/lib/time";
+import { SyncPanel } from "@/components/SyncPanel";
+import { Card, PageHeader, Toggle } from "@/components/ui";
+import { downloadBackup, isStoragePersisted, requestPersistentStorage } from "@/lib/backup";
+import { useStore } from "@/lib/store";
 
 export default function ConfiguracoesPage() {
-  const { profile } = useAppStore();
+  const mode = useStore((s) => s.mode);
+  const enterDemo = useStore((s) => s.enterDemo);
+  const exitDemo = useStore((s) => s.exitDemo);
+  const exportData = useStore((s) => s.exportData);
+  const importData = useStore((s) => s.importData);
+  const clearUserData = useStore((s) => s.clearUserData);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  const autoProgress = useStore((s) => s.settings.autoProgress !== false);
+  const smartRest = useStore((s) => s.settings.smartRest !== false);
+  const autoWarmup = useStore((s) => s.settings.autoWarmup !== false);
+  const periodization = useStore((s) => s.settings.periodization);
+  const updateSettings = useStore((s) => s.updateSettings);
+  const markBackupDone = useStore((s) => s.markBackupDone);
+  const lastBackupAt = useStore((s) => s.settings.lastBackupAt);
+  const [persisted, setPersisted] = useState<boolean | null>(null);
+  useEffect(() => {
+    void isStoragePersisted().then(setPersisted);
+  }, []);
+
+  const download = () => {
+    downloadBackup(exportData());
+    markBackupDone();
+    setMsg({
+      ok: true,
+      text: "Arquivo de backup gerado com os seus dados (sem os dados de demonstração)."
+    });
+  };
+
+  const onImport = async (f: File | undefined) => {
+    if (!f) return;
+    try {
+      const res = importData(JSON.parse(await f.text()));
+      setMsg(res.ok ? { ok: true, text: "Dados importados com sucesso." } : { ok: false, text: res.error });
+    } catch {
+      setMsg({
+        ok: false,
+        text: "Não foi possível ler o arquivo. Use um backup exportado pelo BODYBUILDER."
+      });
+    }
+  };
+
   return (
-    <div className="space-y-5">
-      <h1 className="font-display text-4xl font-black">Configuracoes</h1>
-      <div className="grid gap-4 md:grid-cols-2">
-        {[
-          ["Tema", "Escuro premium como padrao"],
-          ["Unidade de peso", "Quilogramas"],
-          ["Notificacoes", "Estrutura preparada para lembretes locais"],
-          ["Vibracao", "Ativa quando o navegador permitir"],
-          ["Descanso padrao", "90 segundos"],
-          ["Modo demonstracao", profile.demoMode ? "Ativo" : "Inativo"],
-          ["Supabase", isSupabaseConfigured ? "Configurado" : "Nao configurado"],
-          ["Privacidade", "Dados locais no navegador neste MVP"]
-        ].map(([title, text]) => (
-          <Card key={title}>
-            <h2 className="font-bold">{title}</h2>
-            <p className="mt-2 text-sm text-sand">{text}</p>
-          </Card>
-        ))}
-      </div>
+    <div className="mx-auto max-w-3xl space-y-5">
+      <PageHeader eyebrow="Preferências" title="Configurações" />
+
+      <Card className="space-y-3">
+        <h2 className="font-display text-xl font-bold">Som e vibração</h2>
+        <p className="text-sm text-muted">
+          Os alertas tocam no início do treino, no fim de cada descanso e no encerramento. O treino funciona normalmente mesmo sem som.
+        </p>
+        <AudioControls />
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="font-display text-xl font-bold">Lembretes no celular</h2>
+        <RemindersPanel />
+      </Card>
+
+      <Card className="space-y-1">
+        <h2 className="font-display text-xl font-bold">Progressão de carga</h2>
+        <Toggle
+          id="progressao-automatica"
+          label="Atualizar a ficha sozinho"
+          description="Ao finalizar o treino, se você bateu o topo das repetições em todas as séries, a carga da ficha sobe para a próxima vez (2,5 kg na barra e máquinas, 2 kg nos halteres). Se ficou abaixo da faixa chegando à falha, ela desce. Dá para desfazer no histórico."
+          checked={autoProgress}
+          onChange={(v) => updateSettings({ autoProgress: v })}
+        />
+      </Card>
+
+      <Card className="space-y-1">
+        <h2 className="font-display text-xl font-bold">Durante o treino</h2>
+        <Toggle
+          id="descanso-inteligente"
+          label="Descanso inteligente"
+          description="Ajusta o descanso de cada série: mais tempo em exercícios pesados e multiarticulares ou quando você vai até a falha, menos em isolados e séries longas. O motivo aparece no cronômetro."
+          checked={smartRest}
+          onChange={(v) => updateSettings({ smartRest: v })}
+        />
+        <Toggle
+          id="aquecimento-automatico"
+          label="Aquecimento automático"
+          description="Antes do primeiro exercício pesado de cada músculo, o app monta 2 ou 3 séries de aquecimento com cargas menores."
+          checked={autoWarmup}
+          onChange={(v) => updateSettings({ autoWarmup: v })}
+        />
+      </Card>
+
+      <Card className="space-y-2" data-testid="periodizacao">
+        <h2 className="font-display text-xl font-bold">Plano de periodização</h2>
+        <Toggle
+          id="periodizacao"
+          label="Ciclo de 4 semanas"
+          description="Base, volume, pesada e alívio, repetindo. A ficha salva não muda: o app ajusta séries e cargas na hora de começar o treino."
+          checked={!!periodization?.on}
+          onChange={(v) => updateSettings({ periodization: { on: v, start: periodization?.start ?? todayISO() } })}
+        />
+        {periodization?.on && (
+          <>
+            <ol className="space-y-1 text-sm">
+              {CYCLE.map((c, i) => {
+                const cur = cycleWeek(periodization.start, Date.now()) === i;
+                return (
+                  <li key={c.phase} className={cur ? "font-semibold text-bronze-light" : "text-sand"}>
+                    Semana {i + 1} · {PHASES[c.phase]}: {c.text}
+                    {cur && " (esta semana)"}
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="text-xs text-muted">Nas semanas pesada e de alívio a progressão automática não mexe na ficha.</p>
+            <button
+              type="button"
+              className="btn-ghost min-h-10 px-2 text-sm"
+              onClick={() => updateSettings({ periodization: { on: true, start: todayISO() } })}
+            >
+              Recomeçar o ciclo nesta semana
+            </button>
+          </>
+        )}
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="font-display text-xl font-bold">Música</h2>
+        <MusicPlayer />
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="font-display text-xl font-bold">Sincronizar entre aparelhos</h2>
+        <SyncPanel />
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="font-display text-xl font-bold">Seus dados</h2>
+        <p className="text-sm text-muted">
+          Tudo fica salvo apenas neste aparelho (armazenamento local do navegador). Faça backups para não perder seus treinos ao limpar o navegador ou trocar de
+          aparelho.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="btn-secondary" onClick={download}>
+            <Download size={18} aria-hidden /> Exportar dados
+          </button>
+          <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()}>
+            <Upload size={18} aria-hidden /> Importar dados
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="sr-only"
+            aria-label="Escolher arquivo de backup"
+            onChange={(e) => void onImport(e.target.files?.[0]).then(() => (e.target.value = ""))}
+          />
+        </div>
+        <p className="text-xs text-muted">Importar substitui os dados atuais deste aparelho pelos do arquivo.</p>
+        <p className="text-sm text-sand" data-testid="status-backup">
+          Último backup: {lastBackupAt ? new Date(lastBackupAt).toLocaleDateString("pt-BR") : "nenhum ainda"}.
+        </p>
+        {persisted !== null && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className={persisted ? "text-ok" : "text-sand"}>
+              {persisted
+                ? "Armazenamento protegido: o navegador não apaga os dados sozinho."
+                : "Armazenamento não protegido: o navegador pode apagar os dados se faltar espaço ou após muito tempo sem uso. No iPhone, instale o app na tela de início para o Safari não apagar os dados."}
+            </span>
+            {!persisted && (
+              <button type="button" className="btn-ghost min-h-10 px-2 text-sm" onClick={() => void requestPersistentStorage().then((v) => setPersisted(!!v))}>
+                Pedir proteção
+              </button>
+            )}
+          </div>
+        )}
+        {msg && (
+          <p role="status" className={msg.ok ? "text-sm text-ok" : "text-sm text-danger"}>
+            {msg.text}
+          </p>
+        )}
+        {confirmClear ? (
+          <div role="alert" className="rounded-xl border border-danger/50 p-3 text-sm">
+            <p className="mb-2">Apagar todos os seus treinos, histórico, pesos e perfil deste aparelho? Esta ação não pode ser desfeita.</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn-danger min-h-10 flex-1"
+                onClick={() => {
+                  clearUserData();
+                  setConfirmClear(false);
+                  setMsg({ ok: true, text: "Dados apagados." });
+                }}
+              >
+                Apagar tudo
+              </button>
+              <button type="button" className="btn-ghost min-h-10 flex-1" onClick={() => setConfirmClear(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="btn-danger" onClick={() => setConfirmClear(true)}>
+            Apagar meus dados
+          </button>
+        )}
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="font-display text-xl font-bold">Modo demonstração</h2>
+        <p className="text-sm text-muted">Explore o app com treinos e histórico de exemplo, sem cadastro. Os dados de exemplo ficam separados dos seus.</p>
+        {mode === "demo" ? (
+          <button type="button" className="btn-secondary" onClick={exitDemo}>
+            Sair da demonstração
+          </button>
+        ) : (
+          <button type="button" className="btn-secondary" onClick={enterDemo}>
+            Entrar na demonstração
+          </button>
+        )}
+      </Card>
+
+      <Card className="space-y-2">
+        <h2 className="font-display text-xl font-bold">Modo academia offline</h2>
+        <OfflinePanel />
+      </Card>
+
+      <Card className="space-y-2">
+        <h2 className="font-display text-xl font-bold">Créditos de mídia</h2>
+        <p className="text-sm text-muted">
+          Os GIFs dos exercícios vêm do ExerciseDB (exercisedb.dev) e precisam de internet. Sem internet, ou nos exercícios sem GIF, o app mostra a animação
+          própria do BODYBUILDER, desenhada em código.
+        </p>
+      </Card>
     </div>
   );
 }

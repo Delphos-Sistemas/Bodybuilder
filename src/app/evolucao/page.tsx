@@ -1,71 +1,327 @@
 "use client";
 
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Card } from "@/components/ui/Card";
-import { useAppStore } from "@/stores/appStore";
+import { Award, Calculator, NotebookPen, Share2, Trash2, Users } from "lucide-react";
+import Link from "next/link";
+import { ShareCanvas } from "@/components/ShareCanvas";
+import { WeekMuscleMap } from "@/components/WeekMuscleMap";
+import { DIARY_FIELDS, diaryAverages, diaryInsights } from "@/lib/diary";
+import { drawWeekCard } from "@/lib/shareCard";
+import { weekSummary } from "@/lib/weekly";
+import { useMemo, useState } from "react";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { BodyProgress } from "@/components/BodyProgress";
+import { RecordsList } from "@/components/RecordsList";
+import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { WeeklyVolume } from "@/components/WeeklyVolume";
+import { fmt } from "@/lib/progression";
+import { exerciseRecords } from "@/lib/records";
+import { EXERCISE_MAP } from "@/data/exercises";
+import { exercisesWithHistory, loadHistory, sortedWeights } from "@/lib/stats";
+import { useData, useStore } from "@/lib/store";
+import { formatDate, formatDateShort, todayISO } from "@/lib/time";
+
+const axis = { stroke: "#9C9284", fontSize: 12 };
+const tooltipStyle = {
+  background: "#171513",
+  border: "1px solid #34302A",
+  borderRadius: 12,
+  color: "#F3EEE6"
+};
 
 export default function EvolucaoPage() {
-  const { weightLogs, sessions } = useAppStore();
-  const weights = [...weightLogs].reverse().slice(-14).map((item) => ({
-    dia: new Date(item.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-    peso: item.weightKg
-  }));
-  const volume = [...sessions].reverse().filter((item) => item.finishedAt).slice(-12).map((item, index) => ({
-    treino: `T${index + 1}`,
-    volume: item.totalVolume
-  }));
+  const data = useData();
+  const addWeight = useStore((s) => s.addBodyWeight);
+  const removeWeight = useStore((s) => s.removeBodyWeight);
+  const [date, setDate] = useState(todayISO());
+  const [kg, setKg] = useState("");
+  const [err, setErr] = useState("");
+
+  const weights = sortedWeights(data.bodyWeights);
+  const withHistory = useMemo(() => exercisesWithHistory(data.sessions), [data.sessions]);
+  const [selected, setSelected] = useState<string>("");
+  const exId = selected && withHistory.includes(selected) ? selected : (withHistory[0] ?? "");
+  const loads = useMemo(() => (exId ? loadHistory(data.sessions, exId) : []), [data.sessions, exId]);
+  const recs = useMemo(() => (exId ? exerciseRecords(data.sessions, exId) : null), [data.sessions, exId]);
+  const now = Date.now();
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = parseFloat(kg.replace(",", "."));
+    if (!Number.isFinite(v) || v < 20 || v > 400) {
+      setErr("Informe um peso entre 20 e 400 kg.");
+      return;
+    }
+    addWeight(date, Math.round(v * 10) / 10);
+    setKg("");
+    setErr("");
+  };
 
   return (
-    <div className="space-y-5">
-      <header>
-        <p className="text-sm uppercase text-bronze-light">Evolucao</p>
-        <h1 className="font-display text-4xl font-black">Capacidade em construcao</h1>
-      </header>
+    <div className="space-y-6">
+      <PageHeader eyebrow="Acompanhamento" title="Evolução" />
+
+      <nav aria-label="Atalhos" className="-mx-4 overflow-x-auto px-4">
+        <div className="flex gap-2 pb-1">
+          <Link href="/conquistas" className="btn-secondary min-h-10 shrink-0 px-3 text-sm">
+            <Award size={16} aria-hidden /> Conquistas
+          </Link>
+          <Link href="/desafio" className="btn-secondary min-h-10 shrink-0 px-3 text-sm">
+            <Users size={16} aria-hidden /> Desafio com amigos
+          </Link>
+          <Link href="/calculadora" className="btn-secondary min-h-10 shrink-0 px-3 text-sm">
+            <Calculator size={16} aria-hidden /> 1RM e anilhas
+          </Link>
+          <ShareCanvas
+            title="Resumo da semana"
+            className="shrink-0"
+            fileName={`semana-${new Date(now).toISOString().slice(0, 10)}.png`}
+            draw={(c, logo) => drawWeekCard(c, weekSummary(data.sessions, data.profile.weeklyGoal, Date.now()), logo)}
+          >
+            <Share2 size={16} aria-hidden /> Resumo da semana
+          </ShareCanvas>
+        </div>
+      </nav>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-4 font-bold">Peso corporal</h2>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weights}>
-                <CartesianGrid stroke="#2b2b2b" />
-                <XAxis dataKey="dia" stroke="#D5C2A5" />
-                <YAxis stroke="#D5C2A5" domain={["dataMin - 1", "dataMax + 1"]} />
-                <Tooltip contentStyle={{ background: "#171717", border: "1px solid #A9783F" }} />
-                <Area dataKey="peso" stroke="#C89B62" fill="#A9783F33" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <WeekMuscleMap sessions={data.sessions} now={now} />
         </Card>
         <Card>
-          <h2 className="mb-4 font-bold">Volume por treino</h2>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={volume}>
-                <CartesianGrid stroke="#2b2b2b" />
-                <XAxis dataKey="treino" stroke="#D5C2A5" />
-                <YAxis stroke="#D5C2A5" />
-                <Tooltip contentStyle={{ background: "#171717", border: "1px solid #A9783F" }} />
-                <Bar dataKey="volume" fill="#A9783F" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <WeeklyVolume sessions={data.sessions} now={now} />
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Treinos concluidos" value={`${sessions.filter((item) => item.finishedAt).length}`} />
-        <Stat label="Duracao media" value="58 min" />
-        <Stat label="Recordes" value="5" />
-        <Stat label="Constancia mensal" value="82%" />
-      </div>
+
+      <DiaryCard />
+
+      {data.sessions.some((s) => s.endedAt) && (
+        <Card>
+          <RecordsList sessions={data.sessions} />
+        </Card>
+      )}
+
+      <Card className="space-y-4">
+        <h2 className="font-display text-xl font-bold">Peso corporal</h2>
+        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div>
+            <label htmlFor="peso-data" className="label">
+              Data
+            </label>
+            <input id="peso-data" type="date" className="input" value={date} max={todayISO()} onChange={(e) => setDate(e.target.value)} required />
+          </div>
+          <div>
+            <label htmlFor="peso-kg" className="label">
+              Peso (kg)
+            </label>
+            <input
+              id="peso-kg"
+              inputMode="decimal"
+              className="input"
+              placeholder="Ex.: 78,5"
+              value={kg}
+              onChange={(e) => setKg(e.target.value)}
+              aria-invalid={!!err}
+              aria-describedby={err ? "peso-erro" : undefined}
+            />
+          </div>
+          <button type="submit" className="btn-primary">
+            Registrar
+          </button>
+        </form>
+        {err && (
+          <p id="peso-erro" className="text-sm text-danger">
+            {err}
+          </p>
+        )}
+        {weights.length >= 2 ? (
+          <div
+            className="h-64"
+            role="img"
+            aria-label={`Gráfico de peso corporal com ${weights.length} registros, de ${weights[0].kg} kg a ${weights[weights.length - 1].kg} kg`}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={weights.map((w) => ({
+                  ...w,
+                  label: formatDateShort(w.date)
+                }))}
+                margin={{ top: 8, right: 12, left: -12, bottom: 0 }}
+              >
+                <CartesianGrid stroke="#34302A" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={axis} stroke="#34302A" />
+                <YAxis domain={["dataMin - 1", "dataMax + 1"]} tick={axis} stroke="#34302A" unit=" kg" width={64} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} kg`, "Peso"]} />
+                <Line type="monotone" dataKey="kg" stroke="#D3A46B" strokeWidth={2.5} dot={{ r: 3, fill: "#D3A46B" }} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <EmptyState
+            title={weights.length ? "Falta pouco para o gráfico" : "Nenhum peso registrado"}
+            text="Registre seu peso em pelo menos duas datas para ver a evolução."
+          />
+        )}
+        {weights.length > 0 && (
+          <details>
+            <summary className="cursor-pointer text-sm text-sand">Ver registros ({weights.length})</summary>
+            <ul className="mt-2 divide-y divide-line text-sm">
+              {weights
+                .slice()
+                .reverse()
+                .map((w) => (
+                  <li key={w.id} className="flex items-center justify-between py-1.5">
+                    <span>
+                      {formatDate(w.date)} · <strong>{w.kg.toLocaleString("pt-BR")} kg</strong>
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-ghost min-h-10 px-2"
+                      onClick={() => removeWeight(w.id)}
+                      aria-label={`Excluir registro de ${formatDate(w.date)}`}
+                    >
+                      <Trash2 size={16} aria-hidden />
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </details>
+        )}
+      </Card>
+
+      <Card className="space-y-4">
+        <h2 className="font-display text-xl font-bold">Carga por exercício</h2>
+        {withHistory.length === 0 ? (
+          <EmptyState title="Sem séries registradas" text="Faça um treino e registre as séries para acompanhar a evolução da carga de cada exercício." />
+        ) : (
+          <>
+            <div>
+              <label htmlFor="exercicio-grafico" className="label">
+                Exercício
+              </label>
+              <select id="exercicio-grafico" className="input" value={exId} onChange={(e) => setSelected(e.target.value)}>
+                {withHistory.map((id) => (
+                  <option key={id} value={id}>
+                    {EXERCISE_MAP[id]?.name ?? id}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {recs && (
+              <dl className="grid grid-cols-3 gap-2 text-center" data-testid="recordes">
+                {[
+                  [
+                    "Maior carga",
+                    recs.maxLoad ? `${fmt(recs.maxLoad.value)} kg` : "—",
+                    recs.maxLoad ? `× ${recs.maxLoad.reps} · ${formatDateShort(recs.maxLoad.date)}` : ""
+                  ],
+                  ["1RM estimado", recs.best1RM ? `${fmt(recs.best1RM.value)} kg` : "—", recs.best1RM ? recs.best1RM.set : "até 12 repetições"],
+                  ["Melhor série", recs.bestSetVolume ? `${fmt(recs.bestSetVolume.value)} kg` : "—", recs.bestSetVolume ? recs.bestSetVolume.set : ""]
+                ].map(([t, v, sub]) => (
+                  <div key={t} className="rounded-xl border border-line bg-iron p-2">
+                    <dt className="text-xs text-muted">{t}</dt>
+                    <dd className="font-display text-lg font-bold text-bronze-light">{v}</dd>
+                    <dd className="text-xs text-muted">{sub}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            <p className="text-xs text-muted">1RM estimado pela fórmula de Epley: uma estimativa da carga máxima para 1 repetição, sem precisar testar.</p>
+            {loads.length >= 2 ? (
+              <div className="h-64" role="img" aria-label={`Gráfico da maior carga por sessão em ${EXERCISE_MAP[exId]?.name}`}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={loads.map((p) => ({
+                      ...p,
+                      label: formatDateShort(p.date)
+                    }))}
+                    margin={{ top: 8, right: 12, left: -12, bottom: 0 }}
+                  >
+                    <CartesianGrid stroke="#34302A" strokeDasharray="3 3" />
+                    <XAxis dataKey="label" tick={axis} stroke="#34302A" />
+                    <YAxis tick={axis} stroke="#34302A" unit=" kg" width={64} />
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      formatter={(v, name, p) =>
+                        name === "Maior carga" ? [`${v} kg (melhor série: ${(p.payload as { bestSet: string }).bestSet})`, name] : [`${v} kg`, name]
+                      }
+                    />
+                    <Legend wrapperStyle={{ fontSize: 12, color: "#9C9284" }} />
+                    <Line
+                      name="Maior carga"
+                      type="monotone"
+                      dataKey="maxLoad"
+                      stroke="#D3A46B"
+                      strokeWidth={2.5}
+                      dot={{ r: 3, fill: "#D3A46B" }}
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      name="1RM estimado"
+                      type="monotone"
+                      dataKey="e1rm"
+                      stroke="#9C9284"
+                      strokeWidth={2}
+                      strokeDasharray="5 4"
+                      dot={false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState
+                title="Uma sessão registrada"
+                text={`Melhor série até agora: ${loads[0]?.bestSet ?? "—"}. Com duas sessões ou mais, o gráfico aparece.`}
+              />
+            )}
+          </>
+        )}
+      </Card>
+
+      <Card>
+        <BodyProgress />
+      </Card>
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function DiaryCard() {
+  const data = useData();
+  const avg = useMemo(() => diaryAverages(data.sessions), [data.sessions]);
+  const insights = useMemo(() => diaryInsights(data.sessions), [data.sessions]);
   return (
-    <Card>
-      <p className="text-sm text-sand">{label}</p>
-      <p className="mt-2 text-3xl font-black">{value}</p>
+    <Card className="space-y-3" data-testid="diario-evolucao">
+      <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+        <NotebookPen size={20} className="text-bronze-light" aria-hidden /> Diário de treino
+      </h2>
+      {avg.count === 0 ? (
+        <p className="text-sm text-muted">
+          Ao terminar um treino, dê notas de 1 a 5 para energia, sono e dor (no histórico). Com alguns treinos, o app mostra se isso muda o seu desempenho.
+        </p>
+      ) : (
+        <>
+          <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {DIARY_FIELDS.map((f) => (
+              <div key={f.key} className="rounded-xl border border-line bg-iron p-2 text-center">
+                <dt className="text-xs text-muted">{f.label}</dt>
+                <dd className="font-display text-2xl font-bold">{avg[f.key]?.toLocaleString("pt-BR") ?? "—"}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-xs text-muted">Média dos últimos {avg.count} treinos com diário (de 1 a 5).</p>
+          {insights.length ? (
+            <ul className="space-y-1 text-sm text-sand" data-testid="insights-diario">
+              {insights.map((i) => (
+                <li key={i.key}>• {i.text}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">
+              Preencha o diário em mais treinos (alguns bons e alguns ruins) para ver como sono, energia e dor afetam seu volume.
+            </p>
+          )}
+        </>
+      )}
     </Card>
   );
 }

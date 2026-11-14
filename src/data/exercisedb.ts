@@ -1,0 +1,58 @@
+/**
+ * GIFs da API gratuita do ExerciseDB (https://exercisedb.dev), carregados direto do servidor deles.
+ * TESTE: ainda falta confirmar os termos de uso antes de publicar.
+ * Exercícios fora desta lista continuam com a animação própria (a prancha: a versão grátis não tem a prancha sem peso).
+ */
+export const EXERCISEDB_GIF: Record<string, string> = {
+  "supino-reto": "EIeI8Vf",
+  "supino-inclinado-halteres": "ns0SIbU",
+  "supino-reto-halteres": "SpYC0Kp",
+  "crucifixo-halteres": "yz9nUhF",
+  crossover: "0CXGHya",
+  voador: "v3xmPAR",
+  paralelas: "PAgTVaK",
+  "flexao-de-braco": "I4hDWkc",
+  "remada-curvada": "eZyBC3j",
+  "remada-baixa": "fUBheHs",
+  "puxada-frontal": "RVwzP10",
+  "puxada-supinada": "xBYcQHj",
+  "barra-fixa": "lBDjFxJ",
+  "remada-invertida": "bZGHsAZ",
+  "levantamento-terra": "ila4NZS",
+  "hiperextensao-lombar": "zhMwOwE",
+  "agachamento-livre": "qXTaZnJ",
+  "leg-press": "10Z2DXU",
+  "agachamento-smith": "jFtipLl",
+  "cadeira-extensora": "my33uHU",
+  "mesa-flexora": "17lJ1kr",
+  "cadeira-flexora": "Zg3XY7P",
+  stiff: "hrVQWvE",
+  "afundo-halteres": "RRWFUcw",
+  "avanco-caminhando": "IZVHb27",
+  "cadeira-abdutora": "CHpahtl",
+  "cadeira-adutora": "oHsrypV",
+  "ponte-de-gluteo": "qKBpF7I",
+  "panturrilha-sentada": "ipvgBnC",
+  "panturrilha-leg-press": "qCNVnaU",
+  "desenvolvimento-halteres": "znQUdHY",
+  "desenvolvimento-militar": "kTbSH9h",
+  "elevacao-lateral": "DsgkuIt",
+  "elevacao-frontal": "3eGE2JC",
+  "desenvolvimento-arnold": "Xy4jlWA",
+  "remada-alta": "UDlhcO8",
+  "encolhimento-barra": "dG7tG5y",
+  "crucifixo-inverso": "EAs3xL9",
+  "rosca-direta": "25GPyDY",
+  "rosca-martelo": "2NpxjC1",
+  "rosca-alternada": "BU15nH4",
+  "rosca-scott": "qOgPVf6",
+  "triceps-polia": "3ZflifB",
+  "triceps-corda": "dU605di",
+  "triceps-testa": "h8LFzo9",
+  "triceps-frances": "kont8Ut",
+  "abdominal-supra": "TFqbd8t",
+  "abdominal-polia": "WW95auq",
+  "elevacao-de-pernas": "WhuFnR7"
+};
+
+export const exercisedbGif = (id: string): string | undefined => (EXERCISEDB_GIF[id] ? `https://static.exercisedb.dev/media/${EXERCISEDB_GIF[id]}.gif` : undefined);

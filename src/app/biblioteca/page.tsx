@@ -1,70 +1,115 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { CustomExerciseForm } from "@/components/CustomExerciseForm";
 import { useMemo, useState } from "react";
-import { ExerciseVisual } from "@/components/exercises/ExerciseVisual";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { exercises } from "@/data/exercises";
-import { ptLabel } from "@/lib/format";
+import { ExerciseCard } from "@/components/ExerciseCard";
+import { ExerciseSheet } from "@/components/ExerciseSheet";
+import { EmptyState, PageHeader } from "@/components/ui";
+import { useAllExercises } from "@/lib/useExercises";
+import { matchesSearch } from "@/lib/text";
+import { EQUIPMENT, MUSCLES, type Equipment, type Muscle } from "@/lib/types";
 
 export default function BibliotecaPage() {
   const [query, setQuery] = useState("");
-  const [group, setGroup] = useState("Todos");
-  const groups = ["Todos", ...Array.from(new Set(exercises.map((exercise) => exercise.primaryMuscle)))];
-  const filtered = useMemo(
+  const [muscle, setMuscle] = useState<Muscle | "">("");
+  const [equipment, setEquipment] = useState<Equipment | "">("");
+  const [open, setOpen] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const EXERCISES = useAllExercises();
+  const usedMuscles = useMemo(() => [...new Set(EXERCISES.map((e) => e.primary))] as Muscle[], [EXERCISES]);
+  const usedEquipment = useMemo(() => [...new Set(EXERCISES.map((e) => e.equipment))] as Equipment[], [EXERCISES]);
+
+  const list = useMemo(
     () =>
-      exercises.filter(
-        (exercise) =>
-          (group === "Todos" || exercise.primaryMuscle === group) &&
-          exercise.name.toLowerCase().includes(query.toLowerCase())
+      EXERCISES.filter(
+        (e) =>
+          (!muscle || e.primary === muscle || e.secondary.includes(muscle)) &&
+          (!equipment || e.equipment === equipment) &&
+          matchesSearch([e.name, MUSCLES[e.primary], EQUIPMENT[e.equipment], ...e.secondary.map((m) => MUSCLES[m])], query)
       ),
-    [group, query]
+    [query, muscle, equipment, EXERCISES]
   );
 
   return (
-    <div className="space-y-5">
-      <header>
-        <p className="text-sm uppercase text-bronze-light">Biblioteca</p>
-        <h1 className="font-display text-4xl font-black">50 exercícios iniciais</h1>
-      </header>
-      <Card className="grid gap-3 md:grid-cols-[1fr_220px]">
-        <label className="relative">
-          <Search className="absolute left-3 top-3 text-sand" size={18} />
-          <Input
-            className="pl-10"
+    <div>
+      <PageHeader eyebrow={`${EXERCISES.length} exercícios`} title="Biblioteca">
+        <button type="button" className="btn-secondary" onClick={() => setCreating(true)}>
+          <Plus size={18} aria-hidden /> Criar exercício
+        </button>
+      </PageHeader>
+      <div className="mb-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} aria-hidden />
+          <label htmlFor="busca" className="sr-only">
+            Buscar exercício
+          </label>
+          <input
+            id="busca"
+            type="search"
+            className="input pl-10"
+            placeholder="Buscar (ex.: supino, triceps, agachamento)"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar exercício"
+            onChange={(e) => setQuery(e.target.value)}
           />
-        </label>
-        <select
-          className="min-h-11 rounded-lg border border-white/10 bg-iron px-3 text-parchment"
-          value={group}
-          onChange={(event) => setGroup(event.target.value)}
-        >
-          {groups.map((item) => (
-            <option key={item} value={item}>
-              {ptLabel(item)}
-            </option>
-          ))}
-        </select>
-      </Card>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((exercise) => (
-          <Card key={exercise.id}>
-            <div className="mb-3">
-              <ExerciseVisual exercise={exercise} compact />
-            </div>
-            <p className="text-sm text-bronze-light">
-              {ptLabel(exercise.primaryMuscle)} · {ptLabel(exercise.equipment)}
-            </p>
-            <h2 className="text-xl font-black">{exercise.name}</h2>
-            <p className="mt-2 text-sm text-sand">{exercise.instructions.join(" ")}</p>
-            <p className="mt-3 text-xs text-sand">Substituições: {exercise.substitutions.slice(0, 2).join(", ")}</p>
-          </Card>
-        ))}
+        </div>
+        <div>
+          <label htmlFor="filtro-musculo" className="sr-only">
+            Filtrar por músculo
+          </label>
+          <select id="filtro-musculo" className="input" value={muscle} onChange={(e) => setMuscle(e.target.value as Muscle | "")}>
+            <option value="">Todos os músculos</option>
+            {usedMuscles.map((m) => (
+              <option key={m} value={m}>
+                {MUSCLES[m]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="filtro-equipamento" className="sr-only">
+            Filtrar por equipamento
+          </label>
+          <select id="filtro-equipamento" className="input" value={equipment} onChange={(e) => setEquipment(e.target.value as Equipment | "")}>
+            <option value="">Todos os equipamentos</option>
+            {usedEquipment.map((m) => (
+              <option key={m} value={m}>
+                {EQUIPMENT[m]}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
+      <p className="mb-3 text-sm text-muted" aria-live="polite">
+        {list.length === 1 ? "1 exercício encontrado" : `${list.length} exercícios encontrados`}
+      </p>
+      {list.length ? (
+        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {list.map((e) => (
+            <ExerciseCard key={e.id} exercise={e} onOpen={setOpen} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="Nenhum exercício encontrado"
+          text="Tente outro termo ou limpe os filtros."
+          action={
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setQuery("");
+                setMuscle("");
+                setEquipment("");
+              }}
+            >
+              Limpar filtros
+            </button>
+          }
+        />
+      )}
+      <ExerciseSheet exerciseId={open} onClose={() => setOpen(null)} onSelect={setOpen} />
+      <CustomExerciseForm open={creating} onClose={() => setCreating(false)} onSaved={setOpen} />
     </div>
   );
 }
